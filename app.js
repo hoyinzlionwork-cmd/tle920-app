@@ -507,6 +507,7 @@ const FUNCS = [
   ["docs",   "folder", "交班文件"],
   ["budget", "coin",   "預算表"],
   ["optin:sunrise","sunrise","日出名單"],
+  ["ink",    "pen",    "手寫備註"],
 ];
 
 const ROSTER_FIELDS = [
@@ -2398,6 +2399,88 @@ function editBudget(b){
 }
 
 /* ---------- 交班文件 ---------- */
+/* ---------- 手寫備註：Apple Pencil 直接寫，存成圖片在 IndexedDB（files 表，cat:"ink"） ---------- */
+PAGES.ink=(hdr,scr)=>{
+  hbar(hdr,"手寫備註",{back:true});
+  const el=document.createElement("div");
+  el.className="pagepad";
+  el.innerHTML=`<p class="vs">用 Apple Pencil 或手指在畫布上寫，存起來就是一張圖，離線也在；每晚「完整備份」會一起帶走。</p>
+    <button class="btn pri" id="inkNew" style="margin-bottom:12px">${ic("pen",16)} 新的手寫備註</button>
+    <div id="inkList">讀取中…</div>`;
+  scr.appendChild(el);
+  el.querySelector("#inkNew").onclick=()=>openInk(null);
+  idbAll("files").then(files=>{
+    const box=el.querySelector("#inkList"); box.innerHTML="";
+    const items=files.filter(f=>f.cat==="ink").sort((a,b)=>b.ts-a.ts);
+    if(!items.length){ box.innerHTML=`<div class="docrow placeholder"><div class="fic2 other">✍️</div><div class="meta"><div class="fn">還沒有手寫備註</div><div class="fs">按上面的按鈕開始寫</div></div></div>`; return; }
+    items.forEach(f=>{
+      const url=URL.createObjectURL(f.blob);
+      const r=document.createElement("div"); r.className="inkcard";
+      r.innerHTML=`<img src="${url}" alt=""><div class="meta"><div class="fn">${esc(f.name)}</div><div class="fs">${f.day?`第 ${f.day} 天 · `:""}${new Date(f.ts).toLocaleString("zh-TW",{month:"numeric",day:"numeric",hour:"2-digit",minute:"2-digit"})}</div></div>
+        <div class="acts"><button class="btn sec" data-a="edit">續寫</button><button class="btn ghost" data-a="del">刪除</button></div>`;
+      r.querySelector("img").onclick=()=>openModal(f.name,`<img src="${url}" style="max-width:100%;border-radius:12px;display:block;background:#fff">`,[["續寫","pri",()=>{ closeModal(); openInk(f); }],["關閉","sec",closeModal]]);
+      r.querySelector('[data-a="edit"]').onclick=()=>openInk(f);
+      r.querySelector('[data-a="del"]').onclick=()=>confirmBox(`刪除「${f.name}」？`,async()=>{ await idbDel("files",f.id); render(); });
+      box.appendChild(r);
+    });
+  });
+};
+function openInk(rec){
+  const d=new Date(), p2=n=>String(n).padStart(2,"0");
+  const title = rec ? rec.name : `手寫 ${d.getMonth()+1}/${d.getDate()} ${p2(d.getHours())}:${p2(d.getMinutes())}`;
+  openModal(rec?"續寫手寫備註":"新的手寫備註",`
+    <input type="text" id="inkTitle" class="inktitle" value="${esc(title)}" placeholder="標題">
+    <div class="inkwrap"><canvas id="inkCv"></canvas></div>
+    <div class="pens">
+      <div class="pen on" data-c="#1C1C1E" style="background:#1C1C1E"></div>
+      <div class="pen" data-c="#E60012" style="background:#E60012"></div>
+      <div class="pen" data-c="#2563EB" style="background:#2563EB"></div>
+      <div class="pen" data-c="#1E9E4A" style="background:#1E9E4A"></div>
+      <button class="btn sec" id="inkEraser">橡皮擦</button>
+      <button class="btn sec" id="inkUndo">↩︎ 復原</button>
+      <button class="btn sec" id="inkClear">清空</button>
+      <span style="font-size:12px;color:#8E8E93;margin-left:auto">Apple Pencil 寫字時手掌可以靠在螢幕上</span>
+    </div>`,
+    [["儲存","pri",async()=>{
+      const cv=$("#inkCv"), name=($("#inkTitle").value.trim()||title);
+      const blob=await new Promise(r=>cv.toBlob(r,"image/png"));
+      const id=rec?rec.id:"ink"+Date.now()+Math.random().toString(36).slice(2,5);
+      await idbPut("files",{ id, name, type:"image/png", size:blob.size, cat:"ink", blob, ts:Date.now(), day:S.day });
+      closeModal(); render(); toast("手寫備註已存");
+    }],["取消","sec",closeModal]]);
+  $("#mbox").classList.add("wide");
+  const cv=$("#inkCv"), ctx=cv.getContext("2d"), wrap=cv.parentElement;
+  const dpr=Math.min(2,window.devicePixelRatio||1);
+  const cssW=wrap.clientWidth, cssH=Math.max(360,Math.min(620,Math.round(window.innerHeight*0.58)));
+  cv.width=Math.round(cssW*dpr); cv.height=Math.round(cssH*dpr); cv.style.height=cssH+"px";
+  const strokes=[]; let cur=null, color="#1C1C1E", eraser=false, penActive=false, bg=null;
+  const paper=()=>{ ctx.setTransform(dpr,0,0,dpr,0,0); ctx.fillStyle="#fff"; ctx.fillRect(0,0,cssW,cssH);
+    ctx.strokeStyle="#EEF0F4"; ctx.lineWidth=1; for(let y=40;y<cssH;y+=36){ ctx.beginPath(); ctx.moveTo(16,y); ctx.lineTo(cssW-16,y); ctx.stroke(); }
+    if(bg) ctx.drawImage(bg,0,0,cssW,cssH); };
+  const redraw=()=>{ paper(); ctx.lineCap="round"; ctx.lineJoin="round";
+    for(const st of strokes){
+      ctx.globalCompositeOperation=st.erase?"destination-out":"source-over"; ctx.strokeStyle=st.c;
+      for(let i=1;i<st.pts.length;i++){ const a=st.pts[i-1], b=st.pts[i]; ctx.lineWidth=st.erase?22:st.w*(0.55+b.p); ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke(); }
+      if(st.pts.length===1){ const a=st.pts[0]; ctx.beginPath(); ctx.arc(a.x,a.y,(st.erase?11:st.w*0.6),0,Math.PI*2); ctx.fillStyle=st.c; ctx.fill(); }
+    }
+    ctx.globalCompositeOperation="source-over"; };
+  if(rec){ bg=new Image(); bg.onload=()=>redraw(); bg.src=URL.createObjectURL(rec.blob); } else paper();
+  const pos=e=>{ const r=cv.getBoundingClientRect(); return {x:(e.clientX-r.left)*cssW/r.width, y:(e.clientY-r.top)*cssH/r.height, p:e.pointerType==="pen"?Math.max(0.15,e.pressure||0.5):0.5}; };
+  cv.addEventListener("pointerdown",e=>{
+    if(e.pointerType==="pen") penActive=true;
+    if(e.pointerType==="touch"&&penActive) return;        /* 手掌靠在螢幕上不畫線 */
+    e.preventDefault(); cv.setPointerCapture(e.pointerId);
+    cur={c:color,w:e.pointerType==="pen"?3.2:4,erase:eraser,pts:[pos(e)],id:e.pointerId}; strokes.push(cur); redraw();
+  });
+  cv.addEventListener("pointermove",e=>{ if(!cur||cur.id!==e.pointerId) return; const evs=e.getCoalescedEvents?e.getCoalescedEvents():[e]; evs.forEach(x=>cur.pts.push(pos(x))); redraw(); });
+  const end=e=>{ if(cur&&cur.id===e.pointerId) cur=null; };
+  cv.addEventListener("pointerup",end); cv.addEventListener("pointercancel",end);
+  $("#mbox").querySelectorAll(".pen").forEach(pn=>pn.onclick=()=>{ color=pn.dataset.c; eraser=false; $("#inkEraser").classList.remove("on"); $("#mbox").querySelectorAll(".pen").forEach(x=>x.classList.toggle("on",x===pn)); });
+  $("#inkEraser").onclick=()=>{ eraser=!eraser; $("#inkEraser").classList.toggle("on",eraser); $("#mbox").querySelectorAll(".pen").forEach(x=>x.classList.toggle("on",!eraser&&x.dataset.c===color)); };
+  $("#inkUndo").onclick=()=>{ strokes.pop(); redraw(); };
+  $("#inkClear").onclick=()=>confirmBox("清空這張畫布？",()=>{ strokes.length=0; bg=null; redraw(); });
+}
+
 PAGES.docs=(hdr,scr)=>{
   hbar(hdr,"交班文件",{back:true});
   const el=document.createElement("div");

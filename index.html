@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="27133c6 2026-09-16T07:46Z">
+<meta name="build" content="6889fe2 2026-09-16T08:01Z">
 <title>導領e化平台 · 920董事會</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, minimum-scale=1, maximum-scale=5">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -486,6 +486,19 @@ svg.ic{width:1em;height:1em;stroke:currentColor;fill:none;stroke-width:2;stroke-
 .mbox.confirm .mf{justify-content:center}
 .mbox.confirm .mb{font-size:14.5px;font-weight:600;padding:24px 18px 18px}
 .canwrap{position:relative;background:#F0F0F2;border-radius:12px;overflow:hidden;touch-action:none}
+/* ===== 手寫備註 ===== */
+.inktitle{width:100%;border:1.5px solid var(--line);border-radius:10px;padding:9px 12px;font-size:15px;font-weight:700;font-family:inherit;background:#fff;color:var(--ink);margin-bottom:10px;box-sizing:border-box}
+.inktitle:focus{outline:none;border-color:var(--red)}
+.inkwrap{border:1.5px solid var(--line);border-radius:12px;overflow:hidden;background:#fff;touch-action:none;-webkit-user-select:none}
+.inkwrap canvas{display:block;width:100%;touch-action:none}
+.pens .btn.on{background:var(--red);color:#fff;border-color:var(--red)}
+.inkcard{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:9px}
+.inkcard img{width:150px;height:84px;object-fit:cover;object-position:left top;border:1px solid var(--line);border-radius:8px;background:#fff;cursor:pointer;flex-shrink:0}
+.inkcard .meta{flex:1;min-width:0}
+.inkcard .fn{font-weight:800;font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.inkcard .fs{font-size:11.5px;color:var(--ink2);margin-top:2px}
+.inkcard .acts{display:flex;gap:6px;flex-shrink:0}
+.inkcard .acts .btn{padding:7px 12px;font-size:12.5px}
 .canwrap canvas{display:block;width:100%;touch-action:none}
 .pens{display:flex;gap:8px;margin-top:10px;align-items:center;flex-wrap:wrap}
 .pen{width:32px;height:32px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 1.5px var(--line);cursor:pointer}
