@@ -482,17 +482,6 @@ let LUGGAGE_ROUTE = {
   3:"阿里山英迪格 → 台北車站（台中、桃園點無法停靠）　｜　村煌董、柳教授行李上大巴",
 };
 
-const DOC_ROWS = [
-  { id:"overview", name:"交班總覽" },
-  { id:"receipt",  name:"收件一覽表" },
-  { id:"ticket",   name:"開票名單" },
-  { id:"pnr",      name:"PNR" },
-  { id:"insurance",name:"保單" },
-  { id:"contract", name:"合約書" },
-  { id:"seatimgs", name:"座位／分桌圖檔", hint:"圖片可直接開啟手寫註記" },
-  { id:"advance",  name:"預支表", hint:"圖片可註記填寫" },
-  { id:"other",    name:"其他交班文件" },
-];
 
 const FUNCS = [
   ["itin",   "route",  "行程表"],
@@ -504,7 +493,6 @@ const FUNCS = [
   ["vendors","phone",  "店家聯絡"],
   ["coffee", "cup",    "咖啡點餐"],
   ["luggage","lug",    "行李點收"],
-  ["docs",   "folder", "交班文件"],
   ["budget", "coin",   "預算表"],
   ["optin:sunrise","sunrise","日出名單"],
   ["ink",    "pen",    "手寫備註"],
@@ -895,6 +883,7 @@ function render(){
   EDIT_HANDLER=null;
   if(!NAVS.some(n=>n[0]===S.tab)) S.tab="lead";
   if(S.page==="tables") S.page="meals";
+  if(S.page && !PAGES[S.page]) S.page=null;   /* 舊存檔指到已拿掉的頁面（例如交班文件）就回帶團中 */
   const nav=$("#nav");
   nav.innerHTML=NAVS.map(([id,icn,lb])=>`<button class="nitem${S.tab===id?" on":""}" data-t="${id}">
     <span class="nic">${ic(icn,19)}</span>${lb}</button>`).join("");
@@ -2507,7 +2496,6 @@ function editBudget(b){
   });
 }
 
-/* ---------- 交班文件 ---------- */
 /* ---------- 手寫備註：Apple Pencil 直接寫，存成圖片在 IndexedDB（files 表，cat:"ink"） ---------- */
 PAGES.ink=(hdr,scr)=>{
   hbar(hdr,"手寫備註",{back:true});
@@ -2590,137 +2578,6 @@ function openInk(rec){
   $("#inkClear").onclick=()=>confirmBox("清空這張畫布？",()=>{ strokes.length=0; bg=null; redraw(); });
 }
 
-PAGES.docs=(hdr,scr)=>{
-  hbar(hdr,"交班文件",{back:true});
-  const el=document.createElement("div");
-  el.className="pagepad";
-  el.innerHTML=`<div id="docRows">讀取中…</div>
-    <span class="grayinfo">離線狀態，使用下載資料顯示</span>
-    <span class="grayinfo">連線狀態，使用線上資料顯示</span>`;
-  scr.appendChild(el);
-  idbAll("files").then(files=>{
-    const box=el.querySelector("#docRows");
-    box.innerHTML="";
-    DOC_ROWS.forEach(row=>{
-      const n=files.filter(f=>f.cat===row.id).length;
-      const r=document.createElement("div");
-      r.className="listrow";
-      r.innerHTML=`${esc(row.name)}<span class="cnt">${n?`${n} 檔`:""}</span><span class="chev">${ic("chev",14)}</span>`;
-      r.onclick=()=>{ S.docCat=row.id; save(); goPage("doccat"); };
-      box.appendChild(r);
-    });
-  });
-};
-
-PAGES.doccat=(hdr,scr)=>{
-  const row=DOC_ROWS.find(r=>r.id===S.docCat)||DOC_ROWS[0];
-  hdr.innerHTML=`<div class="hbar">
-    <div class="hleft"><button class="backbtn">${ic("back",16)}</button></div>
-    <div class="htitle">${esc(row.name)}</div>
-    <div class="hright"><button class="iconbtn">${ic("bell",19)}</button><button class="iconbtn" style="color:var(--red)">${ic("live",19)}</button></div></div>`;
-  hdr.querySelector(".backbtn").onclick=()=>goPage("docs");
-  const el=document.createElement("div");
-  el.className="pagepad";
-  el.innerHTML=`<p class="vs">${esc(row.hint||"OP 自 SERP 上傳的文件集中於此；檔案存於裝置，離線可開。圖片檔可直接開啟手寫註記。")}</p>
-    <div id="catFiles">讀取中…</div>
-    <label class="camlbl">＋ 加入檔案（PDF／圖片）<input type="file" accept="application/pdf,image/*" multiple></label>`;
-  scr.appendChild(el);
-  el.querySelector("input").onchange=async e=>{
-    let ok=true;
-    for(const file of e.target.files){
-      ok = ok && await idbPutOrWarn("files",{ id:"f"+Date.now()+Math.random().toString(36).slice(2,6),
-        name:file.name, type:file.type||"application/octet-stream", size:file.size, cat:row.id, blob:file, ts:Date.now() },"檔案");
-    }
-    render(); if(ok) toast("檔案已加入（離線可用）");
-  };
-  idbAll("files").then(files=>{
-    const box=el.querySelector("#catFiles");
-    const items=files.filter(f=>f.cat===row.id).sort((a,b)=>b.ts-a.ts);
-    box.innerHTML="";
-    if(!items.length){
-      box.innerHTML=`<div class="docrow placeholder"><div class="fic2 other">📥</div>
-        <div class="meta"><div class="fn">尚無檔案</div><div class="fs">由 SERP 上傳後同步，或以下方按鈕加入</div></div></div>`;
-      return;
-    }
-    items.forEach(f=>{
-      const isImg=f.type.startsWith("image/"), isPdf=f.type==="application/pdf";
-      const r=document.createElement("div");
-      r.className="docrow";
-      r.innerHTML=`<div class="fic2 ${isPdf?"pdf":isImg?"img":"other"}">${isPdf?"📕":isImg?"🖼️":"📄"}</div>
-        <div class="meta"><div class="fn">${esc(f.name)}</div>
-        <div class="fs">${(f.size/1024).toFixed(0)} KB · ${new Date(f.ts).toLocaleString("zh-TW")}${isImg?" · 可註記":""}</div></div>
-        <button class="del">🗑️</button>`;
-      r.onclick=e=>{ if(e.target.classList.contains("del")) return; openDoc(f); };
-      r.querySelector(".del").onclick=e=>{
-        e.stopPropagation();
-        confirmBox(`刪除「${f.name}」？`,async()=>{ await idbDel("files",f.id); render(); });
-      };
-      box.appendChild(r);
-    });
-  });
-};
-
-function openDoc(f){
-  const url=URL.createObjectURL(f.blob);
-  if(f.type.startsWith("image/")){
-    openModal(f.name,`<img src="${url}" style="max-width:100%;border-radius:12px;display:block">`,
-      [["✏️ 註記此圖","pri",()=>{ closeModal(); openAnnotate(f); }],["關閉","sec",()=>{ URL.revokeObjectURL(url); closeModal(); }]]);
-  }else if(f.type==="application/pdf"){
-    openModal(f.name,`<iframe src="${url}" style="width:100%;height:62dvh;border:none;border-radius:12px;background:#F0F0F2"></iframe>`,
-      [["關閉","sec",()=>{ URL.revokeObjectURL(url); closeModal(); }]]);
-  }else{
-    openModal(f.name,`<p style="font-size:13.5px;color:#8E8E93">此檔案格式無法預覽。</p>`,
-      [["關閉","sec",()=>{ URL.revokeObjectURL(url); closeModal(); }]]);
-  }
-}
-function openAnnotate(f){
-  const url=URL.createObjectURL(f.blob);
-  openModal(`✏️ 註記 · ${f.name}`,`
-    <div class="canwrap"><canvas id="anno"></canvas></div>
-    <div class="pens">
-      <div class="pen on" data-c="#E60012" style="background:#E60012"></div>
-      <div class="pen" data-c="#333336" style="background:#333336"></div>
-      <div class="pen" data-c="#2563eb" style="background:#2563eb"></div>
-      <button class="btn sec" id="undo">↩︎ 復原</button>
-      <span style="font-size:12px;color:#8E8E93">手指或 Apple Pencil 直接畫</span>
-    </div>
-  `,[["儲存為新檔","pri",async ()=>{
-      const cv=$("#anno");
-      const blob=await new Promise(r=>cv.toBlob(r,"image/png"));
-      if(!await idbPutOrWarn("files",{ id:"f"+Date.now(), name:f.name.replace(/\.\w+$/,"")+"（註記）.png",
-        type:"image/png", size:blob.size, cat:f.cat, blob, ts:Date.now() },"註記版本")) return;
-      URL.revokeObjectURL(url); closeModal(); render(); toast("已儲存註記版本");
-    }],["取消","sec",()=>{ URL.revokeObjectURL(url); closeModal(); }]]);
-  const cv=$("#anno"), ctx=cv.getContext("2d");
-  const img=new Image();
-  const strokes=[]; let cur=null, color="#E60012";
-  img.onload=()=>{ const sc=Math.min(1,900/img.width); cv.width=img.width*sc; cv.height=img.height*sc; redraw(); };
-  img.src=url;
-  function redraw(){
-    ctx.clearRect(0,0,cv.width,cv.height);
-    ctx.drawImage(img,0,0,cv.width,cv.height);
-    ctx.lineCap="round"; ctx.lineJoin="round";
-    for(const s of strokes){
-      ctx.strokeStyle=s.c; ctx.lineWidth=s.w;
-      ctx.beginPath();
-      s.pts.forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));
-      ctx.stroke();
-    }
-  }
-  const pos=e=>{ const r=cv.getBoundingClientRect(); return [(e.clientX-r.left)*cv.width/r.width,(e.clientY-r.top)*cv.height/r.height]; };
-  cv.addEventListener("pointerdown",e=>{ e.preventDefault(); cv.setPointerCapture(e.pointerId);
-    cur={c:color,w:e.pointerType==="pen"?3:4,pts:[pos(e)]}; strokes.push(cur); });
-  cv.addEventListener("pointermove",e=>{ if(!cur) return; cur.pts.push(pos(e)); redraw(); });
-  cv.addEventListener("pointerup",()=>cur=null);
-  $("#mbox").querySelectorAll(".pen").forEach(p=>p.onclick=()=>{
-    color=p.dataset.c;
-    $("#mbox").querySelectorAll(".pen").forEach(x=>x.classList.toggle("on",x===p));
-  });
-  $("#undo").onclick=()=>{ strokes.pop(); redraw(); };
-}
-
-/* ---------- 行李點收 ---------- */
-/* 行李備註欄的展開狀態（僅本次開啟有效，不寫入儲存） */
 const LUG_OPEN=new Set();
 let LUG_FOCUS=null;   /* 展開後待聚焦的對象（列是非同步渲染，用旗標處理） */
 PAGES.luggage=(hdr,scr)=>{
@@ -2817,7 +2674,7 @@ PAGES.rooms=(hdr,scr)=>{
   el.className="pagepad";
   el.innerHTML=`<div class="vs" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><b style="flex:1">${esc(N.date)}｜${esc(N.hotel)}</b>
     ${N.vendor&&vendor(N.vendor)?`<button class="chip" data-vm="${esc(N.vendor)}">${ic("phone",13)}飯店聯絡</button>`:""}${ebtn("__night",true)}</div>
-  <p class="vs">發放房卡時照表引導；異動可至「交班文件」開圖註記。</p>
+  <p class="vs">發放房卡時照表引導；異動請用「手寫備註」記下。</p>
   <div class="roomgrid">${N.rooms.map((r,i)=>`
     <div class="roomcard">${ebtn(String(i))}<div class="no">${esc(r.no)}</div>
       <div class="tp"><span class="pill ${(r.type||"").includes("套")||(r.type||"").includes("豪華")?"redln":"gray"}">${esc(r.type)}</span>
@@ -3063,7 +2920,7 @@ PAGES.storage=(hdr,scr)=>{
       <button class="btn pri" id="expFull">完整備份（含照片）</button>
       <button class="btn sec" id="expLite">只匯出紀錄</button>
     </div>
-    <p class="vs" style="margin:11px 0 0">完整備份包含行李照片與交班文件，檔案較大；只匯出紀錄則是點名、備註、訂單、預算、簽名，通常不到 1 MB。</p>
+    <p class="vs" style="margin:11px 0 0">完整備份包含行李照片與手寫備註，檔案較大；只匯出紀錄則是點名、備註、訂單、預算、簽名，通常不到 1 MB。</p>
   </div>
 
   <h3 class="sect">還原</h3>
