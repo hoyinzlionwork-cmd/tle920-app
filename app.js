@@ -1056,26 +1056,11 @@ function renderLead(hdr,scr){
   <div class="rcbox" id="rcbox" style="display:none">
     RC　${esc(TOUR.rc)}<br>TP　${esc(TOUR.tp)}<br>OP　${esc(TOUR.op)}
   </div>
-  <div class="card" id="stgCard" style="display:flex;align-items:center;gap:11px;cursor:pointer">
-    <span style="font-size:22px">${PREVIEW?"👀":(HEALTH.ls===null&&HEALTH.idb===null)||(durable()&&!memMode)?"🛡️":"⚠️"}</span>
-    <span style="flex:1;line-height:1.5">
-      <b style="font-size:14px">資料保全</b>
-      <span style="display:block;font-size:11.5px;color:var(--ink2)" id="stgSub"></span>
-    </span>
-    <span style="color:var(--ink3)">${ic("chev",15)}</span>
-  </div>
   <div class="endmark">— 已經到底了 —</div>
   <div class="blacktoast" id="dlHint">${ic("dl",15)} 建議下載離線資料，帶團更安心</div>
-  <div class="setlink" id="setLink">Demo 設定 · 重置資料</div>`;
+  <div class="setlink" id="setLink">設定 · 資料保全（備份／還原）</div>`;
   scr.appendChild(el);
   EDIT_HANDLER=()=>editForm("團資料",TOUR_FIELDS,TOUR,{onSave:o=>{ Object.assign(TOUR,o); dataChanged("已儲存"); }});
-  el.querySelector("#stgCard").onclick=()=>goPage("storage");
-  el.querySelector("#stgSub").textContent = PREVIEW
-    ? "預覽版：資料只留在這個分頁，正式帶團請用加入主畫面的版本"
-    : (HEALTH.ls===null&&HEALTH.idb===null) ? "尚未存檔"
-    : !durable() ? "存檔失敗，請立刻匯出備份"
-    : memMode ? "照片僅存記憶體，關掉會消失"
-    : `上次存檔 ${when(HEALTH.lastOk)}・每晚收工記得匯出備份`;
   el.querySelectorAll(".fbtn").forEach(b=>b.onclick=()=>goPage(b.dataset.p));
   el.querySelector("#qlink").onclick=()=>goPage("qmail");
   el.querySelector("#setLink").onclick=()=>goPage("settings");
