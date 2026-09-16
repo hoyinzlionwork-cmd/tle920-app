@@ -632,7 +632,7 @@ function DEFAULTS(){
   return { tab:"lead", page:null, day:1, seatTab:"hsr", homeTab:"list",
     rosterMode:"roll",
     fields:{orderNo:true,idNo:true,en:true,birth:true,tkt:true,pnr:true,meal:true,note:true},
-    roll:{1:{},2:{},3:{}}, notes:{}, orders:{}, lug:{}, sigs:[], budgetFinal:{}, vconf:{}, optin:{},
+    roll:{1:{},2:{},3:{}}, notes:{}, orders:{}, lug:{}, sigs:[], budgetFinal:{}, budgetDeposit:{}, vconf:{}, optin:{},
     dl:{status:"idle",ts:null}, rev:0, savedAt:0 };
 }
 
@@ -2268,86 +2268,81 @@ PAGES.budget=(hdr,scr)=>{
   const el=document.createElement("div");
   el.className="pagepad";
   const t=budgetTotals();
+  if(!S.budgetDeposit) S.budgetDeposit={};
+  const cards=budgetCards();
+  const dateOf=d=>{ const m=String(TOUR.dateTxt||"").match(/(\d{4})\/(\d{1,2})\/(\d{1,2})/); if(!m) return `第 ${d} 天`;
+    const dt=new Date(+m[1],+m[2]-1,+m[3]+d-1); return `${dt.getFullYear()}${String(dt.getMonth()+1).padStart(2,"0")}${String(dt.getDate()).padStart(2,"0")}`; };
+  const nt=n=>Math.round(n).toLocaleString("en-US");
+  /* 表格：照公司 Budget 表的欄位（不含 FOC／稅率／稅金） */
+  let rows="";
+  [1,2,3].forEach(d=>{
+    const cs=cards.filter(c=>c.day===d); if(!cs.length) return;
+    const dayRows=cs.reduce((n,c)=>n+c.lines.length,0);
+    let first=true;
+    cs.forEach(c=>{
+      const n=c.lines.length, cash=c.pay==="現金", dep=+S.budgetDeposit[c.key]||0, fin=S.budgetFinal[c.key];
+      const hasAmt=c.lines.some(b=>+b.qty);
+      c.lines.forEach((b,i)=>{
+        rows+=`<tr class="${cash?"":"nocash"}${i===0?" cardtop":""}">`;
+        if(first){ rows+=`<td class="date" rowspan="${dayRows}">${dateOf(d)}</td>`; first=false; }
+        if(i===0) rows+=`<td class="comp" rowspan="${n}"><b>${esc(c.cat)}</b><span>${esc([c.slot,c.t].filter(Boolean).join(" "))}</span><span class="vend">${esc(c.vendor)}</span></td>`;
+        rows+=`<td class="det">${ebtn(b.id,true)}${esc(b.name)}${b.note?`<div class="dnote">${esc(b.note)}</div>`:""}</td>
+          <td class="num">${+b.qty||""}</td><td>${esc(b.unit||"")}</td>
+          <td class="num">${+b.qty?nt(+b.price||0):""}</td><td class="num">${+b.qty?nt((+b.price||0)*(+b.qty||0)):""}</td>`;
+        if(i===0){
+          rows+=`<td class="tot" rowspan="${n}"><span class="paylbl">${esc(c.pay)}</span><b>${hasAmt?"NTD "+nt(c.budget):"NTD 0"}</b></td>
+            <td class="num edit" rowspan="${n}">${cash?`<input class="bgcell" data-k="${esc(c.key)}" data-f="dep" inputmode="numeric" value="${dep||""}" placeholder="0">`:"—"}</td>
+            <td class="num" rowspan="${n}" id="rem_${esc(c.key)}">${cash?nt(c.budget-dep):"—"}</td>
+            <td class="num edit" rowspan="${n}">${cash?`<input class="bgcell fin" data-k="${esc(c.key)}" data-f="fin" inputmode="numeric" value="${fin!=null?fin:""}" placeholder="${nt(c.budget)}">`:`<span class="pill gray">${c.pay==="信用卡"?"公司刷卡":"公司轉帳"}</span>`}</td>`;
+        }
+        rows+=`</tr>`;
+      });
+    });
+  });
   el.innerHTML=`
   <div class="card budgethead">
-    <div class="bh1"><span class="pill redln">Budget 表</span><b>${esc(TOUR.code)}</b><span class="bhsub">${esc(TOUR.name)}</span>${ebtn("__head",true)}</div>
+    <div class="bh1"><span class="pill redln">BOOK01 Budget 表</span><b>${esc(TOUR.code)}</b><span class="bhsub">${esc(TOUR.name)}</span>${ebtn("__head",true)}</div>
     <div class="bh2">
       <span><i>抬頭</i>${esc(TOUR.taxTitle||"—")}</span><span><i>統編</i>${esc(TOUR.taxId||"—")}</span>
-      <span><i>印表</i>${esc(TOUR.budgetPrinted||"—")}</span><span><i>分攤</i>${BUDGET_HEADCOUNT} 人</span>
+      <span><i>印表</i>${esc(TOUR.budgetPrinted||"—")}</span><span><i>TL/TG</i>${esc(TOUR.leader||"")}</span><span><i>分攤</i>${BUDGET_HEADCOUNT} 人</span>
     </div>
   </div>
   <div class="card budgetsum" id="bgSummary">
     <div class="bgstats">
       <div class="st hot"><span class="k">領隊現金 TOTAL</span><b>${fmtNT(t.cash)}</b></div>
-      <div class="st"><span class="k">實際支出</span><b id="bgFinal">${fmtNT(t.cashFinal)}</b></div>
+      <div class="st"><span class="k">實付合計</span><b id="bgFinal">${fmtNT(t.cashFinal)}</b></div>
       <div class="st"><span class="k">差額</span><b id="bgVariance" class="v ${t.variance>0?"over":t.variance<0?"under":"even"}">${(t.variance>0?"＋":t.variance<0?"－":"")+fmtNT(Math.abs(t.variance))}</b></div>
     </div>
     <div class="bgfoot">
       <span>另有 <b>銀存轉帳 ${fmtNT(t.transfer)}</b>、<b>公司刷卡 ${t.card} 筆</b>（飯店），不在領隊現金內</span>
-      <span class="pill gray" id="bgRecorded">${t.recorded} / ${t.cashCards} 張已決算</span>
+      <span class="pill gray" id="bgRecorded">${t.recorded} / ${t.cashCards} 張已填實付</span>
     </div>
   </div>
-  <p class="vs">依公司系統 Budget 表（9/10 印表）。每張單付完把實際金額填進「實際」，回團交帳時差額一目了然。單價空白的（愛玉、甜甜圈）直接填實付。</p>
-  <div id="bgList"></div>
-  <h3 class="sect">領隊報告</h3>
-  <div class="card"><textarea class="bgreport" id="bgReport" rows="4" placeholder="回團交帳時要說明的事：超支原因、店家未收款、發票缺漏…">${esc(S.budgetReport||"")}</textarea></div>
-  <button class="btn sec" id="bgReset" style="margin-top:4px">清空所有決算金額</button>`;
+  <div class="card bgtablewrap">
+    <table class="bgtable">
+      <thead><tr><th>日期</th><th>元件</th><th>訂購明細</th><th>數量</th><th>單位</th><th>項次單價</th><th>小計</th><th>TOTAL</th><th>已付訂金</th><th>剩餘金額</th><th>實付金額</th></tr></thead>
+      <tbody>${rows}</tbody>
+      <tfoot><tr><td colspan="7" class="rep"><b>領隊報告：</b><textarea class="bgreport" id="bgReport" rows="3" placeholder="超支原因、店家未收款、發票缺漏…">${esc(S.budgetReport||"")}</textarea></td>
+        <td colspan="4" class="grand"><span>TOTAL：</span><b>現金 ${nt(t.cash)} NTD</b><span class="sub">實付 ${nt(t.cashFinal)} NTD</span></td></tr>
+      <tr class="sign"><td colspan="4">主管：______________</td><td colspan="4">審帳：______________</td><td colspan="3">領隊：______________</td></tr></tfoot>
+    </table>
+  </div>
+  <p class="vs">「已付訂金」與「實付金額」直接在格子裡填，填完自動存；剩餘金額＝TOTAL－已付訂金。愛玉、甜甜圈單價空白，實付填現場金額。</p>
+  <button class="btn sec" id="bgReset" style="margin-top:4px">清空已填的訂金與實付</button>`;
   scr.appendChild(el);
 
-  const list=el.querySelector("#bgList");
-  const cards=budgetCards();
-  [1,2,3].forEach(d=>{
-    const cs=cards.filter(c=>c.day===d);
-    if(!cs.length) return;
-    const dayCash=cs.filter(c=>c.pay==="現金").reduce((s,c)=>s+c.budget,0);
-    const h=document.createElement("h3");
-    h.className="sect";
-    h.style.display="flex"; h.style.justifyContent="space-between"; h.style.alignItems="baseline";
-    h.innerHTML=`<span>第 ${d} 天 · ${esc(TOUR.dates[d-1]||"")}</span><span style="color:var(--ink3);font-weight:600">現金小計 ${fmtNT(dayCash)}</span>`;
-    list.appendChild(h);
-    cs.forEach(c=>{
-      const f=S.budgetFinal[c.key], cash=c.pay==="現金";
-      const row=document.createElement("div");
-      row.className="bgitem"+(cash?"":" nocash");
-      const pillCls=v=>v==null?"gray":v===c.budget?"gray":v>c.budget?"amber":"green";
-      const pillTxt=v=>v==null?"尚未決算":v===c.budget?"與預算打平":(v>c.budget?"超支 ":"節省 ")+fmtNT(Math.abs(v-c.budget));
-      row.innerHTML=`
-        <div class="bgtop">
-          <span class="bgtime">${esc(c.t||"—")}</span>
-          <span class="pill gray">${esc(c.cat)}${c.slot?"・"+esc(c.slot):""}</span>
-          <b class="bgvendor">${esc(c.vendor)}</b>
-          ${payPill(c.pay)}
-        </div>
-        <div class="bglines">${c.lines.map(b=>`<div class="bgline">${ebtn(b.id,true)}<span class="nm">${esc(b.name)}</span>
-          <span class="calc">${(+b.qty||0)?`${b.qty} ${esc(b.unit||"")} × ${fmtNT(+b.price||0)}`:"—"}</span>
-          <b class="sub">${(+b.qty||0)?fmtNT((+b.price||0)*(+b.qty||0)):"—"}</b></div>`).join("")}</div>
-        ${c.notes.length?`<div class="bgnote">${c.notes.map(esc).join("；")}</div>`:""}
-        <div class="bgrow2">
-          <div class="bgbudget">${cash?"預算":"金額"}　<b>${c.lines.some(b=>+b.qty)?fmtNT(c.budget):"—"}</b></div>
-          ${cash?`<div class="bgfinal"><label>實際</label>
-            <input class="bginput" inputmode="numeric" placeholder="${fmtNT(c.budget)}" value="${f!=null?f:""}"></div>
-          <span class="pill diffpill ${pillCls(f)}">${pillTxt(f)}</span>`
-          :`<span class="pill diffpill gray">${c.pay==="信用卡"?"公司刷卡・不列現金":"公司轉帳・不列現金"}</span>`}
-        </div>`;
-      const inp=row.querySelector(".bginput");
-      if(inp){
-        const pill=row.querySelector(".diffpill");
-        inp.addEventListener("input",()=>{
-          const raw=inp.value.replace(/[^\d]/g,"");
-          if(raw==="") delete S.budgetFinal[c.key]; else S.budgetFinal[c.key]=parseInt(raw,10);
-          save();
-          const fv=S.budgetFinal[c.key];
-          pill.className="pill diffpill "+pillCls(fv); pill.textContent=pillTxt(fv);
-          refreshBudgetSummary();
-        });
-      }
-      list.appendChild(row);
+  el.querySelectorAll(".bgcell").forEach(inp=>{
+    inp.addEventListener("input",()=>{
+      const k=inp.dataset.k, raw=inp.value.replace(/[^\d]/g,""), v=raw===""?null:parseInt(raw,10);
+      if(inp.dataset.f==="dep"){ if(v==null) delete S.budgetDeposit[k]; else S.budgetDeposit[k]=v;
+        const c=cards.find(x=>x.key===k); const rem=el.querySelector(`#rem_${CSS.escape(k)}`); if(rem&&c) rem.textContent=nt(c.budget-(v||0)); }
+      else { if(v==null) delete S.budgetFinal[k]; else S.budgetFinal[k]=v; refreshBudgetSummary(); }
+      save();
     });
   });
-
   el.querySelector("#bgReport").onchange=e=>{ S.budgetReport=e.target.value; save(); toast("領隊報告已存"); };
-  el.querySelector("#bgReset").onclick=()=>confirmBox("清空所有已填寫的決算金額？此動作無法復原。",()=>{
-    S.budgetFinal={}; save(); render(); toast("決算金額已清空");
+  el.querySelector("#bgReset").onclick=()=>confirmBox("清空所有已填的訂金與實付金額？此動作無法復原。",()=>{
+    S.budgetFinal={}; S.budgetDeposit={}; save(); render(); toast("已清空");
   });
   editBar(el,{add:()=>editBudget(null),addLabel:"新增項目",reset:()=>resetSection("budget"),resetLabel:"還原 Budget 表"});
   EDIT_HANDLER=k=>{
