@@ -1699,9 +1699,12 @@ function svgHsr(containerW){
  * 本團配位 25 席＝4車 1–8 號（8）＋5車 1–17 號（17，含領隊）
  * 座位以林鐵配位區塊對應，實際對號以現場安排為準。 */
 const FUSEN_CARS = {
-  4:{ name:"客座車廂", seats:16, topBays:4, botBays:4, facW:110 },
-  5:{ name:"守車車廂", seats:18, topBays:5, botBays:4, facW:85 },
+  /* 依林鐵原廠配置圖：4車 客座車廂（洗手間＋吧檯側桌）、5車 守車車廂（守車室）。
+   * 每個 bay 是兩張面對面的座椅夾一張小桌；topBays 上排、botBays 下排。 */
+  4:{ name:"客座車廂", seats:16, topBays:4, botBays:4, left:"toilet" },
+  5:{ name:"守車車廂", seats:18, topBays:4, botBays:5, left:"guard" },
 };
+const FUSEN_TRAIN=[["觀景車廂",18],["客座車廂",16],["吧檯車廂",10],["客座車廂",16],["守車車廂",18]];   /* 車頭之後 1→5 車 */
 
 function fusenSeatIndex(){
   const map={};
@@ -1714,96 +1717,98 @@ function fusenSeatIndex(){
   return map;
 }
 
+/* 整列福森號：車頭＋五節，本團用的兩節標紅 */
+function svgFusenTrain(){
+  const W=900,H=96, x0=14, locoW=118, carW=136, gap=10;
+  let g=`<svg viewBox="0 0 ${W} ${H}" class="fusentrain">`;
+  g+=`<g transform="translate(${x0},14)"><rect x="0" y="8" width="${locoW}" height="40" rx="8" fill="#C8102E"/><rect x="6" y="0" width="52" height="16" rx="4" fill="#C8102E"/>
+      <rect x="14" y="4" width="14" height="9" rx="2" fill="#F5E4B8"/><rect x="34" y="4" width="14" height="9" rx="2" fill="#F5E4B8"/>
+      <rect x="0" y="46" width="${locoW}" height="5" fill="#333"/>${[16,34,84,102].map(cx=>`<circle cx="${cx}" cy="56" r="6" fill="#333"/>`).join("")}
+      <text x="${locoW/2}" y="78" text-anchor="middle" font-size="11" font-weight="700" fill="#8A5A20">車頭</text></g>`;
+  FUSEN_TRAIN.forEach(([nm,seats],i)=>{
+    const x=x0+locoW+gap+i*(carW+gap), mine=(i===3||i===4);
+    g+=`<g transform="translate(${x},14)">
+      <rect x="0" y="8" width="${carW}" height="40" rx="7" fill="#F5E4B8" stroke="${mine?"#D6001C":"#C9B48C"}" stroke-width="${mine?2.5:1.2}"/>
+      <rect x="0" y="8" width="${carW}" height="9" rx="7" fill="#C8102E"/>
+      ${[0,1,2,3,4,5].map(k=>`<rect x="${12+k*20}" y="22" width="12" height="12" rx="2" fill="#fff" stroke="#C9B48C"/>`).join("")}
+      <rect x="0" y="46" width="${carW}" height="4" fill="#333"/><circle cx="22" cy="55" r="5" fill="#333"/><circle cx="${carW-22}" cy="55" r="5" fill="#333"/>
+      <text x="${carW/2}" y="78" text-anchor="middle" font-size="11.5" font-weight="${mine?900:700}" fill="${mine?"#B8001A":"#6B5A3E"}">${i+1}車 ${nm}</text>
+      <text x="${carW/2}" y="92" text-anchor="middle" font-size="10" fill="#8A7A62">${seats} 座${mine?"・本團":""}</text>
+    </g>`;
+  });
+  return g+`</svg>`;
+}
+
 function svgFusenCar(carNo, map){
   const C=FUSEN_CARS[carNo];
-  const W=800, H=246;
-  const bodyX=8, bodyR=792, inX=bodyX+10, inR=bodyR-10;
-  const rightW=100;
-  const zoneX=inX+C.facW+5, zoneR=inR-rightW;
-  const SW=42, TBL=11, BAY=SW*2+TBL+4;
-  const topY=26, botY=154, SH=64;
-  const wallT=20, wallB=226;
-  const midY=(topY+SH+botY)/2;
-
-  const bayXs=(n)=>{
-    const gap=n>1?(zoneR-zoneX-n*BAY)/(n-1):0;
-    return Array.from({length:n},(_,i)=>zoneX+i*(BAY+gap));
-  };
+  const W=900, H=262;
+  const bodyX=10, bodyR=W-10, wallT=22, wallB=H-22;          /* 車體 */
+  const inX=bodyX+12, inR=bodyR-12;
+  const leftW = C.left==="guard" ? 96 : 92;                    /* 左側設施寬 */
+  const rightW = 104;                                          /* 右側：空調／行李架／觀景陽台 */
+  const zoneX=inX+leftW+10, zoneR=inR-rightW;
+  const SW=43, SH=52, TBL=16, BAY=SW*2+TBL+6;                  /* 一個 bay：椅＋桌＋椅 */
+  const topY=wallT+16, botY=wallB-16-SH;
+  const bayXs=(n,x0,x1)=>{ const gap=n>1?(x1-x0-n*BAY)/(n-1):0; return Array.from({length:n},(_,i)=>x0+i*(BAY+gap)); };
 
   let g=`<svg viewBox="0 0 ${W} ${H}" style="width:100%;max-width:${W}px;height:auto;display:block">
   <defs>
-    <linearGradient id="fsFloor${carNo}" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#FAF2E2"/><stop offset="1" stop-color="#F3E6CC"/>
-    </linearGradient>
-    <linearGradient id="fsWood${carNo}" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#E0BC8A"/><stop offset="1" stop-color="#D2A468"/>
-    </linearGradient>
-    <pattern id="fsRack${carNo}" width="7" height="7" patternTransform="rotate(45)" patternUnits="userSpaceOnUse">
-      <line x1="0" y1="0" x2="0" y2="7" stroke="#C8B69A" stroke-width="1.4"/>
-    </pattern>
+    <pattern id="fsRack${carNo}" width="6" height="6" patternTransform="rotate(45)" patternUnits="userSpaceOnUse"><line x1="0" y1="0" x2="0" y2="6" stroke="#B89B6E" stroke-width="1.6"/></pattern>
   </defs>`;
-
-  /* 車體與地板 */
-  g+=`<rect x="${bodyX}" y="12" width="${bodyR-bodyX}" height="${H-24}" rx="8" fill="#fff" stroke="#BFAE92" stroke-width="1.6"/>
-      <rect x="${inX}" y="${wallT}" width="${inR-inX}" height="${wallB-wallT}" fill="url(#fsFloor${carNo})"/>
-      <rect x="${inX}" y="${wallT-6}" width="${inR-inX}" height="5" fill="#CFE0EC"/>
-      <rect x="${inX}" y="${wallB+1}" width="${inR-inX}" height="5" fill="#CFE0EC"/>
-      <line x1="${inX+6}" y1="${midY}" x2="${inR-6}" y2="${midY}" stroke="#DCCEB2" stroke-width="1.4" stroke-dasharray="5 6"/>`;
+  /* 車體、地板、窗戶、車門 */
+  g+=`<rect x="${bodyX}" y="${wallT-8}" width="${bodyR-bodyX}" height="${wallB-wallT+16}" rx="10" fill="#F5E4B8" stroke="#B89B6E" stroke-width="1.6"/>
+      <rect x="${inX}" y="${wallT}" width="${inR-inX}" height="${wallB-wallT}" fill="#F8ECC8"/>`;
+  const winXs=[]; for(let x=zoneX-40;x<zoneR+20;x+=70) winXs.push(x);
+  winXs.forEach(x=>{ g+=`<rect x="${x}" y="${wallT-8}" width="44" height="6" rx="1.5" fill="#3A3A3E"/><rect x="${x}" y="${wallB+2}" width="44" height="6" rx="1.5" fill="#3A3A3E"/>`; });
+  [inX+14, inR-40].forEach(x=>{ g+=`<rect x="${x}" y="${wallT-8}" width="26" height="6" fill="#111"/><rect x="${x}" y="${wallB+2}" width="26" height="6" fill="#111"/>`; });
 
   /* 左側設施 */
-  if(carNo===4){
-    g+=`<rect x="${inX+6}" y="${wallT+6}" width="${C.facW-16}" height="88" rx="5" fill="#fff" stroke="#C8B69A"/>
-        <text x="${inX+6+(C.facW-16)/2}" y="${wallT+56}" text-anchor="middle" font-size="11" font-weight="700" fill="#8A7A62">洗手間</text>
-        <circle cx="${inX+32}" cy="${wallB-44}" r="15" fill="#fff" stroke="#C8B69A"/>
-        <text x="${inX+32}" y="${wallB-18}" text-anchor="middle" font-size="9" fill="#A89880">洗手台</text>`;
+  if(C.left==="toilet"){
+    g+=`<rect x="${inX+6}" y="${wallT+8}" width="${leftW-12}" height="64" rx="5" fill="#fff" stroke="#B89B6E"/>
+        <ellipse cx="${inX+6+22}" cy="${wallT+36}" rx="9" ry="12" fill="none" stroke="#8A7A62" stroke-width="1.5"/><rect x="${inX+6+18}" y="${wallT+18}" width="8" height="8" rx="2" fill="#8A7A62"/>
+        <text x="${inX+6+(leftW-12)/2+8}" y="${wallT+40}" text-anchor="middle" font-size="11" font-weight="700" fill="#6B5A3E">洗手間</text>
+        <circle cx="${inX+leftW-18}" cy="${wallT+96}" r="10" fill="#fff" stroke="#8A7A62"/><text x="${inX+leftW-18}" y="${wallT+118}" text-anchor="middle" font-size="9" fill="#8A7A62">洗手台</text>
+        <path d="M${inX+6} ${wallB-22} h${leftW+110} v-16 h-30 v-30 h-20 v30 h-${leftW+60} z" fill="#E4CFA0" stroke="#B89B6E" stroke-width="1.2"/>
+        <text x="${inX+leftW-6}" y="${wallB-9}" text-anchor="middle" font-size="9" fill="#6B5A3E">吧檯側桌</text>`;
   }else{
-    g+=`<rect x="${inX+6}" y="${wallT+6}" width="${C.facW-16}" height="${wallB-wallT-12}" rx="5" fill="#fff" stroke="#C8B69A"/>
-        <text x="${inX+6+(C.facW-16)/2}" y="${(wallT+wallB)/2+4}" text-anchor="middle" font-size="11" font-weight="700" fill="#8A7A62">守車室</text>`;
+    g+=`<rect x="${inX+6}" y="${wallT+8}" width="${leftW-12}" height="${wallB-wallT-16}" rx="5" fill="#fff" stroke="#B89B6E"/>
+        <text x="${inX+leftW/2}" y="${(wallT+wallB)/2+4}" text-anchor="middle" font-size="12" font-weight="800" fill="#6B5A3E">守車室</text>
+        <rect x="${inX+leftW-16}" y="${(wallT+wallB)/2-14}" width="6" height="28" fill="#B89B6E"/>`;
   }
+  /* 右側設施：空調（上）、行李架（下）、觀景陽台（最右） */
+  g+=`<rect x="${zoneR+12}" y="${wallT+10}" width="60" height="30" rx="4" fill="#fff" stroke="#B89B6E"/><text x="${zoneR+42}" y="${wallT+29}" text-anchor="middle" font-size="10.5" font-weight="700" fill="#6B5A3E">空調</text>
+      <rect x="${zoneR+12}" y="${wallB-52}" width="60" height="42" rx="4" fill="url(#fsRack${carNo})" stroke="#B89B6E"/><rect x="${zoneR+18}" y="${wallB-38}" width="48" height="15" rx="3" fill="#fff" fill-opacity=".9"/><text x="${zoneR+42}" y="${wallB-27}" text-anchor="middle" font-size="9.5" font-weight="700" fill="#6B5A3E">行李架</text>
+      <rect x="${inR-22}" y="${wallT+6}" width="14" height="${wallB-wallT-12}" rx="3" fill="#EAD9A8" stroke="#B89B6E"/>
+      <text x="${inR-15}" y="${(wallT+wallB)/2}" font-size="10" font-weight="700" fill="#6B5A3E" transform="rotate(90 ${inR-15} ${(wallT+wallB)/2})" text-anchor="middle">觀景陽台</text>`;
 
-  /* 右側設施 */
-  g+=`<rect x="${zoneR+14}" y="${wallT+8}" width="66" height="32" rx="4" fill="#fff" stroke="#C8B69A"/>
-      <text x="${zoneR+47}" y="${wallT+29}" text-anchor="middle" font-size="10" font-weight="700" fill="#8A7A62">空調</text>
-      <rect x="${zoneR+14}" y="${wallB-52}" width="66" height="44" rx="4" fill="url(#fsRack${carNo})" stroke="#C8B69A"/>
-      <rect x="${zoneR+20}" y="${wallB-38}" width="54" height="15" rx="3" fill="#fff" fill-opacity="0.85"/>
-      <text x="${zoneR+47}" y="${wallB-26}" text-anchor="middle" font-size="9.5" font-weight="700" fill="#8A7A62">行李架</text>
-      <text x="${bodyR-4}" y="${(wallT+wallB)/2}" font-size="10" font-weight="700" fill="#A89880"
-        transform="rotate(90 ${bodyR-4} ${(wallT+wallB)/2})" text-anchor="middle">觀景座台</text>`;
-
-  /* 座位 */
-  const seat=(x,y,no,p,flipBack)=>{
+  /* 座椅：面對面一組，桌子在中間 */
+  const seat=(x,y,no,p,faceRight)=>{
     const tl=p&&p.__tl, vip=p&&VIP2.includes(p.id);
-    const fill = vip?"#D6001C" : tl?"#FFF3E0" : p?"#FFFFFF" : "#EFE3CB";
-    const edge = vip?"#B8001A" : tl?"#E8A33C" : p?"#D6001C" : "#DCCEB2";
-    const nameCol = vip?"#fff" : "#3A3226";
-    const noCol = vip?"rgba(255,255,255,0.8)" : p?"#C0392B" : "#B6A88E";
-    const bx = flipBack ? x+SW-13 : x+3;
-    const cx = x+SW/2+(flipBack?-5:5);
+    const fill = vip?"#D6001C" : tl?"#FFE1B0" : p?"#FFFFFF" : "#C8935A";
+    const edge = vip?"#B8001A" : tl?"#E8A33C" : p?"#D6001C" : "#A8743E";
+    const back = vip?"rgba(255,255,255,.4)" : tl?"#E8A33C" : p?"#D6001C" : "#8F5F2E";
+    const nameCol = vip?"#fff":"#3A3226";
+    const bx = faceRight ? x : x+SW-7;             /* 椅背在背對桌子那一側 */
     return `<g${p?` style="cursor:pointer"`:""}>
-      <rect class="seat${p?" mine":""}" ${p&&!tl?`data-p="${p.id}"`:""} x="${x}" y="${y}" width="${SW}" height="${SH}" rx="7"
-        style="fill:${fill};stroke:${edge};stroke-width:${p?1.6:1.2}"></rect>
-      <rect x="${bx}" y="${y+5}" width="10" height="${SH-10}" rx="4" pointer-events="none"
-        fill="${vip?"rgba(255,255,255,0.35)":p?"url(#fsWood"+carNo+")":"#E3D6BC"}"></rect>
-      <text x="${cx}" y="${y+16}" text-anchor="middle" font-size="8.5" font-weight="800"
-        pointer-events="none" fill="${noCol}">${no}</text>
-      ${p?`<text x="${cx}" y="${y+SH/2+11}" text-anchor="middle" font-size="11" font-weight="800"
-        pointer-events="none" fill="${nameCol}">${esc(shortName(p.name))}</text>`:""}
-      ${tl?`<text x="${cx}" y="${y+SH-7}" text-anchor="middle" font-size="7.5" font-weight="800"
-        pointer-events="none" fill="#C77700">領隊</text>`:""}
+      <rect class="seat${p?" mine":""}" ${p&&!tl?`data-p="${p.id}"`:""} x="${x}" y="${y}" width="${SW}" height="${SH}" rx="7" style="fill:${fill};stroke:${edge};stroke-width:${p?1.6:1}"></rect>
+      <rect x="${bx}" y="${y+4}" width="7" height="${SH-8}" rx="3" fill="${back}" pointer-events="none"/>
+      <text x="${x+SW/2+(faceRight?3:-3)}" y="${y+13}" text-anchor="middle" font-size="8" font-weight="800" pointer-events="none" fill="${vip?"rgba(255,255,255,.85)":p?"#C0392B":"#F8ECC8"}">${no}</text>
+      ${p?`<text x="${x+SW/2+(faceRight?3:-3)}" y="${y+SH/2+8}" text-anchor="middle" font-size="${shortName(p.name).length>=4?9.5:11}" font-weight="800" pointer-events="none" fill="${nameCol}">${esc(shortName(p.name))}</text>`:""}
+      ${tl?`<text x="${x+SW/2+3}" y="${y+SH-6}" text-anchor="middle" font-size="7.5" font-weight="800" pointer-events="none" fill="#C77700">領隊</text>`:""}
     </g>`;
   };
-
   let no=1;
-  [[C.topBays,topY],[C.botBays,botY]].forEach(pair=>{
-    const bays=pair[0], y=pair[1];
-    bayXs(bays).forEach(bx=>{
-      const p1=map[`${carNo}-${no}`], n1=no++;
-      const p2=map[`${carNo}-${no}`], n2=no++;
-      g+=seat(bx,y,n1,p1,false);
-      g+=`<rect x="${bx+SW+2}" y="${y+9}" width="${TBL}" height="${SH-18}" rx="3" fill="#fff" stroke="#D8C9AC" stroke-width="1"/>`;
-      g+=seat(bx+SW+2+TBL+2,y,n2,p2,true);
+  const botStart = C.left==="toilet" ? zoneX+40 : zoneX;
+  [[C.topBays,topY,zoneX,zoneR],[C.botBays,botY,botStart,zoneR]].forEach(([bays,y,x0,x1])=>{
+    bayXs(bays,x0,x1).forEach(bx=>{
+      const n1=no++, n2=no++;
+      g+=seat(bx,y,n1,map[`${carNo}-${n1}`],true);
+      g+=`<rect x="${bx+SW+3}" y="${y+10}" width="${TBL}" height="${SH-20}" rx="3" fill="#B07A44" stroke="#8F5F2E"/>`;
+      g+=seat(bx+SW+3+TBL+3,y,n2,map[`${carNo}-${n2}`],false);
     });
   });
+  /* 走道虛線 */
+  g+=`<line x1="${zoneX}" y1="${(topY+SH+botY)/2}" x2="${zoneR}" y2="${(topY+SH+botY)/2}" stroke="#D8C9AC" stroke-width="1.2" stroke-dasharray="5 6"/>`;
   return g+`</svg>`;
 }
 
@@ -1827,11 +1832,12 @@ PAGES.fusen=(hdr,scr)=>{
     <span><i style="background:#D6001C;border-color:#B8001A"></i>董事長伉儷</span>
     <span><i style="background:#fff;border-color:#D6001C"></i>本團貴賓</span>
     <span><i style="background:#FFF3E0;border-color:#E8A33C"></i>領隊</span>
-    <span><i style="background:#EFE3CB;border-color:#DCCEB2"></i>未使用</span>
+    <span><i style="background:#C8935A;border-color:#A8743E"></i>未使用</span>
     <span style="color:var(--ink3)">點座位查看貴賓</span>
   </div>
+  <div class="card fusentrainwrap">${svgFusenTrain()}</div>
   <div id="fusenCars"></div>
-  <p class="vs">車廂配置依林鐵原廠圖繪製。座位對應林鐵配位區塊（4車 1–8 號、5車 1–17 號），實際對號以現場安排為準。</p>`;
+  <p class="vs">車廂配置依林鐵原廠圖繪製（車頭後 1→5 車：觀景・客座・吧檯・客座・守車）。本團配位 4 車 1–8 號、5 車 1–17 號，實際對號以現場安排為準。</p>`;
   const box=el.querySelector("#fusenCars");
   [4,5].forEach(c=>{
     const C=FUSEN_CARS[c], used=Object.keys(map).filter(k=>k.startsWith(c+"-")).length;
