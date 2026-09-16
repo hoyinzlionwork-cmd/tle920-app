@@ -497,7 +497,7 @@ const DOC_ROWS = [
 const FUNCS = [
   ["itin",   "route",  "行程表"],
   ["roster", "team",   "團體大表"],
-  ["seats",  "seat",   "座位表"],
+  ["seats",  "seat",   "高鐵座位圖"],
   ["fusen",  "train",  "福森號座位"],
   ["rooms",  "bed",    "分房表"],
   ["meals",  "meal",   "餐食・分桌"],
@@ -1321,7 +1321,7 @@ function rosterRoll(scr){
 
 /* ---------- 座位表 ---------- */
 PAGES.seats=(hdr,scr)=>{
-  hbar(hdr,"座位表",{back:true});
+  hbar(hdr,S.seatTab==="bus"?"遊覽車座位圖":"高鐵座位圖",{back:true});
   const tb=document.createElement("div");
   tb.className="tabbar";
   tb.innerHTML=`<button class="tab" data-t="hsr">🚄 高鐵</button>
@@ -1342,6 +1342,7 @@ PAGES.seats=(hdr,scr)=>{
     scr.appendChild(el);
     const w=el.clientWidth-28;   /* pagepad 兩側各 14 */
     el.querySelector("#seatArea").innerHTML=svgHsr(w);
+    el.querySelectorAll(".zw").forEach(zoomify);
     const tc=document.createElement("div"); tc.className="card editonly";
     tc.innerHTML=`<div style="font-weight:800;margin-bottom:8px;font-size:14px">本日車次</div>
       ${(HSR_TRAINS[S.day]||[]).map((t,i)=>`<div class="ordrow"><span class="who">${esc(t.no)}</span><span class="what">${esc(t.route)}${t.tag?"・"+esc(t.tag):""}</span>${ebtn(String(i),true)}</div>`).join("")}`;
@@ -1356,7 +1357,8 @@ PAGES.seats=(hdr,scr)=>{
       <div class="legend"><span><span class="sw" style="background:#FDECEE;border-color:#E60012"></span>本團座位</span>
       <span><span class="sw"></span>其他座位</span><span>點座位查看貴賓</span></div>
       <p class="vs" style="margin:8px 0 0">座位對應為示意，實際以林鐵配位／現場安排為準。</p></div>`;
-    el.querySelector("#seatArea").innerHTML = S.seatTab==="train"?svgTrain():svgBus();
+    el.querySelector("#seatArea").innerHTML = `<div class="zw">${S.seatTab==="train"?svgTrain():svgBus()}</div>`;
+    el.querySelectorAll(".zw").forEach(zoomify);
   }
   el.querySelectorAll(".cartabs .tab").forEach(b=>b.onclick=()=>{ S.hsrCar[b.dataset.tk]=+b.dataset.car; save(); render(); });
   el.querySelectorAll(".seat.mine,.seatg.mine").forEach(s=>s.addEventListener("click",()=>{
@@ -1639,6 +1641,38 @@ function svgCarThsrc(carNo, seatMap, t){
   return g+`</svg>`;
 }
 
+/* ===== 兩指縮放／拖曳：座位圖共用 =====
+ * 沒放大時單指照常捲頁面（touch-action: pan-y）；兩指捏合放大、放大後單指拖曳、雙擊切換 1x/2x；
+ * 右上角 ＋ － 1:1。不用 pointer capture，座位本身的點擊才不會被吃掉。 */
+function zoomify(wrap){
+  const inner=wrap.firstElementChild; if(!inner||wrap.dataset.zoom) return;
+  wrap.dataset.zoom="1"; inner.classList.add("zin");
+  let s=1,tx=0,ty=0; const ptrs=new Map(); let pinch=null, drag=null, lastTap=0;
+  const apply=()=>{ const W=wrap.clientWidth,H=wrap.clientHeight, cw=inner.clientWidth*s, ch=inner.clientHeight*s;
+    tx=cw<=W?0:Math.min(0,Math.max(W-cw,tx)); ty=ch<=H?0:Math.min(0,Math.max(H-ch,ty));
+    inner.style.transform=`translate(${tx}px,${ty}px) scale(${s})`; wrap.classList.toggle("zoomed",s>1.01); wrap.style.height=s>1.01?`${inner.clientHeight}px`:""; };
+  const zoomAt=(f,cx,cy)=>{ const ns=Math.min(4,Math.max(1,s*f)); f=ns/s; tx=cx-(cx-tx)*f; ty=cy-(cy-ty)*f; s=ns; apply(); };
+  const rel=e=>{ const r=wrap.getBoundingClientRect(); return [e.clientX-r.left,e.clientY-r.top]; };
+  wrap.addEventListener("pointerdown",e=>{ if(e.target.closest(".zoombar")) return; ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    if(ptrs.size===2){ const [a,b]=[...ptrs.values()]; const r=wrap.getBoundingClientRect();
+      pinch={d:Math.hypot(a.x-b.x,a.y-b.y),s0:s,cx:(a.x+b.x)/2-r.left,cy:(a.y+b.y)/2-r.top,tx0:tx,ty0:ty}; drag=null; }
+    else if(ptrs.size===1&&s>1){ drag={x:e.clientX,y:e.clientY,tx0:tx,ty0:ty,moved:false}; } });
+  const move=e=>{ if(!ptrs.has(e.pointerId)) return; ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    if(pinch&&ptrs.size===2){ const [a,b]=[...ptrs.values()]; const d=Math.hypot(a.x-b.x,a.y-b.y); const r=wrap.getBoundingClientRect();
+      const cx=(a.x+b.x)/2-r.left, cy=(a.y+b.y)/2-r.top, ns=Math.min(4,Math.max(1,pinch.s0*d/pinch.d)), f=ns/pinch.s0;
+      tx=cx-(pinch.cx-pinch.tx0)*f; ty=cy-(pinch.cy-pinch.ty0)*f; s=ns; apply(); e.preventDefault(); }
+    else if(drag&&ptrs.size===1){ const dx=e.clientX-drag.x, dy=e.clientY-drag.y; if(Math.abs(dx)+Math.abs(dy)>4) drag.moved=true; tx=drag.tx0+dx; ty=drag.ty0+dy; apply(); } };
+  const up=e=>{ if(!ptrs.has(e.pointerId)) return; ptrs.delete(e.pointerId);
+    if(ptrs.size===0){ const now=Date.now(); if(!pinch&&!(drag&&drag.moved)){ if(now-lastTap<320){ const [cx,cy]=rel(e); if(s>1.01){s=1;tx=0;ty=0;apply();} else zoomAt(2,cx,cy); lastTap=0; } else lastTap=now; }
+      pinch=null; drag=null; }
+    else if(ptrs.size<2) pinch=null; };
+  window.addEventListener("pointermove",move,{passive:false}); window.addEventListener("pointerup",up); window.addEventListener("pointercancel",up);
+  wrap.addEventListener("wheel",e=>{ if(!e.ctrlKey&&!e.metaKey) return; e.preventDefault(); const [cx,cy]=rel(e); zoomAt(e.deltaY<0?1.15:1/1.15,cx,cy); },{passive:false});
+  const bar=document.createElement("div"); bar.className="zoombar";
+  bar.innerHTML=`<button data-z="in" title="放大">＋</button><button data-z="out" title="縮小">－</button><button data-z="reset" title="還原">1:1</button>`;
+  bar.querySelectorAll("button").forEach(b=>b.onclick=ev=>{ ev.stopPropagation(); if(b.dataset.z==="reset"){s=1;tx=0;ty=0;apply();} else zoomAt(b.dataset.z==="in"?1.4:1/1.4,wrap.clientWidth/2,wrap.clientHeight/2); });
+  wrap.appendChild(bar);
+}
 /* 站名時刻拆成 chip：「台北 06:30 → 台中 07:20 → 嘉義 07:43」 */
 function routeChips(route){
   return String(route||"").split("→").map(seg=>{
@@ -1673,10 +1707,10 @@ function svgHsr(containerW){
         <span class="pill gray">本團 ${n} 席</span>
       </div>
       ${tabs}
-      <div class="cars${narrow?" scroll":""}">${[cur].map(c=>`
+      <div class="cars">${[cur].map(c=>`
         <div class="carblk">
-          ${svgCarThsrc(c,map,t)}
-          ${narrow?`<div class="scrollhint">← 左右滑動看整節車廂 →</div>`:""}
+          <div class="zw">${svgCarThsrc(c,map,t)}</div>
+          <div class="zoomhint">兩指縮放・放大後可拖曳・雙擊切換</div>
         </div>`).join("")}</div>
     </div>`;
   });
@@ -1848,12 +1882,13 @@ PAGES.fusen=(hdr,scr)=>{
         <b>${esc(C.name)}</b>
         <span class="fcsub">（${C.seats} 座）· ${c} 車</span>
         <span class="pill ${used?"redln":"gray"}">本團 ${used} 席</span>
-      </div>${svgFusenCar(c,map)}`;
+      </div><div class="zw">${svgFusenCar(c,map)}</div>`;
     box.appendChild(d);
   });
   el.querySelectorAll(".seat.mine").forEach(s=>s.addEventListener("click",()=>{
     const p=pax(s.dataset.p); if(p) openPaxModal(p);
   }));
+  el.querySelectorAll(".zw").forEach(zoomify);
   scr.appendChild(el);
 };
 
