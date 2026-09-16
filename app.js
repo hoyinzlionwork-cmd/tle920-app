@@ -1340,10 +1340,10 @@ function seatRect(x,y,w,h,label,name,pid){
 const HSR_CARS = {
   6:{ cls:"商務車廂", side:"2+2", cols:["A","C","D","E"], aisleBefore:"D",
       rowFrom:1, rowTo:17, noRow1:["A","C"],
-      lugTop:[["A","C"]], lugBottom:[["A","C"],["D","E"]], prev:"5車", next:"7車" },
+      lugTop:[["A","C"]], lugBottom:[["A","C"],["D","E"]], prev:"5車", next:"7車", exits:[3,9,15] },
   5:{ cls:"標準車廂", side:"3+2", cols:["A","B","C","D","E"], aisleBefore:"D",
       rowFrom:2, rowTo:17, noRow1:[],
-      lugTop:[["A","B","C"],["D","E"]], lugBottom:[["A","B","C"],["D","E"]], prev:"4車", next:"6車" },
+      lugTop:[["A","B","C"],["D","E"]], lugBottom:[["A","B","C"],["D","E"]], prev:"4車", next:"6車", exits:[4,9,14] },
 };
 const VIP2 = ["p01","p02"];                      /* 董事長伉儷（原表以綠色標示） */
 const shortName = n => {
@@ -1486,6 +1486,109 @@ function svgCar(carNo, seatMap, t, horiz){
   return g+`</svg>`;
 }
 
+/* ===== 高鐵車廂圖：照高鐵官網「車廂座位配置圖」的樣子畫 =====
+ * 深灰標題列（車號・車廂類型・總席數）、圓角車體、左右「往N號車／南北」、
+ * 上排 A–C、走道、下排 D–E，兩端行李放置區，滅火器／垃圾桶／列車長室／AED，逃生窗口橘三角，底下圖例。
+ * 本團座位依身分上色並寫名字，空位只寫座位號。 */
+function svgCarThsrc(carNo, seatMap, t){
+  const C=HSR_CARS[carNo], south=t.dir==="南下";
+  const dest=String(t.route||"").split("→").pop().replace(/[\d:\s]/g,"")||(south?"嘉義":"台北");
+  const rows=[]; for(let r=C.rowFrom;r<=C.rowTo;r++) rows.push(r);
+  const ai=C.cols.indexOf(C.aisleBefore);
+  const blocks=[C.cols.slice(0,ai), C.cols.slice(ai)];
+  const seatAt=(r,c)=>seatMap[`${carNo}車 ${r}${c}`];
+  const paint=p=> VIP2.includes(p.id) ? {f:"#E60012",s:"#B8000F",lb:"rgba(255,255,255,.75)",t:"#FFFFFF"}
+    : p.group==="貴賓"     ? {f:"#FDECEE",s:"#E60012",lb:"#C00010",t:"#7A000B"}
+    : p.group==="雄獅主管" ? {f:"#E9F0FD",s:"#2563EB",lb:"#2563EB",t:"#1E3A8A"}
+    :                        {f:"#F0F0F2",s:"#9A9AA0",lb:"#8E8E93",t:"#48484D"};
+  const total=rows.length*C.cols.length-(C.rowFrom===1?C.noRow1.length:0);
+
+  /* ── 幾何 ── */
+  const SW=46, SH=38, G=5, ROWG=6, AISLE=34;
+  const HEAD=54, PADX=74, PADT=24, PADB=24, BODY_PAD=16, FAC=44, FACR=60, LUG=30, LUGG=8, LEG=46;
+  const seatsW=rows.length*(SW+G)-G;
+  const leftRack = C.noRow1.length ? 0 : (C.lugTop.length?LUG+LUGG:0);    /* 6車第1排本來就沒 A/C，行李架就放在那格 */
+  const bodyX=PADX, X0=bodyX+BODY_PAD+FAC+LUGG+leftRack;
+  const bodyW=BODY_PAD+FAC+LUGG+leftRack+seatsW+LUGG+LUG+LUGG+FACR+BODY_PAD;
+  const W=PADX*2+bodyW;
+  const rowX=r=>X0+(r-C.rowFrom)*(SW+G);
+  const colY={}; let y=HEAD+PADT+BODY_PAD;
+  blocks.forEach((b,i)=>{ if(i) y+=AISLE-ROWG; b.forEach(c=>{ colY[c]=y; y+=SH+ROWG; }); });
+  const seatsBottom=y-ROWG;
+  const bodyY=HEAD+PADT, bodyH=seatsBottom+BODY_PAD-bodyY;
+  const H=bodyY+bodyH+PADB+LEG;
+  const span=b=>[colY[b[0]], colY[b[b.length-1]]+SH];
+
+  /* ── 小圖示 ── */
+  const icoLug=(x,y,w,h)=>`<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="4" fill="#F1F1F3" stroke="#D5D5DA"/>
+    <rect x="${x+w/2-8}" y="${y+h/2-7}" width="16" height="14" rx="2" fill="#6B6B70"/><rect x="${x+w/2-4}" y="${y+h/2-10}" width="8" height="3" rx="1" fill="#6B6B70"/>`;
+  const icoFire=(x,y)=>`<rect x="${x-4}" y="${y-2}" width="8" height="18" rx="3" fill="#D6001C"/><rect x="${x-2}" y="${y-6}" width="4" height="5" fill="#333"/><path d="M${x+4} ${y+1} q5 0 5 5" stroke="#333" fill="none" stroke-width="1.5"/>`;
+  const icoTrash=(x,y)=>`<path d="M${x-6} ${y-3} h12 l-1.5 16 h-9 z" fill="#8E8E93"/><rect x="${x-7}" y="${y-6}" width="14" height="3" rx="1" fill="#8E8E93"/>`;
+  const icoAED=(x,y)=>`<path d="M${x} ${y+12} C${x-12} ${y+2} ${x-8} ${y-8} ${x} ${y-2} C${x+8} ${y-8} ${x+12} ${y+2} ${x} ${y+12}z" fill="none" stroke="#D6001C" stroke-width="2"/>
+    <path d="M${x+1} ${y-1} l-4 6 h4 l-1 5 l4 -6 h-4z" fill="#D6001C"/><text x="${x}" y="${y-10}" text-anchor="middle" font-size="7" font-weight="800" fill="#333">AED</text>`;
+  const icoCond=(x,y)=>`<circle cx="${x}" cy="${y-4}" r="4" fill="#333"/><path d="M${x-7} ${y+10} q7 -10 14 0z" fill="#333"/><rect x="${x-5}" y="${y-9}" width="10" height="2" fill="#333"/>`;
+  const tri=(x,y,up)=>`<path d="M${x-4} ${up?y+5:y-5} L${x+4} ${up?y+5:y-5} L${x} ${up?y-2:y+2}z" fill="#F08A24"/>`;
+
+  let g=`<svg viewBox="0 0 ${W} ${H}" class="carsvg thsrc">`;
+  /* 標題列 */
+  g+=`<rect x="0" y="0" width="${W}" height="${HEAD}" rx="6" fill="#4E4E52"/>
+    <text x="26" y="${HEAD/2+12}" font-size="34" font-weight="900" fill="#fff">${carNo}</text>
+    <text x="${carNo>9?66:52}" y="${HEAD/2-3}" font-size="11" font-weight="700" fill="#fff">號</text><text x="${carNo>9?66:52}" y="${HEAD/2+11}" font-size="11" font-weight="700" fill="#fff">車</text>
+    <text x="${W/2}" y="${HEAD/2+8}" text-anchor="middle" font-size="22" font-weight="800" fill="#fff">${esc(C.cls)}</text>
+    <text x="${W-24}" y="${HEAD/2+5}" text-anchor="end" font-size="13" font-weight="700" fill="#fff">共${total}席</text>`;
+  /* 車體 */
+  g+=`<rect x="${bodyX}" y="${bodyY}" width="${bodyW}" height="${bodyH}" rx="16" fill="#FAFAFB" stroke="#C9C9CF" stroke-width="1.5"/>`;
+  /* 兩端：往N號車 + 南／北 + 行進方向 */
+  const endLbl=(x,txt,dir,arrow)=>{
+    const cy=bodyY+bodyH/2;
+    g+=txt.split("").map((ch,i)=>`<text x="${x}" y="${cy-56+i*16}" text-anchor="middle" font-size="12" fill="#6B6B70">${ch}</text>`).join("");
+    g+=`<path d="M${x-14} ${cy+22} L${x} ${cy+8} L${x+14} ${cy+22}" fill="none" stroke="#B9B9BF" stroke-width="1.5" transform="rotate(${dir==="南"?-90:90} ${x} ${cy+15})"/>`;
+    g+=`<text x="${x}" y="${cy+58}" text-anchor="middle" font-size="26" font-weight="800" fill="#4E4E52">${dir}</text>`;
+    if(arrow) g+=`<text x="${x}" y="${cy+84}" text-anchor="middle" font-size="10.5" font-weight="800" fill="#E60012">${arrow}</text>`;
+  };
+  endLbl(PADX/2, `往${C.prev.replace("車","號車")}`, "南", south?`◀ 往${esc(dest)}`:"");
+  endLbl(W-PADX/2, `往${C.next.replace("車","號車")}`, "北", south?"":`往${esc(dest)} ▶`);
+  /* 逃生窗口三角（上下車壁） */
+  (C.exits||[]).forEach(r=>{ if(r<C.rowFrom||r>C.rowTo) return; const x=rowX(r)+SW/2; g+=tri(x,bodyY-3,true)+tri(x,bodyY+bodyH+3,false); });
+  /* 左側設施：滅火器（上）、垃圾桶（下）；右側：AED、列車長室 */
+  const facX=bodyX+BODY_PAD+FAC/2, [t1a,t1b]=span(blocks[0]), [t2a,t2b]=span(blocks[1]);
+  g+=icoFire(facX,(t1a+t1b)/2-6)+icoTrash(facX,(t2a+t2b)/2-4);
+  const facRX=X0+seatsW+LUGG+LUG+LUGG+FACR/2;
+  g+=icoFire(facRX,(t1a+t1b)/2-6)+icoAED(facRX,(t2a+t2b)/2-12)+icoCond(facRX,(t2a+t2b)/2+22);
+  /* 行李放置區 */
+  C.lugTop.forEach(b=>{ const [a,z]=span(b); if(C.noRow1.length&&b.some(c=>C.noRow1.includes(c))) g+=icoLug(rowX(C.rowFrom),a,SW,z-a); else g+=icoLug(X0-LUGG-LUG,a,LUG,z-a); });
+  C.lugBottom.forEach(b=>{ const [a,z]=span(b); g+=icoLug(X0+seatsW+LUGG,a,LUG,z-a); });
+  /* 座位 */
+  rows.forEach(r=>C.cols.forEach(c=>{
+    if(r===1&&C.noRow1.includes(c)) return;
+    const p=seatAt(r,c), x=rowX(r), y=colY[c], label=`${r}${c}`;
+    if(!p){
+      g+=`<g class="seatg"><rect x="${x}" y="${y}" width="${SW}" height="${SH}" rx="5" fill="#ECECEF" stroke="#D5D5DA"/>
+        <text x="${x+SW/2}" y="${y+SH/2+4}" text-anchor="middle" font-size="11" font-weight="700" fill="#6B6B70">${label}</text></g>`;
+      return;
+    }
+    const k=paint(p), nm=shortName(p.name), fs=nm.length>=4?10.5:12;
+    g+=`<g class="seatg mine" data-p="${p.id}">
+      <rect x="${x}" y="${y}" width="${SW}" height="${SH}" rx="5" fill="${k.f}" stroke="${k.s}" stroke-width="1.6"/>
+      <text x="${x+3}" y="${y+9}" font-size="7" font-weight="700" fill="${k.lb}">${label}</text>
+      <text x="${x+SW/2}" y="${y+SH/2+7}" text-anchor="middle" font-size="${fs}" font-weight="800" fill="${k.t}">${esc(nm)}</text>
+      ${p.board&&String(t.route||"").includes(p.board)?`<rect x="${x+SW-22}" y="${y+2}" width="20" height="9" rx="2.5" fill="#1E9E4A"/><text x="${x+SW-12}" y="${y+9}" text-anchor="middle" font-size="6.5" font-weight="800" fill="#fff">${esc(p.board)}</text>`:""}
+    </g>`;
+  }));
+  /* 圖例 */
+  const ly=H-LEG/2+4, items=[]; let lx=bodyX+8;
+  const legend=(w,draw,txt)=>{ items.push(draw(lx,ly)); items.push(`<text x="${lx+w}" y="${ly+4}" font-size="11" fill="#4E4E52">${txt}</text>`); lx+=w+txt.length*11+30; };
+  g+=`<line x1="${bodyX}" y1="${H-LEG}" x2="${W-PADX}" y2="${H-LEG}" stroke="#E5E5EA"/>`;
+  legend(16,(x,y)=>icoTrash(x+6,y-4),"垃圾桶");
+  legend(16,(x,y)=>tri(x+6,y-3,false),"緊急逃生窗口");
+  legend(22,(x,y)=>`<rect x="${x}" y="${y-7}" width="16" height="13" rx="2" fill="#6B6B70"/><rect x="${x+4}" y="${y-10}" width="8" height="3" fill="#6B6B70"/>`,"行李放置區");
+  legend(16,(x,y)=>icoFire(x+6,y-6),"滅火器");
+  legend(18,(x,y)=>icoCond(x+6,y-2),"列車長室");
+  legend(22,(x,y)=>icoAED(x+8,y-2),"自動體外心臟電擊去顫器");
+  g+=items.join("");
+  return g+`</svg>`;
+}
+
 /* 站名時刻拆成 chip：「台北 06:30 → 台中 07:20 → 嘉義 07:43」 */
 function routeChips(route){
   return String(route||"").split("→").map(seg=>{
@@ -1496,7 +1599,8 @@ function routeChips(route){
 
 function svgHsr(containerW){
   const trains=HSR_TRAINS[S.day]||[];
-  const horiz = containerW>=980;           /* iPad 橫放：橫式，跟作業手冊與高鐵官網一樣 */
+  const horiz = true;                      /* 一律照高鐵官網的橫式車廂圖；畫面不夠寬就左右滑 */
+  const narrow = containerW<980;
   let out="";
   if(!S.hsrCar) S.hsrCar={};
   trains.forEach(t=>{
@@ -1519,11 +1623,10 @@ function svgHsr(containerW){
         <span class="pill gray">本團 ${n} 席</span>
       </div>
       ${tabs}
-      <div class="cars${horiz?"":" solo"}">${[cur].map(c=>`
+      <div class="cars${narrow?" scroll":""}">${[cur].map(c=>`
         <div class="carblk">
-          <div class="carttl"><b>第 ${c} 車</b><span class="cls">${esc(HSR_CARS[c].cls)} · ${esc(HSR_CARS[c].side)}</span>
-            ${!horiz?`<span class="dirtag">${south?"▲":"▼"} 行進方向 · 往${esc(dest)}</span>`:""}</div>
-          ${svgCar(c,map,t,horiz)}
+          ${svgCarThsrc(c,map,t)}
+          ${narrow?`<div class="scrollhint">← 左右滑動看整節車廂 →</div>`:""}
         </div>`).join("")}</div>
     </div>`;
   });
@@ -1533,10 +1636,8 @@ function svgHsr(containerW){
     <span><i style="background:#E9F0FD;border-color:#2563EB"></i>雄獅主管</span>
     <span><i style="background:#F0F0F2;border-color:#9A9AA0"></i>工作人員</span>
     <span><i style="background:#fff;border-color:#DCDCE2"></i>空位</span>
-    <span><i style="background:repeating-linear-gradient(45deg,#F4F4F6 0 3px,#E0E0E6 3px 4px);border-color:#E0E0E6"></i>行李放置區</span>
     <span><i style="background:#1E9E4A;border-color:#1E9E4A"></i>台中上／下車</span>
-    <span><b style="color:#BFD9F7">▮</b> 窗側</span>
-    <span>點座位看貴賓資料</span>
+    <span>點有名字的座位看貴賓資料</span>
   </div>`;
   return out;
 }
