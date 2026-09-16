@@ -155,7 +155,7 @@ const HSR_0911 = {
         p05:"6車 13C", p07:"6車 14C", p28:"6車 15C", p01:"6車 16C", p23:"6車 17C",
         p16:"6車 13D", p14:"6車 14D", p09:"6車 15D", p03:"6車 16D", p11:"6車 17D",
         p15:"6車 14E", p10:"6車 15E", p04:"6車 16E", p12:"6車 17E",
-        p24:"5車 3A", p17:"5車 4A", p29:"5車 3B", p18:"5車 4B", p30:"5車 3C", p31:"5車 13C" },
+        p24:"5車 3A", p17:"5車 4A", p29:"5車 3B", p18:"5車 4B", p30:"5車 3C", p31:"5車 4C" },
   back:{ p10:"6車 6A", p06:"6車 7A", p23:"6車 8A",
          p09:"6車 6C", p05:"6車 7C", p21:"6車 10C",
          p14:"6車 6D", p19:"6車 7D", p07:"6車 8D", p01:"6車 9D", p11:"6車 10D", p16:"6車 11D",
@@ -163,6 +163,13 @@ const HSR_0911 = {
          p30:"5車 3A", p29:"5車 3B", p24:"5車 3C", p17:"5車 3D", p20:"5車 4D", p31:"5車 11D",
          p18:"5車 3E", p25:"5車 4E", p26:"5車 11E" },
   h609:{ p21:"6車 3E" },
+  /* 訂位代號（表上「高鐵統計」）：同一代號的人坐同一塊；沒對到代號的標「待確認」，座位圖會用虛線框提醒 */
+  pnrGo:{ "03573047":["p13","p23"], "03574156":["p08","p07","p14","p15","p19","p28","p09","p10","p02","p01"],
+          "03575602":["p03","p04","p11","p12"], "4362481":["p06"], "05130881":["p05"],
+          "03575971":["p24","p29","p30","p17","p18","p31"], "04203413":["p21"], "待確認":["p16"] },
+  pnrBk:{ "04421386":["p10","p09","p14","p15","p06","p05","p19","p28","p07","p08"], "04414571":["p01","p02","p11","p12"],
+          "04420933":["p23"], "05130881":["p21"], "04414767":["p30","p29","p24","p17","p18","p20","p25"],
+          "04199621":["p03","p04"], "待確認":["p16","p31","p26","p13"] },
   board:{ p13:"台中", p23:"台中" },
   days:{ p13:[1,2] },
   remove:["p22"],   /* 陸嘉琪 9/1 取消 */
@@ -183,6 +190,9 @@ function applyHsr0911(list){
     if(HSR_0911.h609[p.id]) p.hsr609=HSR_0911.h609[p.id]; else delete p.hsr609;
     p.board = HSR_0911.board[p.id] || "";
     if(HSR_0911.days[p.id]) p.days=HSR_0911.days[p.id];
+    const find=(m)=>{ for(const [pnr,ids] of Object.entries(m)) if(ids.includes(p.id)) return pnr; return "—"; };
+    p.pnrGo=find(HSR_0911.pnrGo); p.pnrBk=find(HSR_0911.pnrBk);
+    p.hsrGoTbc = p.pnrGo==="待確認"; p.hsrBackTbc = p.pnrBk==="待確認";
   });
   HSR_0911.remove.forEach(id=>{ const i=list.findIndex(p=>p.id===id); if(i>=0) list.splice(i,1); });
   return list;
@@ -501,8 +511,9 @@ let HSR_TRAINS = {
   1:[{ no:"0203", route:"台北 06:30 → 台中 07:20 → 嘉義 07:43", dir:"南下", key:"hsrGo", cars:[6,5] }],
   2:[{ no:"0609", route:"台北 07:46 → 嘉義 09:13", dir:"南下", cars:[6], tag:"戴董南下加入", key:"hsr609" },
      { no:"0672", route:"嘉義 18:32 → 台中 18:58 → 台北 19:59", dir:"北上", cars:[6], tag:"魏董伉儷、柳董提前返北",
-       fixed:{ "6車 3D":"p03", "6車 3E":"p04", "6車 4A":"p13" } }],
-  3:[{ no:"0664", route:"嘉義 17:08 → 台中 17:30 → 台北 18:33", dir:"北上", key:"hsrBack", cars:[6,5] }],
+       fixed:{ "6車 3D":"p03", "6車 3E":"p04", "6車 4A":"p13" }, tbc:["6車 4A"] }],
+  3:[{ no:"0664", route:"嘉義 17:08 → 台中 17:30 → 台北 18:33", dir:"北上", key:"hsrBack", cars:[6,5],
+       unused:{ "6車 8C":"04420933 已訂・柳董改搭 672" } }],
 };
 
 /* ============================================================ 可編輯資料層
@@ -520,7 +531,7 @@ function buildSeed(){
     tour:TOUR_SEED, pax:PAX_SEED, nights:NIGHTS_SEED, menu:MENU_SEED, meals,
     vendors:VENDORS_SEED, vendorTodo:VENDOR_TODO_SEED,
     budget:BUDGET_ITEMS_SEED, headcount:BUDGET_HEADCOUNT_SEED,
-    itin:ITIN_SEED, luggageRoute:LUGGAGE_ROUTE_SEED, hsrTrains:HSR_TRAINS_SEED, _seatVer:2, _menuVer:1, _budgetVer:1,
+    itin:ITIN_SEED, luggageRoute:LUGGAGE_ROUTE_SEED, hsrTrains:HSR_TRAINS_SEED, _seatVer:3, _menuVer:1, _budgetVer:1,
   });
 }
 /* 出廠預設另存一份，之後 TOUR / PAX… 這些名字都指向 S.data */
@@ -546,6 +557,13 @@ function bindData(){
     const t672=(HSR_TRAINS[2]||[]).find(x=>x.no==="0672");
     if(t672){ t672.fixed=Object.assign({},t672.fixed,{"6車 4A":"p13"}); t672.route="嘉義 18:32 → 台中 18:58 → 台北 19:59"; t672.tag="魏董伉儷、柳董提前返北"; }
     S.data._seatVer=2;
+  }
+  /* 一次性：依訂位代號校正（薛永南 0203 改 4C）、補訂位代號、標票待確認與已訂未用座位 */
+  if((S.data._seatVer||0)<3){
+    applyHsr0911(PAX);
+    const t672=(HSR_TRAINS[2]||[]).find(x=>x.no==="0672"); if(t672) t672.tbc=["6車 4A"];
+    const t664=(HSR_TRAINS[3]||[]).find(x=>x.no==="0664"); if(t664) t664.unused={ "6車 8C":"04420933 已訂・柳董改搭 672" };
+    S.data._seatVer=3;
   }
   /* 一次性：鳴心咖啡菜單換成店家 9/15 提供的品項，舊示意品項的訂單一併清掉 */
   if((S.data._menuVer||0)<1){
@@ -1497,6 +1515,8 @@ function svgCarThsrc(carNo, seatMap, t){
   const ai=C.cols.indexOf(C.aisleBefore);
   const blocks=[C.cols.slice(0,ai), C.cols.slice(ai)];
   const seatAt=(r,c)=>seatMap[`${carNo}車 ${r}${c}`];
+  const isTbc=(p,key)=> (t.tbc||[]).includes(key) || !!(t.key && p[t.key+"Tbc"]);
+  const unusedOf=key=> (t.unused||{})[key];
   const paint=p=> VIP2.includes(p.id) ? {f:"#E60012",s:"#B8000F",lb:"rgba(255,255,255,.75)",t:"#FFFFFF"}
     : p.group==="貴賓"     ? {f:"#FDECEE",s:"#E60012",lb:"#C00010",t:"#7A000B"}
     : p.group==="雄獅主管" ? {f:"#E9F0FD",s:"#2563EB",lb:"#2563EB",t:"#1E3A8A"}
@@ -1529,7 +1549,7 @@ function svgCarThsrc(carNo, seatMap, t){
   const icoCond=(x,y)=>`<circle cx="${x}" cy="${y-4}" r="4" fill="#333"/><path d="M${x-7} ${y+10} q7 -10 14 0z" fill="#333"/><rect x="${x-5}" y="${y-9}" width="10" height="2" fill="#333"/>`;
   const tri=(x,y,up)=>`<path d="M${x-4} ${up?y+5:y-5} L${x+4} ${up?y+5:y-5} L${x} ${up?y-2:y+2}z" fill="#F08A24"/>`;
 
-  let g=`<svg viewBox="0 0 ${W} ${H}" class="carsvg thsrc">`;
+  let g=`<svg viewBox="0 0 ${W} ${H}" class="carsvg thsrc"><defs><pattern id="hatch${carNo}" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="6" height="6" fill="#F4F4F6"/><line x1="0" y1="0" x2="0" y2="6" stroke="#D5D5DA" stroke-width="2"/></pattern></defs>`;
   /* 標題列 */
   g+=`<rect x="0" y="0" width="${W}" height="${HEAD}" rx="6" fill="#4E4E52"/>
     <text x="26" y="${HEAD/2+12}" font-size="34" font-weight="900" fill="#fff">${carNo}</text>
@@ -1562,14 +1582,22 @@ function svgCarThsrc(carNo, seatMap, t){
   rows.forEach(r=>C.cols.forEach(c=>{
     if(r===1&&C.noRow1.includes(c)) return;
     const p=seatAt(r,c), x=rowX(r), y=colY[c], label=`${r}${c}`;
+    const key=`${carNo}車 ${label}`, un=unusedOf(key);
     if(!p){
+      if(un){
+        g+=`<g class="seatg"><title>${esc(un)}</title><rect x="${x}" y="${y}" width="${SW}" height="${SH}" rx="5" fill="url(#hatch${carNo})" stroke="#B9B9BF" stroke-dasharray="3 2"/>
+          <text x="${x+SW/2}" y="${y+SH/2-1}" text-anchor="middle" font-size="10" font-weight="700" fill="#6B6B70">${label}</text>
+          <text x="${x+SW/2}" y="${y+SH/2+11}" text-anchor="middle" font-size="7.5" font-weight="700" fill="#8E8E93">已訂未用</text></g>`;
+        return;
+      }
       g+=`<g class="seatg"><rect x="${x}" y="${y}" width="${SW}" height="${SH}" rx="5" fill="#ECECEF" stroke="#D5D5DA"/>
         <text x="${x+SW/2}" y="${y+SH/2+4}" text-anchor="middle" font-size="11" font-weight="700" fill="#6B6B70">${label}</text></g>`;
       return;
     }
-    const k=paint(p), nm=shortName(p.name), fs=nm.length>=4?10.5:12;
+    const k=paint(p), nm=shortName(p.name), fs=nm.length>=4?10.5:12, tbc=isTbc(p,key);
     g+=`<g class="seatg mine" data-p="${p.id}">
-      <rect x="${x}" y="${y}" width="${SW}" height="${SH}" rx="5" fill="${k.f}" stroke="${k.s}" stroke-width="1.6"/>
+      <rect x="${x}" y="${y}" width="${SW}" height="${SH}" rx="5" fill="${k.f}" stroke="${tbc?"#F08A24":k.s}" stroke-width="${tbc?2:1.6}"${tbc?' stroke-dasharray="3 2"':""}/>
+      ${tbc&&!(p.board&&String(t.route||"").includes(p.board))?`<rect x="${x+SW-26}" y="${y+2}" width="24" height="9" rx="2.5" fill="#F08A24"/><text x="${x+SW-14}" y="${y+9}" text-anchor="middle" font-size="6.5" font-weight="800" fill="#fff">票待確認</text>`:""}
       <text x="${x+3}" y="${y+9}" font-size="7" font-weight="700" fill="${k.lb}">${label}</text>
       <text x="${x+SW/2}" y="${y+SH/2+7}" text-anchor="middle" font-size="${fs}" font-weight="800" fill="${k.t}">${esc(nm)}</text>
       ${p.board&&String(t.route||"").includes(p.board)?`<rect x="${x+SW-22}" y="${y+2}" width="20" height="9" rx="2.5" fill="#1E9E4A"/><text x="${x+SW-12}" y="${y+9}" text-anchor="middle" font-size="6.5" font-weight="800" fill="#fff">${esc(p.board)}</text>`:""}
@@ -1637,6 +1665,8 @@ function svgHsr(containerW){
     <span><i style="background:#F0F0F2;border-color:#9A9AA0"></i>工作人員</span>
     <span><i style="background:#fff;border-color:#DCDCE2"></i>空位</span>
     <span><i style="background:#1E9E4A;border-color:#1E9E4A"></i>台中上／下車</span>
+    <span><i style="background:#fff;border:2px dashed #F08A24"></i>票待確認（沒對到訂位代號）</span>
+    <span><i style="background:repeating-linear-gradient(45deg,#F4F4F6 0 3px,#D5D5DA 3px 4px);border-color:#B9B9BF"></i>已訂未用</span>
     <span>點有名字的座位看貴賓資料</span>
   </div>`;
   return out;
