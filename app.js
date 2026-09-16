@@ -2356,7 +2356,21 @@ PAGES.budget=(hdr,scr)=>{
       <span class="pill gray" id="bgRecorded">${t.recorded} / ${t.cashCards} 張已填實付</span>
     </div>
   </div>
+  <div class="inkbar" id="bgInkBar">
+    <button class="btn sec" id="bgInkToggle">${ic("pen",15)} 手寫模式</button>
+    <div class="tools">
+      <div class="pen on" data-c="#1C1C1E" style="background:#1C1C1E"></div>
+      <div class="pen" data-c="#E60012" style="background:#E60012"></div>
+      <div class="pen" data-c="#2563EB" style="background:#2563EB"></div>
+      <div class="pen" data-c="#1E9E4A" style="background:#1E9E4A"></div>
+      <button class="btn sec" id="bgInkEraser">橡皮擦</button>
+      <button class="btn sec" id="bgInkUndo">↩︎ 復原</button>
+      <button class="btn sec" id="bgInkClear">清除手寫</button>
+    </div>
+    <span class="hint" id="bgInkHint"></span>
+  </div>
   <div class="card bgtablewrap">
+    <div class="bgpaper" id="bgPaper">
     <table class="bgtable">
       <thead><tr><th>日期</th><th>元件</th><th>訂購明細</th><th>數量</th><th>單位</th><th>項次單價</th><th>小計</th><th>TOTAL</th><th>已付訂金</th><th>剩餘金額</th><th>實付金額</th><th>備註</th></tr></thead>
       <tbody>${rows}</tbody>
@@ -2364,10 +2378,13 @@ PAGES.budget=(hdr,scr)=>{
         <td colspan="5" class="grand"><span>TOTAL：</span><b>現金 ${nt(t.cash)} NTD</b><span class="sub">實付 ${nt(t.cashFinal)} NTD</span></td></tr>
       <tr class="sign"><td colspan="4">主管：______________</td><td colspan="4">審帳：______________</td><td colspan="4">領隊：______________</td></tr></tfoot>
     </table>
+    <canvas class="bgink" id="bgInk"></canvas>
+    </div>
   </div>
-  <p class="vs">「已付訂金」與「實付金額」直接在格子裡填，填完自動存；剩餘金額＝TOTAL－已付訂金。愛玉、甜甜圈單價空白，實付填現場金額。</p>
+  <p class="vs">「已付訂金」與「實付金額」直接在格子裡填，填完自動存；剩餘金額＝TOTAL－已付訂金。愛玉、甜甜圈單價空白，實付填現場金額。<br>按「手寫模式」整張表就變成紙：Apple Pencil 直接在格子上寫、畫、簽名，手指捲動、兩指縮放；寫的內容跟著這張表一起存、一起備份。要打字填格子時把手寫模式關掉。</p>
   <button class="btn sec" id="bgReset" style="margin-top:4px">清空已填的訂金、實付與備註</button>`;
   scr.appendChild(el);
+  budgetInkInit(el);
 
   el.querySelectorAll(".bgcell").forEach(inp=>{
     inp.addEventListener("input",()=>{
@@ -2391,6 +2408,57 @@ PAGES.budget=(hdr,scr)=>{
     else editBudget(BUDGET_ITEMS.find(b=>b.id===k));
   };
 };
+/* Budget 表當紙用：透明畫布蓋在整張表上，筆寫、手指捲、兩指縮放；筆跡以表格比例座標存在 S.budgetInk，跟著存檔與備份 */
+function budgetInkInit(el){
+  const paper=el.querySelector("#bgPaper"), cv=el.querySelector("#bgInk"), bar=el.querySelector("#bgInkBar"),
+        wrap=el.querySelector(".bgtablewrap"), scr=$("#screen"), hint=bar.querySelector("#bgInkHint");
+  if(!S.budgetInk||!Array.isArray(S.budgetInk.strokes)) S.budgetInk={strokes:[]};
+  const ink=S.budgetInk, ctx=cv.getContext("2d");
+  let W=0,H=0,dpr=1,cur=null,pan=null,saveT=null,eraser=false,color=ink.color||"#1C1C1E";
+  const prep=()=>{ ctx.setTransform(dpr,0,0,dpr,0,0); ctx.lineCap="round"; ctx.lineJoin="round"; };
+  const seg=(a,b,st)=>{ ctx.globalCompositeOperation=st.e?"destination-out":"source-over"; ctx.strokeStyle=st.c;
+    ctx.lineWidth=st.e?24:st.w*(0.55+b[2]); ctx.beginPath(); ctx.moveTo(a[0]*W,a[1]*H); ctx.lineTo(b[0]*W,b[1]*H); ctx.stroke(); };
+  const dot=(a,st)=>{ ctx.globalCompositeOperation=st.e?"destination-out":"source-over"; ctx.fillStyle=st.c;
+    ctx.beginPath(); ctx.arc(a[0]*W,a[1]*H,st.e?12:st.w*0.6,0,Math.PI*2); ctx.fill(); };
+  const redraw=()=>{ prep(); ctx.clearRect(0,0,W,H);
+    for(const st of ink.strokes){ if(!st.pts||!st.pts.length) continue; if(st.pts.length===1) dot(st.pts[0],st); for(let i=1;i<st.pts.length;i++) seg(st.pts[i-1],st.pts[i],st); }
+    ctx.globalCompositeOperation="source-over"; };
+  const fit=()=>{ const w=paper.clientWidth, h=paper.clientHeight; if(!w||!h||(w===W&&h===H)) return; W=w; H=h;
+    dpr=Math.min(2,window.devicePixelRatio||1); if(W*H*dpr*dpr>14e6) dpr=Math.max(1,Math.sqrt(14e6/(W*H)));
+    cv.width=Math.round(W*dpr); cv.height=Math.round(H*dpr); redraw(); };
+  fit();
+  if(window.ResizeObserver) new ResizeObserver(()=>fit()).observe(paper);
+  const pos=e=>{ const r=cv.getBoundingClientRect(); return [+((e.clientX-r.left)/r.width).toFixed(4), +((e.clientY-r.top)/r.height).toFixed(4),
+    +(e.pointerType==="pen"?Math.max(0.15,e.pressure||0.5):0.5).toFixed(2)]; };
+  const persist=()=>{ clearTimeout(saveT); saveT=setTimeout(()=>save(),400); };
+  cv.addEventListener("pointerdown",e=>{
+    if(!S.budgetInkOn) return;
+    if(e.pointerType==="touch"){ pan={id:e.pointerId,x:e.clientX,y:e.clientY}; try{ cv.setPointerCapture(e.pointerId); }catch(_){ } return; }   /* 手指＝捲動、手掌靠著不畫 */
+    e.preventDefault(); try{ cv.setPointerCapture(e.pointerId); }catch(_){ }
+    cur={c:color,w:e.pointerType==="pen"?2.8:3.4,e:eraser?1:0,pts:[pos(e)],id:e.pointerId}; ink.strokes.push(cur);
+    prep(); dot(cur.pts[0],cur);
+  });
+  cv.addEventListener("pointermove",e=>{
+    if(pan&&pan.id===e.pointerId){ wrap.scrollLeft-=e.clientX-pan.x; scr.scrollTop-=e.clientY-pan.y; pan.x=e.clientX; pan.y=e.clientY; return; }
+    if(!cur||cur.id!==e.pointerId) return;
+    const evs=e.getCoalescedEvents?e.getCoalescedEvents():[e];
+    for(const x of evs){ const p=pos(x), a=cur.pts[cur.pts.length-1]; if(Math.hypot((p[0]-a[0])*W,(p[1]-a[1])*H)<1.2) continue; cur.pts.push(p); seg(a,p,cur); }
+  });
+  const end=e=>{ if(pan&&pan.id===e.pointerId) pan=null; if(cur&&cur.id===e.pointerId){ cur=null; persist(); } };
+  cv.addEventListener("pointerup",end); cv.addEventListener("pointercancel",end);
+  const setOn=on=>{ S.budgetInkOn=on; paper.classList.toggle("on",on); bar.classList.toggle("on",on);
+    bar.querySelector("#bgInkToggle").classList.toggle("on",on);
+    hint.textContent = on ? "筆寫字、手指捲動、兩指縮放；要打字先關手寫模式" : (ink.strokes.length?`已有 ${ink.strokes.length} 筆手寫`:"開啟後整張表可直接用筆寫"); if(on) fit(); };
+  bar.querySelector("#bgInkToggle").onclick=()=>{ setOn(!S.budgetInkOn); save(); };
+  bar.querySelectorAll(".pen").forEach(pn=>pn.onclick=()=>{ color=pn.dataset.c; ink.color=color; eraser=false;
+    bar.querySelector("#bgInkEraser").classList.remove("on"); bar.querySelectorAll(".pen").forEach(x=>x.classList.toggle("on",x===pn)); });
+  bar.querySelectorAll(".pen").forEach(x=>x.classList.toggle("on",x.dataset.c===color));
+  bar.querySelector("#bgInkEraser").onclick=()=>{ eraser=!eraser; bar.querySelector("#bgInkEraser").classList.toggle("on",eraser);
+    bar.querySelectorAll(".pen").forEach(x=>x.classList.toggle("on",!eraser&&x.dataset.c===color)); };
+  bar.querySelector("#bgInkUndo").onclick=()=>{ ink.strokes.pop(); redraw(); persist(); };
+  bar.querySelector("#bgInkClear").onclick=()=>confirmBox("清掉 Budget 表上所有手寫？",()=>{ ink.strokes.length=0; redraw(); save(); toast("已清除手寫"); });
+  setOn(!!S.budgetInkOn);
+}
 function editBudget(b){
   editForm(b?"編輯預算項目":"新增預算項目", BUDGET_FIELDS(), b||{day:S.day,cat:"餐廳",price:0,qty:24,unit:"人",pay:"現金"}, {
     onSave:o=>{ o.day=+o.day||1; if(b) Object.assign(b,o); else { o.id=newId("k"); BUDGET_ITEMS.push(o); } dataChanged("已儲存"); },
