@@ -781,17 +781,21 @@ const esc = s => String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">"
 const GUESTS = ()=>PAX.filter(p=>p.group!=="工作人員");
 
 /* ============================================================ IndexedDB */
-/* Safari 以 file:// 開啟時會封鎖 IndexedDB，改用記憶體備援（當次開啟有效） */
+/* Safari 以 file:// 開啟時會封鎖 IndexedDB，改用記憶體備援（當次開啟有效）。
+ * iOS 把 App 丟到背景久一點，IndexedDB 連線會被系統關掉（InvalidStateError）；
+ * 所以每次操作失敗先「重連再試一次」，真的不行才退回記憶體，絕不因一次閃失就整團照片都只留在記憶體裡。 */
 let idb=null;
 const MEM={files:new Map(),photos:new Map(),state:new Map(),backups:new Map(),sigs:new Map()};
 let memMode=false;
-function idbOpen(){
-  return new Promise(res=>{
-    let done=false;
-    const finish=(useMem)=>{ if(done) return; done=true; memMode=useMem; res(); };
+let idbOpening=null;
+function idbConnect(timeoutMs){
+  if(idbOpening) return idbOpening;
+  idbOpening = new Promise(res=>{
     let rq;
     try{ rq = indexedDB.open("tle920", 2); }
-    catch(e){ console.warn("IndexedDB 不可用，改用記憶體模式",e); return finish(true); }
+    catch(e){ console.warn("IndexedDB 不可用",e); idbOpening=null; return res(null); }
+    let settled=false;
+    const done=db=>{ if(settled) return; settled=true; idbOpening=null; res(db); };
     rq.onupgradeneeded = e=>{
       const db=e.target.result;
       if(!db.objectStoreNames.contains("files"))   db.createObjectStore("files",{keyPath:"id"});
@@ -801,37 +805,74 @@ function idbOpen(){
       if(!db.objectStoreNames.contains("backups")) db.createObjectStore("backups",{keyPath:"id"});
       if(!db.objectStoreNames.contains("sigs"))    db.createObjectStore("sigs",{keyPath:"id"});
     };
-    rq.onsuccess=()=>{ idb=rq.result; finish(false); };
-    rq.onerror=()=>{ console.warn("IndexedDB 開啟失敗，改用記憶體模式"); finish(true); };
-    rq.onblocked=()=>finish(true);
-    setTimeout(()=>finish(true),2500);   /* 逾時保護：確保畫面一定會出來 */
+    rq.onsuccess=()=>{
+      const db=rq.result;
+      db.onclose=()=>{ console.warn("IndexedDB 連線被系統關閉，下次操作會自動重連"); if(idb===db) idb=null; };
+      db.onversionchange=()=>{ try{ db.close(); }catch(e){} if(idb===db) idb=null; };
+      idb=db;
+      if(memMode){ memMode=false; flushMem(); }   /* 開太慢逾時過，但其實開成功：接回來並把記憶體裡的東西補寫進去 */
+      done(db);
+    };
+    rq.onerror=()=>{ console.warn("IndexedDB 開啟失敗", rq.error); done(null); };
+    rq.onblocked=()=>done(null);
+    if(timeoutMs) setTimeout(()=>done(null), timeoutMs);   /* 逾時保護：確保畫面一定會出來；之後開成功仍會接回 */
   });
+  return idbOpening;
 }
-const idbPut=(st,v)=>new Promise((res,rej)=>{
-  if(memMode||!idb){ MEM[st].set(v.id,v); return res(); }
-  try{ const t=idb.transaction(st,"readwrite"); t.objectStore(st).put(v); t.oncomplete=res; t.onerror=()=>rej(t.error); }
-  catch(e){ memMode=true; MEM[st].set(v.id,v); res(); }
-});
-const idbGet=(st,id)=>new Promise((res,rej)=>{
-  if(memMode||!idb) return res(MEM[st].get(id)||null);
-  try{ const rq=idb.transaction(st).objectStore(st).get(id); rq.onsuccess=()=>res(rq.result||null); rq.onerror=()=>rej(rq.error); }
-  catch(e){ memMode=true; res(MEM[st].get(id)||null); }
-});
-const idbAll=st=>new Promise((res,rej)=>{
-  if(memMode||!idb) return res([...MEM[st].values()]);
-  try{ const rq=idb.transaction(st).objectStore(st).getAll(); rq.onsuccess=()=>res(rq.result||[]); rq.onerror=()=>rej(rq.error); }
-  catch(e){ memMode=true; res([...MEM[st].values()]); }
-});
-const idbDel=(st,id)=>new Promise((res,rej)=>{
-  if(memMode||!idb){ MEM[st].delete(id); return res(); }
-  try{ const t=idb.transaction(st,"readwrite"); t.objectStore(st).delete(id); t.oncomplete=res; t.onerror=()=>rej(t.error); }
-  catch(e){ memMode=true; MEM[st].delete(id); res(); }
-});
-const idbClear=st=>new Promise((res,rej)=>{
-  if(memMode||!idb){ MEM[st].clear(); return res(); }
-  try{ const t=idb.transaction(st,"readwrite"); t.objectStore(st).clear(); t.oncomplete=res; t.onerror=()=>rej(t.error); }
-  catch(e){ memMode=true; MEM[st].clear(); res(); }
-});
+async function idbOpen(){
+  const db = await idbConnect(2500);
+  if(!db) memMode=true;
+}
+/* 逾時期間或斷線期間寫進記憶體的東西，連線恢復後補寫回 IndexedDB */
+async function flushMem(){
+  for(const st of Object.keys(MEM)){
+    for(const v of [...MEM[st].values()]){
+      try{ await idbPut(st,v); MEM[st].delete(v.id); }catch(e){ console.warn("補寫失敗", st, v.id, e); }
+    }
+  }
+  updateSaveBar();
+}
+/* 每個操作：沒連線→先連；失敗→重連再試一次；還是不行→記憶體 */
+async function idbRun(st, mode, fn, memFn){
+  if(memMode) return memFn();
+  let lastErr=null;
+  for(let attempt=0; attempt<2; attempt++){
+    if(!idb){ await idbConnect(4000); if(!idb) break; }
+    try{
+      return await new Promise((res,rej)=>{
+        const t=idb.transaction(st,mode); const os=t.objectStore(st);
+        const out=fn(os);
+        t.oncomplete=()=>res(out && out.__rq ? (out.__rq.result ?? out.dflt) : undefined);
+        t.onerror=()=>rej(t.error); t.onabort=()=>rej(t.error||new Error("aborted"));
+      });
+    }catch(e){
+      lastErr=e; console.warn("IndexedDB 操作失敗", st, e && e.message);
+      const closed = e && /InvalidState|closing|closed|TransactionInactive/i.test(String(e.name||"")+String(e.message||""));
+      if(closed && attempt===0){ idb=null; continue; }   /* 連線被關掉：重連再試一次 */
+      if(/Quota/i.test(String(e&&e.name))) throw e;     /* 空間滿了要讓上層知道，不能默默丟進記憶體 */
+    }
+  }
+  /* 連線根本開不起來才退回記憶體；連線好好的但某次寫入失敗，就把錯誤丟給上層跳警告，不能把整個 session 都改成記憶體 */
+  if(idb && lastErr) throw lastErr;
+  memMode=true; updateSaveBar();
+  return memFn();
+}
+const idbPut=(st,v)=>idbRun(st,"readwrite",os=>{ os.put(v); }, ()=>{ MEM[st].set(v.id,v); });
+const idbGet=(st,id)=>idbRun(st,"readonly",os=>({__rq:os.get(id),dflt:null}), ()=>MEM[st].get(id)||null);
+const idbAll=st=>idbRun(st,"readonly",os=>({__rq:os.getAll(),dflt:[]}), ()=>[...MEM[st].values()]);
+const idbDel=(st,id)=>idbRun(st,"readwrite",os=>{ os.delete(id); }, ()=>{ MEM[st].delete(id); });
+const idbClear=st=>idbRun(st,"readwrite",os=>{ os.clear(); }, ()=>{ MEM[st].clear(); });
+/* 存不進去絕不能無聲：照片／檔案／手寫這類只在 IndexedDB 的東西，失敗要跳出來講 */
+async function idbPutOrWarn(st, v, what){
+  try{ await idbPut(st, v); return true; }
+  catch(e){
+    console.error(what+" 儲存失敗", e);
+    HEALTH.idb=false; HEALTH.err=(/Quota/i.test(String(e&&e.name))?"儲存空間已滿":"IndexedDB 寫入失敗：")+(e&&e.message||"");
+    updateSaveBar();
+    openModal("⚠️ "+what+"沒有存進去",`<p style="line-height:1.7">${esc(HEALTH.err)}。<br>請先到「設定 · 資料保全」匯出完整備份，再檢查 iPad 剩餘空間。</p>`,[["前往資料保全","pri",()=>{ closeModal(); goPage("storage"); }],["關閉","sec",closeModal]]);
+    return false;
+  }
+}
 
 /* ============================================================ SHELL */
 const $=s=>document.querySelector(s);
@@ -2513,7 +2554,7 @@ function openInk(rec){
       const cv=$("#inkCv"), name=($("#inkTitle").value.trim()||title);
       const blob=await new Promise(r=>cv.toBlob(r,"image/png"));
       const id=rec?rec.id:"ink"+Date.now()+Math.random().toString(36).slice(2,5);
-      await idbPut("files",{ id, name, type:"image/png", size:blob.size, cat:"ink", blob, ts:Date.now(), day:S.day });
+      if(!await idbPutOrWarn("files",{ id, name, type:"image/png", size:blob.size, cat:"ink", blob, ts:Date.now(), day:S.day },"手寫備註")) return;
       closeModal(); render(); toast("手寫備註已存");
     }],["取消","sec",closeModal]]);
   $("#mbox").classList.add("wide");
@@ -2585,11 +2626,12 @@ PAGES.doccat=(hdr,scr)=>{
     <label class="camlbl">＋ 加入檔案（PDF／圖片）<input type="file" accept="application/pdf,image/*" multiple></label>`;
   scr.appendChild(el);
   el.querySelector("input").onchange=async e=>{
+    let ok=true;
     for(const file of e.target.files){
-      await idbPut("files",{ id:"f"+Date.now()+Math.random().toString(36).slice(2,6),
-        name:file.name, type:file.type||"application/octet-stream", size:file.size, cat:row.id, blob:file, ts:Date.now() });
+      ok = ok && await idbPutOrWarn("files",{ id:"f"+Date.now()+Math.random().toString(36).slice(2,6),
+        name:file.name, type:file.type||"application/octet-stream", size:file.size, cat:row.id, blob:file, ts:Date.now() },"檔案");
     }
-    render(); toast("檔案已加入（離線可用）");
+    render(); if(ok) toast("檔案已加入（離線可用）");
   };
   idbAll("files").then(files=>{
     const box=el.querySelector("#catFiles");
@@ -2645,8 +2687,8 @@ function openAnnotate(f){
   `,[["儲存為新檔","pri",async ()=>{
       const cv=$("#anno");
       const blob=await new Promise(r=>cv.toBlob(r,"image/png"));
-      await idbPut("files",{ id:"f"+Date.now(), name:f.name.replace(/\.\w+$/,"")+"（註記）.png",
-        type:"image/png", size:blob.size, cat:f.cat, blob, ts:Date.now() });
+      if(!await idbPutOrWarn("files",{ id:"f"+Date.now(), name:f.name.replace(/\.\w+$/,"")+"（註記）.png",
+        type:"image/png", size:blob.size, cat:f.cat, blob, ts:Date.now() },"註記版本")) return;
       URL.revokeObjectURL(url); closeModal(); render(); toast("已儲存註記版本");
     }],["取消","sec",()=>{ URL.revokeObjectURL(url); closeModal(); }]]);
   const cv=$("#anno"), ctx=cv.getContext("2d");
@@ -2746,7 +2788,7 @@ PAGES.luggage=(hdr,scr)=>{
       }
       r.querySelector("input[type=file]").onchange=async e=>{
         const file=e.target.files[0]; if(!file) return;
-        await idbPut("photos",{id:"ph"+Date.now(),pax:p.id,blob:file,ts:Date.now()});
+        if(!await idbPutOrWarn("photos",{id:"ph"+Date.now(),pax:p.id,blob:file,ts:Date.now()},"行李照片")) return;
         lg.count=Math.max(lg.count,1); save(); render(); toast(`${p.name} 行李照片已存，可填備註`);
       };
       r.querySelectorAll(".thumbs img").forEach(imEl=>{
