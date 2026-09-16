@@ -43,8 +43,10 @@ const ic=(n,s)=>`<svg class="ic" viewBox="0 0 24 24" style="font-size:${s||18}px
 
 /* ============================================================ SEED DATA（作業手冊 0827 版） */
 let TOUR = {
-  code:"26TS920A3A",
-  name:"920 董事會阿里山參訪團｜福森號×水山巨木×小山霂茗茶席×優遊吧斯 三日",
+  code:"26TS920A3A T",
+  name:"雄獅董事會嘉義福森AC3日",
+  sub:"920 董事會阿里山參訪團｜福森號×水山巨木×小山霂茗茶席×優遊吧斯 三日",
+  ctrl:"NJ6-12139 雄獅董事會", deadline:"09/19", seats:"團位 25・HL 29・保留 1・可賣 24・團 30",
   dateTxt:"2026/09/20(日)~2026/09/22(二)",
   days:3,
   dates:["9/20 (日)","9/21 (一)","9/22 (二)"],
@@ -531,7 +533,7 @@ function buildSeed(){
     tour:TOUR_SEED, pax:PAX_SEED, nights:NIGHTS_SEED, menu:MENU_SEED, meals,
     vendors:VENDORS_SEED, vendorTodo:VENDOR_TODO_SEED,
     budget:BUDGET_ITEMS_SEED, headcount:BUDGET_HEADCOUNT_SEED,
-    itin:ITIN_SEED, luggageRoute:LUGGAGE_ROUTE_SEED, hsrTrains:HSR_TRAINS_SEED, _seatVer:3, _menuVer:1, _budgetVer:1,
+    itin:ITIN_SEED, luggageRoute:LUGGAGE_ROUTE_SEED, hsrTrains:HSR_TRAINS_SEED, _seatVer:3, _menuVer:1, _budgetVer:1, _tourVer:1,
   });
 }
 /* 出廠預設另存一份，之後 TOUR / PAX… 這些名字都指向 S.data */
@@ -582,6 +584,12 @@ function bindData(){
     for(const d of Object.keys(seed.itin)) seed.itin[d].forEach(ss=>{ const st=(ITIN[d]||[]).find(x=>x.t===ss.t&&x.title.slice(0,4)===ss.title.slice(0,4)); if(!st) return;
       ss.links.forEach(l=>{ if(l[0].startsWith("vendors:")&&!(st.links||[]).some(x=>x[0]===l[0])) (st.links=st.links||[]).push([l[0],l[1]]); }); });
     S.data._budgetVer=1;
+  }
+  if((S.data._tourVer||0)<1){
+    if(TOUR.name==="920 董事會阿里山參訪團｜福森號×水山巨木×小山霂茗茶席×優遊吧斯 三日"){ TOUR.name=seed.tour.name; TOUR.sub=seed.tour.sub; }
+    if(TOUR.code==="26TS920A3A") TOUR.code=seed.tour.code;
+    for(const k of ["ctrl","deadline","seats"]) if(TOUR[k]===undefined) TOUR[k]=seed.tour[k];
+    S.data._tourVer=1;
   }
   /* 一次性升級：舊資料裡泛用的「店家聯絡」捷徑換成 seed 指到特定店家的版本；分房補上飯店對應 */
   for(const d of Object.keys(ITIN)) (ITIN[d]||[]).forEach(st=>(st.links||[]).forEach(l=>{
@@ -975,7 +983,7 @@ const BUDGET_FIELDS=()=>[
   {k:"note",label:"備註",type:"textarea",rows:2},
 ];
 const TOUR_FIELDS=[
-  {k:"code",label:"團號"},{k:"name",label:"團名",type:"textarea",rows:2},{k:"dateTxt",label:"出團日"},
+  {k:"code",label:"團號"},{k:"name",label:"標準團名"},{k:"sub",label:"副標（行程名）",type:"textarea",rows:2},{k:"ctrl",label:"團控說明"},{k:"seats",label:"團位／HL／可賣"},{k:"dateTxt",label:"出團日"},
   {k:"leader",label:"領隊"},{k:"rc",label:"RC"},{k:"tp",label:"TP"},{k:"op",label:"OP"},
   {k:"taxTitle",label:"發票抬頭"},{k:"taxId",label:"統一編號"},
 ];
@@ -1002,7 +1010,7 @@ function renderHome(hdr,scr){
   <div class="homedark">
     <div class="htour" id="htour">
       <div class="r1"><span class="pill red">帶團中</span><span>${TOUR.code}</span></div>
-      <div class="nm">${esc(TOUR.name)}</div>
+      <div class="nm">${esc(TOUR.name)}${TOUR.sub?`<span style="display:block;font-size:12px;font-weight:500;opacity:.85;margin-top:2px">${esc(TOUR.sub)}</span>`:""}</div>
       <div class="qbtns">
         <button class="hq" data-p="roster">${ic("team",20)}團體大表</button>
         <button class="hq" data-p="itin">${ic("route",20)}行程表</button>
@@ -1063,7 +1071,8 @@ function renderLead(hdr,scr){
     <div class="ttop"><span class="pill redln">共 ${TOUR.days} 天</span><span style="display:flex;gap:8px;align-items:center">${ebtn("tour",true)}<span id="dlSlot"></span></span></div>
     <div class="trow"><span class="k">出團日</span><span class="v">${TOUR.dateTxt}</span></div>
     <div class="trow"><span class="k">團號</span><span class="v">${TOUR.code}</span></div>
-    <div class="trow"><span class="k">團名</span><span class="v" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">${esc(TOUR.name)}</span></div>
+    <div class="trow"><span class="k">團名</span><span class="v">${esc(TOUR.name)}${TOUR.sub?`<span style="display:block;font-size:11.5px;font-weight:500;color:var(--ink2);line-height:1.5">${esc(TOUR.sub)}</span>`:""}</span></div>
+    ${TOUR.ctrl?`<div class="trow"><span class="k">團控</span><span class="v">${esc(TOUR.ctrl)}${TOUR.seats?`<span style="display:block;font-size:11.5px;font-weight:500;color:var(--ink2)">${esc(TOUR.seats)}</span>`:""}</span></div>`:""}
     <div class="trow"><span class="k">領　隊</span><span class="v">${esc(TOUR.leader)}</span></div>
     <div class="trow"><span class="k">旅客名單</span><span class="v">${GUESTS().length}人 / ${done}人 <span style="color:var(--ink3);font-size:11px;font-weight:400">(KK/已報到)</span>　<span class="pill gray">工作人員 ${PAX.length-GUESTS().length}</span></span></div>
   </div>
@@ -2242,7 +2251,7 @@ PAGES.budget=(hdr,scr)=>{
   const t=budgetTotals();
   el.innerHTML=`
   <div class="card budgethead">
-    <div class="bh1"><span class="pill redln">Budget 表</span><b>${esc(TOUR.code)}</b><span class="bhsub">雄獅董事會嘉義福森 AC 3 日</span>${ebtn("__head",true)}</div>
+    <div class="bh1"><span class="pill redln">Budget 表</span><b>${esc(TOUR.code)}</b><span class="bhsub">${esc(TOUR.name)}</span>${ebtn("__head",true)}</div>
     <div class="bh2">
       <span><i>抬頭</i>${esc(TOUR.taxTitle||"—")}</span><span><i>統編</i>${esc(TOUR.taxId||"—")}</span>
       <span><i>印表</i>${esc(TOUR.budgetPrinted||"—")}</span><span><i>分攤</i>${BUDGET_HEADCOUNT} 人</span>
