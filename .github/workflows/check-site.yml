@@ -1,0 +1,32 @@
+# 每次 push 後打一次網址，確認 Pages 有把最新版放出來。看 Actions 的 log 找 SITE_OK。
+name: 確認站台上線
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 打網址
+        run: |
+          URL="https://hoyinzlionwork-cmd.github.io/tle920-app/"
+          WANT="${GITHUB_SHA::7}"
+          for i in $(seq 1 24); do
+            code=$(curl -s -o /tmp/index.html -w "%{http_code}" "$URL")
+            got=$(grep -o '<meta name="build" content="[^"]*"' /tmp/index.html | head -1)
+            echo "try $i -> HTTP $code $got"
+            if [ "$code" = "200" ] && echo "$got" | grep -q "$WANT"; then
+              for f in app.js menu-img.js sw.js manifest.json icon.png icon-180.png; do
+                c=$(curl -s -o /dev/null -w "%{http_code}" "$URL$f"); echo "  $f -> $c"
+              done
+              echo "SITE_OK $URL ($WANT)"; exit 0
+            fi
+            sleep 15
+          done
+          echo "SITE_NOT_READY (Pages 還沒發佈這一版，或 Settings → Pages 的 Source 還沒選 main / root)"
