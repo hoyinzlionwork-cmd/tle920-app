@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="e6f80db 2026-09-16T08:44Z">
+<meta name="build" content="ca8ef11 2026-09-16T08:48Z">
 <title>導領e化平台 · 920董事會</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, minimum-scale=1, maximum-scale=5">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -478,6 +478,36 @@ svg.ic{width:1em;height:1em;stroke:currentColor;fill:none;stroke-width:2;stroke-
 .roomcard .tp{font-size:11px;margin:4px 0 7px;display:flex;gap:4px;flex-wrap:wrap}
 .roomcard .gs{font-size:13.5px;line-height:1.6}
 
+/* ===== 分桌（拖拉） ===== */
+.mealswitch{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.mealswitch .tab{font-size:12.5px;padding:7px 13px}
+.tblhint{display:flex;align-items:center;gap:9px;font-size:12.5px;line-height:1.6;color:var(--ink2);background:#FFF8E6;border-color:#F5DFA0;padding:10px 13px}
+.tblhint>span:first-child{color:#C77700;display:flex}
+.tblhint>span:nth-child(2){flex:1}
+.tblhint b{color:#7A5200}
+.tables{display:grid;gap:12px}
+@media (min-width:768px){ .tables{grid-template-columns:1fr 1fr} .tables .pool{grid-column:1/-1} }
+.tcard{margin-bottom:0;padding:12px 12px 10px;transition:box-shadow .12s,border-color .12s}
+.tcard.over{border-color:var(--red);box-shadow:0 0 0 3px rgba(230,0,18,.15)}
+.tcard.pool{background:#F7F7F8;border-style:dashed}
+.thead{display:flex;align-items:center;gap:8px;margin-bottom:9px;flex-wrap:wrap}
+.thead .tname{font-size:15px;font-weight:900}
+.thead .notebtn{margin-left:auto}
+.tseats{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:7px}
+.tseat{min-height:44px;border-radius:11px;border:1.5px solid var(--line);background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:5px 6px;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;cursor:grab;transition:transform .12s,box-shadow .12s}
+.tseat b{font-size:14px;font-weight:800;line-height:1.2}
+.tseat i{font-style:normal;font-size:10.5px;color:#C77700;font-weight:700;margin-top:2px}
+.tseat.vip{border-color:#F3C3C8;background:#FFF7F7}
+.tseat.mgr{border-color:#C9D8F5;background:#F5F8FF}
+.tseat.stf{border-color:var(--line);background:#FAFAFB;color:var(--ink2)}
+.tseat.empty{border-style:dashed;background:transparent;min-height:44px}
+.tseat.empty::after{content:"空位";font-size:11px;color:var(--ink3)}
+.tseat.lift{opacity:.35;transform:scale(.96)}
+.tseat.over{border-color:var(--red)!important;background:var(--red-bg)!important;transform:scale(1.04)}
+.tseat.over.empty::after{content:"放這裡";color:var(--red);font-weight:800}
+.tghost{position:fixed;z-index:200;pointer-events:none;transform:scale(1.08);box-shadow:0 10px 26px rgba(0,0,0,.28);opacity:.96}
+.tempty{font-size:12.5px;color:var(--ink3);padding:6px 2px}
 /* ===== sign ===== */
 .field{margin-bottom:12px}
 .field label{display:block;font-size:12.5px;font-weight:700;color:var(--ink2);margin-bottom:5px}

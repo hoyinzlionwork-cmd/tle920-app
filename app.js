@@ -32,6 +32,7 @@ const P = {
   cup:'<path d="M10 2v2M14 2v2M6 2v2"/><path d="M16 8a1 1 0 0 1 1 1v8a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1h14a4 4 0 1 1 0 8h-1"/>',
   lug:'<path d="M6 20a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2"/><path d="M8 18V6a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v12"/><path d="M10 20h4"/><circle cx="16" cy="20" r="2"/><circle cx="8" cy="20" r="2"/>',
   table:'<circle cx="12" cy="12" r="4"/><circle cx="12" cy="4" r="1.6"/><circle cx="12" cy="20" r="1.6"/><circle cx="4" cy="12" r="1.6"/><circle cx="20" cy="12" r="1.6"/><circle cx="6.3" cy="6.3" r="1.6"/><circle cx="17.7" cy="17.7" r="1.6"/><circle cx="17.7" cy="6.3" r="1.6"/><circle cx="6.3" cy="17.7" r="1.6"/>',
+  hand:'<path d="M18 11V6a2 2 0 0 0-4 0v1"/><path d="M14 10V4a2 2 0 0 0-4 0v2"/><path d="M10 10.5V6a2 2 0 0 0-4 0v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/>',
   meal:'<path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3zm0 0v7"/>',
   refresh:'<path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/>',
   coin:'<rect width="20" height="12" x="2" y="6" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 12h.01M18 12h.01"/>',
@@ -544,6 +545,7 @@ function bindData(){
   const seed = buildSeed();
   for(const k of Object.keys(seed)) if(S.data[k]===undefined) S.data[k]=seed[k];
   TOUR=S.data.tour; PAX=S.data.pax; NIGHTS=S.data.nights; MENU=S.data.menu; MEALS=S.data.meals;
+  for(const d of Object.keys(MEALS)) (MEALS[d]||[]).forEach((m,i)=>{ if(!m.id) m.id="d"+d+"m"+i; });   /* 分桌用的餐次 id */
   VENDORS=S.data.vendors; VENDOR_TODO=S.data.vendorTodo; BUDGET_ITEMS=S.data.budget;
   BUDGET_HEADCOUNT=S.data.headcount; ITIN=S.data.itin; LUGGAGE_ROUTE=S.data.luggageRoute;
   HSR_TRAINS=S.data.hsrTrains;
@@ -621,7 +623,7 @@ function DEFAULTS(){
   return { tab:"lead", page:null, day:1, seatTab:"hsr", homeTab:"list",
     rosterMode:"roll",
     fields:{orderNo:true,idNo:true,en:true,birth:true,tkt:true,pnr:true,meal:true,note:true},
-    roll:{1:{},2:{},3:{}}, notes:{}, orders:{}, lug:{}, sigs:[], budgetFinal:{}, budgetDeposit:{}, budgetNote:{}, vconf:{}, optin:{},
+    roll:{1:{},2:{},3:{}}, notes:{}, orders:{}, lug:{}, sigs:[], budgetFinal:{}, budgetDeposit:{}, budgetNote:{}, vconf:{}, optin:{}, seating:{},
     dl:{status:"idle",ts:null}, rev:0, savedAt:0 };
 }
 
@@ -649,6 +651,7 @@ let S = loadLocal() || DEFAULTS();
 if(!S.budgetFinal) S.budgetFinal={};
 if(!S.vconf) S.vconf={};
 if(!S.optin) S.optin={};
+if(!S.seating) S.seating={};
 if(!S.sigs) S.sigs=[];
 if(typeof S.rev!=="number") S.rev=0;
 
@@ -872,7 +875,7 @@ const NAVS=[["home","home","首頁"],["lead","flag","帶團中"]];
 function goTab(t){ S.tab=t; S.page=null; save(); render(); }
 function goPage(p){
   if(p&&p.startsWith("vendors:")){ openVendorModal(p.slice(8)); return; }
-  if(p&&p.includes(":")){ const [a,b]=p.split(":"); S.page=a; if(a==="seats") S.seatTab=b; if(a==="optin") S.optKey=b; }
+  if(p&&p.includes(":")){ const [a,b]=p.split(":"); S.page=a; if(a==="seats") S.seatTab=b; if(a==="optin") S.optKey=b; if(a==="tables") S.mealId=b; }
   else S.page=p;
   S.tab="lead"; save(); render();
 }
@@ -882,7 +885,6 @@ function render(){
   document.body.classList.toggle("wide-page", S.tab==="lead"&&((S.page==="seats"&&S.seatTab==="hsr")||S.page==="budget"));
   EDIT_HANDLER=null;
   if(!NAVS.some(n=>n[0]===S.tab)) S.tab="lead";
-  if(S.page==="tables") S.page="meals";
   if(S.page && !PAGES[S.page]) S.page=null;   /* 舊存檔指到已拿掉的頁面（例如交班文件）就回帶團中 */
   const nav=$("#nav");
   nav.innerHTML=NAVS.map(([id,icn,lb])=>`<button class="nitem${S.tab===id?" on":""}" data-t="${id}">
@@ -2101,20 +2103,8 @@ PAGES.meals=(hdr,scr)=>{
   const el=document.createElement("div");
   el.className="pagepad";
   const specials=GUESTS().filter(p=>p.meal);
-  const byT={1:0,2:0};
-  PAX.forEach(p=>{ if(byT[p.table]!==undefined) byT[p.table]++; });
 
   el.innerHTML=`
-  <h3 class="sect">分桌（全程三天相同）</h3>
-  <div class="card">
-    <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:10px">
-      <span class="pill redln">第 1 桌 · 貴賓 ${byT[1]} 位</span>
-      <span class="pill gray">第 2 桌 · 主管 ${byT[2]} 位</span>
-    </div>
-    <div class="seatwrap">${svgTables()}</div>
-    <p class="vs" style="margin:9px 0 0">分桌方案討論中（大桌加位／分兩桌／主管另桌），此為「分兩桌」示意。現場由工作人員擺放桌牌，以最終確認為準。</p>
-  </div>
-
   <h3 class="sect">特殊餐食（每餐皆需向餐廳確認）</h3>
   <div class="card" style="border-color:#F5DFA0;background:#FFF8E6">
     ${specials.map(p=>`<div style="font-size:13px;padding:3px 0;display:flex;gap:8px;align-items:baseline">
@@ -2125,9 +2115,10 @@ PAGES.meals=(hdr,scr)=>{
     </div>
   </div>
 
-  <h3 class="sect">第 ${S.day} 天餐食 · ${TOUR.dates[S.day-1]}</h3>
+  <h3 class="sect">第 ${S.day} 天餐食 · ${TOUR.dates[S.day-1]}<span class="efhint">每家餐廳各自分桌，點「分桌」打開</span></h3>
   ${(MEALS[S.day]||[]).map((m,i)=>{
     const {slot,place,menu,st,vids}=m;
+    const st_=seatingOf(m), seated=st_.tables.reduce((n,t)=>n+t.seats.filter(Boolean).length,0), custom=!!S.seating[m.id];
     const vs=(vids||[]).map(vendor).filter(Boolean);
     const calls=vs.map(v=>(v.tel||[]).length
       ? `<a class="chip" href="${telHref(v.tel[0])}">${ic("phone",13)}${esc(v.name)}</a>`
@@ -2139,11 +2130,12 @@ PAGES.meals=(hdr,scr)=>{
         ${ebtn(String(i),true)}<span class="pill ${st==="OK"?"green":"amber"}">${esc(st)}</span>
       </div>
       <div style="font-size:13px;color:var(--ink2);margin-top:6px;line-height:1.65">${esc(menu)}</div>
-      ${info?`<div class="links">${calls}${info}</div>`:""}
+      <div class="links"><button class="chip tblopen" data-tb="${esc(m.id)}">${ic("meal",13)}分桌 · ${st_.tables.length} 桌 ${seated} 人${custom?"":"（預設）"}</button>${calls}${info}</div>
     </div>`;
   }).join("")}
   <p class="vs">山芙蓉與優遊吧斯皆為原住民風味，菜單已協調避免重複。電話為網路查得資訊，撥號前請先確認窗口。</p>`;
   el.querySelectorAll("[data-vm]").forEach(b=>b.onclick=()=>openVendorModal(b.dataset.vm));
+  el.querySelectorAll(".tblopen").forEach(b=>b.onclick=()=>goPage("tables:"+b.dataset.tb));
   editBar(el,{add:()=>editMeal(null),addLabel:"新增餐次",reset:()=>{ MEALS[S.day]=buildSeed().meals[S.day]||[]; },resetLabel:"還原本日餐食"});
   EDIT_HANDLER=i=>editMeal(+i);
   scr.appendChild(el);
@@ -2152,7 +2144,7 @@ function editMeal(i){
   const list=MEALS[S.day]||(MEALS[S.day]=[]);
   const m=i==null?null:list[i];
   editForm(m?"編輯餐次":"新增餐次", MEAL_FIELDS(), m||{slot:"午餐",st:"待確認",vids:[]}, {
-    onSave:o=>{ if(m) Object.assign(m,o); else list.push(o); dataChanged("已儲存"); },
+    onSave:o=>{ if(m) Object.assign(m,o); else { o.id=newId("m"); list.push(o); } dataChanged("已儲存"); },
     onDelete:m?()=>{ list.splice(i,1); dataChanged("已刪除"); }:null,
   });
 }
@@ -2696,25 +2688,141 @@ function editRoom(N,i){
     onDelete:r?()=>{ N.rooms.splice(i,1); dataChanged("已刪除"); }:null,
   });
 }
-function svgTables(){
-  const byT={1:[],2:[]};
-  PAX.forEach(p=>{ if(p.table===1||p.table===2) byT[p.table].push(p); });
-  const names={1:"第 1 桌（貴賓桌）",2:"第 2 桌（主管桌）"};
-  let svg=`<svg viewBox="0 0 940 380" width="940" style="max-width:100%">`;
-  [1,2].forEach((t,ti)=>{
-    const cx=235+ti*470, cy=195, R=64, r=128;
-    svg+=`<circle cx="${cx}" cy="${cy}" r="${R}" fill="#FDECEE" stroke="#E60012" stroke-width="2"/>
-    <text x="${cx}" y="${cy-4}" text-anchor="middle" font-size="14" font-weight="800" fill="#E60012">${names[t]}</text>
-    <text x="${cx}" y="${cy+16}" text-anchor="middle" font-size="11" fill="#C00010">${byT[t].length} 位</text>`;
-    byT[t].forEach((p,i)=>{
-      const a=-Math.PI/2 + i*2*Math.PI/byT[t].length;
-      const x=cx+r*Math.cos(a), y=cy+r*Math.sin(a);
-      svg+=`<circle cx="${x}" cy="${y}" r="9" fill="#fff" stroke="#C9C9CF" stroke-width="1.5"/>
-      <text x="${x}" y="${y+(Math.sin(a)>=0?24:-16)}" text-anchor="middle" font-size="11.5" font-weight="700" fill="#333336">${esc(p.name)}</text>`;
+/* ============================================================ 分桌（每家餐廳各自一份）
+ * S.seating[mealId] = { tables:[ { name, seats:[pid|null,...] } ] }；沒有自訂就用 PAX 的 table 欄位當預設。
+ * 位子可異動：長按名字 → 抬起 → 拖到別的位子（互換）、空位（搬過去）、桌子（加入）、未入座區（移出）。 */
+function defaultSeating(m){
+  const day=+String(m.id||"").match(/^d(\d)/)?.[1] || S.day;
+  const here=PAX.filter(p=>p.days.includes(day));
+  const t1=here.filter(p=>p.table===1).map(p=>p.id), t2=here.filter(p=>p.table===2).map(p=>p.id);
+  const pad=a=>a.concat(Array(Math.max(2, (Math.ceil((a.length+2)/2)*2)-a.length)).fill(null));
+  return { tables:[ {name:"第 1 桌（貴賓桌）",seats:pad(t1)}, {name:"第 2 桌（主管桌）",seats:pad(t2)} ] };
+}
+function seatingOf(m){
+  const st=S.seating[m.id];
+  if(st && Array.isArray(st.tables)) return st;
+  return defaultSeating(m);
+}
+function ensureSeating(m){ if(!S.seating[m.id]) S.seating[m.id]=clone(seatingOf(m)); return S.seating[m.id]; }
+function mealById(id){ for(const d of Object.keys(MEALS)) for(const m of MEALS[d]||[]) if(m.id===id) return {m,day:+d}; return null; }
+
+PAGES.tables=(hdr,scr)=>{
+  const found=mealById(S.mealId)||{m:(MEALS[S.day]||[])[0],day:S.day};
+  if(!found.m){ goPage("meals"); return; }
+  const {m,day}=found;
+  hbar(hdr,"分桌 · "+m.place,{back:true});
+  hdr.querySelector(".backbtn").onclick=()=>goPage("meals");
+  const st=seatingOf(m), custom=!!S.seating[m.id];
+  const here=PAX.filter(p=>p.days.includes(day));
+  const seatedIds=new Set(st.tables.flatMap(t=>t.seats.filter(Boolean)));
+  const pool=here.filter(p=>!seatedIds.has(p.id));
+  const GO={"貴賓":0,"雄獅主管":1,"工作人員":2};
+  pool.sort((a,b)=>(GO[a.group]??9)-(GO[b.group]??9));
+  const chip=(pid,t,i)=>{ const p=pax(pid); if(!p) return `<div class="tseat empty" data-t="${t}" data-i="${i}"></div>`;
+    const g=p.group==="貴賓"?"vip":p.group==="雄獅主管"?"mgr":"stf";
+    return `<div class="tseat ${g}" data-t="${t}" data-i="${i}" data-p="${p.id}"><b>${esc(p.name)}</b>${p.meal?`<i>${esc(p.meal)}</i>`:""}</div>`; };
+  const el=document.createElement("div");
+  el.className="pagepad";
+  el.innerHTML=`
+  <div class="mealswitch">${(MEALS[day]||[]).map(x=>`<button class="tab${x.id===m.id?" on":""}" data-m="${esc(x.id)}">${esc(x.slot)}・${esc(x.place.split("・")[0])}</button>`).join("")}</div>
+  <div class="card tblhint"><span>${ic("hand",16)}</span><span><b>長按名字</b>抬起來，拖到別的位子就互換；拖到空位是搬過去；拖到「未入座」是移出。改完自動存，只影響這家餐廳。</span>
+    <span class="pill ${custom?"green":"gray"}">${custom?"已自訂":"預設分桌"}</span></div>
+  <div class="tables">
+    ${st.tables.map((t,ti)=>{ const n=t.seats.filter(Boolean).length;
+      return `<div class="card tcard tzone" data-t="${ti}">
+        <div class="thead"><b class="tname" data-t="${ti}">${esc(t.name)}</b><span class="pill redln">${n} 人</span><button class="notebtn" data-tedit="${ti}">✎ 桌名／位數</button></div>
+        <div class="tseats">${t.seats.map((pid,i)=>chip(pid,ti,i)).join("")}</div>
+      </div>`; }).join("")}
+    <div class="card tcard pool tzone" data-t="pool">
+      <div class="thead"><b>未入座／工作人員</b><span class="pill gray">${pool.length} 人</span></div>
+      <div class="tseats">${pool.map(p=>chip(p.id,"pool",-1)).join("")||`<div class="tempty">全部都有位子了</div>`}</div>
+    </div>
+  </div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">
+    <button class="btn sec" id="tblAdd">＋ 加一桌</button>
+    <button class="btn sec" id="tblCopy">複製上一餐的分桌</button>
+    <button class="btn ghost" id="tblReset" ${custom?"":"disabled"}>還原成預設</button>
+  </div>`;
+  scr.appendChild(el);
+
+  el.querySelectorAll(".mealswitch .tab").forEach(b=>b.onclick=()=>goPage("tables:"+b.dataset.m));
+  el.querySelector("#tblAdd").onclick=()=>{ const cur=ensureSeating(m); cur.tables.push({name:`第 ${cur.tables.length+1} 桌`,seats:Array(8).fill(null)}); save(); render(); };
+  el.querySelector("#tblReset").onclick=()=>confirmBox("還原成預設分桌？這家餐廳自訂的位子會清掉。",()=>{ delete S.seating[m.id]; save(); render(); toast("已還原"); });
+  el.querySelector("#tblCopy").onclick=()=>{
+    const all=[]; for(const d of [1,2,3]) for(const x of MEALS[d]||[]) all.push(x);
+    const idx=all.findIndex(x=>x.id===m.id); const prev=all.slice(0,idx).reverse().find(x=>S.seating[x.id]);
+    if(!prev){ toast("前面的餐次都還沒自訂分桌"); return; }
+    confirmBox(`把「${prev.place}」的分桌複製過來？`,()=>{ S.seating[m.id]=clone(S.seating[prev.id]); save(); render(); toast("已複製"); });
+  };
+  el.querySelectorAll("[data-tedit]").forEach(b=>b.onclick=()=>{
+    const ti=+b.dataset.tedit, cur=ensureSeating(m), t=cur.tables[ti];
+    editForm("桌子設定",[{k:"name",label:"桌名",required:true},{k:"cap",label:"位數",type:"number",required:true}],{name:t.name,cap:t.seats.length},{
+      onSave:o=>{ t.name=o.name; const cap=Math.max(t.seats.filter(Boolean).length,Math.round(+o.cap||1));
+        while(t.seats.length<cap) t.seats.push(null); while(t.seats.length>cap && t.seats[t.seats.length-1]==null) t.seats.pop(); dataChanged("已儲存"); },
+      onDelete:()=>{ if(t.seats.some(Boolean)){ toast("桌上還有人，先把人拖走"); return; } cur.tables.splice(ti,1); dataChanged("已刪除"); },
     });
   });
-  return svg+"</svg>";
-}
+
+  /* ---- 長按拖拉 ---- */
+  const scrEl=$("#screen"); let press=null, drag=null, ghost=null;
+  const clearPress=()=>{ if(press){ clearTimeout(press.timer); press=null; } };
+  const targetAt=(x,y)=>{ if(ghost) ghost.style.display="none"; const n=document.elementFromPoint(x,y); if(ghost) ghost.style.display="";
+    return n ? (n.closest(".tseat")||n.closest(".tzone")) : null; };
+  const applyDrop=(src,tgt)=>{
+    const cur=ensureSeating(m), pid=src.dataset.p;
+    const from = src.dataset.t==="pool" ? null : {t:+src.dataset.t,i:+src.dataset.i};
+    const take=()=>{ if(from) cur.tables[from.t].seats[from.i]=null; };
+    if(tgt.classList.contains("tseat")){
+      if(tgt.dataset.t==="pool"){ if(!from) return false; take(); return true; }
+      const to={t:+tgt.dataset.t,i:+tgt.dataset.i}; if(from && from.t===to.t && from.i===to.i) return false;
+      const other=cur.tables[to.t].seats[to.i]||null;
+      cur.tables[to.t].seats[to.i]=pid;
+      if(from) cur.tables[from.t].seats[from.i]=other;   /* 互換；對方是空位就等於搬過去 */
+      return true;
+    }
+    if(tgt.dataset.t==="pool"){ if(!from) return false; take(); return true; }
+    const tt=+tgt.dataset.t, seats=cur.tables[tt].seats; if(from && from.t===tt) return false;
+    take(); const hole=seats.indexOf(null); if(hole>=0) seats[hole]=pid; else seats.push(pid); return true;
+  };
+  el.querySelectorAll(".tseat[data-p]").forEach(c=>{
+    c.addEventListener("pointerdown",e=>{
+      if(e.pointerType==="mouse" && e.button!==0) return;
+      clearPress();
+      press={el:c,id:e.pointerId,x:e.clientX,y:e.clientY,scroll:false,
+        timer:setTimeout(()=>{ if(!press||press.el!==c) return;
+          drag={el:c,id:e.pointerId,ox:e.clientX-c.getBoundingClientRect().left,oy:e.clientY-c.getBoundingClientRect().top};
+          try{ c.setPointerCapture(e.pointerId); }catch(_){}
+          ghost=c.cloneNode(true); ghost.className="tseat tghost "+c.className.replace("tseat","").trim(); document.body.appendChild(ghost);
+          const r=c.getBoundingClientRect(); ghost.style.width=r.width+"px"; ghost.style.left=(e.clientX-drag.ox)+"px"; ghost.style.top=(e.clientY-drag.oy)+"px";
+          c.classList.add("lift"); if(navigator.vibrate) navigator.vibrate(10); press=null; },380)};
+      try{ c.setPointerCapture(e.pointerId); }catch(_){}
+    });
+    c.addEventListener("pointermove",e=>{
+      if(drag && drag.id===e.pointerId){
+        e.preventDefault(); ghost.style.left=(e.clientX-drag.ox)+"px"; ghost.style.top=(e.clientY-drag.oy)+"px";
+        const t=targetAt(e.clientX,e.clientY); el.querySelectorAll(".over").forEach(x=>{ if(x!==t) x.classList.remove("over"); }); if(t&&t!==drag.el) t.classList.add("over");
+        if(e.clientY<90) scrEl.scrollTop-=8; else if(e.clientY>window.innerHeight-120) scrEl.scrollTop+=8;   /* 拖到邊緣自動捲 */
+        return;
+      }
+      if(press && press.id===e.pointerId){
+        const dx=e.clientX-press.x, dy=e.clientY-press.y;
+        if(!press.scroll && Math.hypot(dx,dy)>6){ press.scroll=true; clearTimeout(press.timer); }   /* 還沒長按就滑動＝要捲頁 */
+        if(press.scroll){ scrEl.scrollTop-=dy; press.x=e.clientX; press.y=e.clientY; }
+      }
+    });
+    const end=e=>{
+      if(press && press.id===e.pointerId) clearPress();
+      if(drag && drag.id===e.pointerId){
+        const t=targetAt(e.clientX,e.clientY);
+        ghost.remove(); ghost=null; drag.el.classList.remove("lift"); el.querySelectorAll(".over").forEach(x=>x.classList.remove("over"));
+        const src=drag.el; drag=null;
+        if(t && t!==src && applyDrop(src,t)){ save(); render(); toast("已調整座位"); }
+      }
+    };
+    c.addEventListener("pointerup",end); c.addEventListener("pointercancel",end);
+    c.addEventListener("contextmenu",e=>e.preventDefault());
+  });
+};
 
 /* ---------- 同意書（離隊切結） ---------- */
 /* ---------- 自選活動名單（勾誰要去，存在 S.optin[key]） ---------- */
@@ -3103,6 +3211,7 @@ $("#modal").addEventListener("click",e=>{ if(e.target.id==="modal") closeModal()
   if(!S.budgetFinal) S.budgetFinal={};
   if(!S.vconf) S.vconf={};
   if(!S.optin) S.optin={};
+  if(!S.seating) S.seating={};
   if(!S.sigs) S.sigs=[];
 
   /* 跟 iOS 要常駐儲存，避免空間不足時被清掉 */
