@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="96bbaf5 2026-09-16T06:33Z">
+<meta name="build" content="871b930 2026-09-16T06:38Z">
 <title>導領e化平台 · 920董事會</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -26,7 +26,7 @@ html,body{margin:0;padding:0;height:100%}
 body{font-family:"PingFang TC","Microsoft JhengHei",system-ui,sans-serif;background:#E9EAEC;color:var(--ink);
   overscroll-behavior:none;-webkit-user-select:none;user-select:none}
 button{font-family:inherit}
-svg.ic{width:1em;height:1em;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;vertical-align:-2px}
+svg.ic{width:1em;height:1em;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;vertical-align:-2px;flex-shrink:0}
 
 #frame{max-width:640px;margin:0 auto;height:100dvh;display:flex;flex-direction:column;background:var(--bg);
   box-shadow:0 0 40px rgba(0,0,0,.12);position:relative;overflow:hidden}
@@ -154,6 +154,20 @@ svg.ic{width:1em;height:1em;stroke:currentColor;fill:none;stroke-width:1.8;strok
 .namemask{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--ink2);font-weight:600;cursor:pointer}
 .redo{color:var(--red);font-size:12.5px;font-weight:800;background:none;border:none;cursor:pointer;display:flex;align-items:center;gap:4px}
 .rollcard{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:10px}
+/* ===== 自選活動名單 ===== */
+.optsum{background:linear-gradient(135deg,#FFF3E0,#FFE4C2);border-color:#F0C9A0}
+.optbig{display:flex;align-items:baseline;gap:8px}
+.optbig b{font-size:40px;font-weight:900;color:#C77700;line-height:1}
+.optbig span{font-size:14px;font-weight:700;color:#8A6400}
+.optdesc{font-size:12.5px;color:#7A5200;line-height:1.65;margin-top:8px}
+.optnames{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;padding-top:10px;border-top:1px dashed #E8B96A}
+.optnames .chip{pointer-events:none;background:var(--red);color:#fff;border-color:var(--red)}
+.optrow2{display:flex;align-items:center;gap:10px;background:#fff;border:1.5px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:8px;cursor:pointer;font-size:15px}
+.optrow2 .ckbox{width:26px;height:26px;border-radius:7px;font-size:15px}
+.optrow2 .nm{font-weight:800;min-width:76px}
+.optrow2.on{border-color:var(--red);background:#FFF7F7}
+.optrow2.on .ckbox{background:var(--red);border-color:var(--red)}
+@media (min-width:768px){ .optlist{display:grid;grid-template-columns:1fr 1fr;gap:0 12px} .optlist h3.sect{grid-column:1/-1} }
 .rollcard .top{display:flex;align-items:flex-start;gap:8px}
 .rollcard .fields{flex:1}
 .rollcard .rr{display:flex;font-size:13px;line-height:1.6}

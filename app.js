@@ -7,37 +7,43 @@ const PUBLIC_BUILD = true;   /* 公開站台：個資已清除，完整資料請
 
 /* ============================================================ ICONS */
 const P = {
-  home:'<path d="M4 11l8-7 8 7"/><path d="M6 9.5V20h12V9.5"/><path d="M10 20v-5h4v5"/>',
-  clip:'<rect x="6" y="4" width="12" height="17" rx="2"/><path d="M9 4h6v3H9z"/><path d="M9 11h6M9 15h6"/>',
-  flag:'<path d="M6 21V4"/><path d="M6 5h11l-2.5 3.5L17 12H6"/>',
-  bkmk:'<path d="M7 3h10v18l-5-4-5 4z"/>',
-  user:'<circle cx="12" cy="8" r="3.5"/><path d="M5 20c1-4 4.5-5.5 7-5.5s6 1.5 7 5.5"/>',
-  bell:'<path d="M6 17h12l-1.5-2.5V10a4.5 4.5 0 0 0-9 0v4.5z"/><path d="M10.5 19.5a1.8 1.8 0 0 0 3 0"/>',
-  live:'<circle cx="12" cy="12" r="2"/><path d="M8.5 8.5a5 5 0 0 0 0 7M15.5 8.5a5 5 0 0 1 0 7"/>',
-  back:'<path d="M14.5 5.5 8 12l6.5 6.5"/>',
-  chev:'<path d="M9.5 5.5 16 12l-6.5 6.5"/>',
-  dl:'<path d="M12 4v10m0 0 4-4m-4 4-4-4"/><path d="M5 19h14"/>',
-  cloudok:'<path d="M7 17a4 4 0 0 1 .5-8 5 5 0 0 1 9.5 1.2A3.5 3.5 0 0 1 17 17z"/><path d="m9.5 13 2 2 3.5-3.5"/>',
-  route:'<path d="M7 4h10M7 4v6a3 3 0 0 0 3 3h4a3 3 0 0 1 3 3v4M17 20H7"/><circle cx="7" cy="4" r="1.6"/><circle cx="17" cy="20" r="1.6"/>',
-  mega:'<path d="M4 10v4h3l7 4V6l-7 4z"/><path d="M17.5 9a4 4 0 0 1 0 6"/>',
-  team:'<circle cx="9" cy="8.5" r="2.6"/><path d="M4 19c.7-3.2 3-4.5 5-4.5s4.3 1.3 5 4.5"/><circle cx="16.5" cy="9" r="2.1"/><path d="M15.5 14.7c2 .2 3.9 1.4 4.5 4.3"/>',
-  bed:'<path d="M4 18v-7h16v7"/><path d="M4 15h16"/><path d="M6 11V8h6v3"/><circle cx="8" cy="9.5" r="1"/>',
-  folder:'<path d="M4 7a2 2 0 0 1 2-2h4l2 2h6a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/>',
-  pen:'<rect x="5" y="4" width="14" height="16" rx="2"/><path d="m9 14 5.5-5.5 1.5 1.5L10.5 15.5 8.7 16z"/>',
-  calen:'<rect x="4" y="6" width="16" height="14" rx="2"/><path d="M4 10h16M8 4v4M16 4v4"/><path d="M8 14h4"/>',
-  sms:'<path d="M4 6h16v10H9l-4 3z"/><path d="M8 10h8M8 13h5"/>',
-  seat:'<path d="M7 4v9a2 2 0 0 0 2 2h7"/><path d="M7 13H5.5M16 15v4m0-4h2.5"/><path d="M9 8h5"/>',
-  cup:'<path d="M6 8h11v6a5 5 0 0 1-10 0z"/><path d="M17 9h1.5a2.5 2.5 0 0 1 0 5H17"/><path d="M8 4c0 1-.8 1-.8 2M11.5 4c0 1-.8 1-.8 2"/>',
-  lug:'<rect x="6" y="8" width="12" height="12" rx="2"/><path d="M9 8V5.5A1.5 1.5 0 0 1 10.5 4h3A1.5 1.5 0 0 1 15 5.5V8"/><path d="M9.5 12v4M14.5 12v4"/>',
-  table:'<circle cx="12" cy="12" r="4"/><circle cx="12" cy="4.5" r="1.4"/><circle cx="12" cy="19.5" r="1.4"/><circle cx="4.5" cy="12" r="1.4"/><circle cx="19.5" cy="12" r="1.4"/>',
-  meal:'<path d="M6 4v7M4 4v3.5a2 2 0 0 0 4 0V4"/><path d="M6 11v9"/><path d="M15 4c-2 0-3 2.5-3 5s1 4 3 4v7"/><path d="M15 4v16"/>',
-  refresh:'<path d="M18 8a7 7 0 1 0 1.5 5"/><path d="M18 4v4h-4"/>',
-  coin:'<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5v9M9.5 9.3c0-1 1-1.8 2.5-1.8s2.5.8 2.5 1.8-1 1.5-2.5 1.7c-1.6.2-2.7.8-2.7 2s1.1 1.8 2.7 1.8 2.5-.7 2.5-1.7"/>',
-  phone:'<path d="M7 3.5h2.8l1.4 3.9-2 1.5a12.2 12.2 0 0 0 5.9 5.9l1.5-2 3.9 1.4V17a2.5 2.5 0 0 1-2.8 2.5C11.4 18.7 5.3 12.6 4.5 6.3A2.5 2.5 0 0 1 7 3.5z"/>',
-  pin:'<path d="M12 21s6.4-5.9 6.4-10.4a6.4 6.4 0 1 0-12.8 0C5.6 15.1 12 21 12 21z"/><circle cx="12" cy="10.4" r="2.4"/>',
-  copy:'<rect x="9" y="9" width="11" height="11" rx="2"/><path d="M15 6.5V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h.6"/>',
-  warn:'<path d="M12 4 2.8 20h18.4z"/><path d="M12 10v4.4M12 17.2v.3"/>',
-  mail:'<rect x="3.5" y="6" width="17" height="12" rx="2"/><path d="m4 7.6 8 5.4 8-5.4"/>',
+  /* 線條圖示（24 格、2px 線、圓頭），風格統一、在 iPad 上一眼分得出來 */
+  home:'<path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/>',
+  clip:'<rect width="8" height="4" x="8" y="2" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4M12 16h4M8 11h.01M8 16h.01"/>',
+  flag:'<path d="M4 22V4"/><path d="M4 4h12.5l-2.5 4 2.5 4H4"/>',
+  bkmk:'<path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>',
+  user:'<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
+  bell:'<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>',
+  live:'<path d="M4.9 19.1C1 15.2 1 8.8 4.9 4.9"/><path d="M7.8 16.2c-2.3-2.3-2.3-6.1 0-8.5"/><circle cx="12" cy="12" r="2"/><path d="M16.2 7.8c2.3 2.3 2.3 6.1 0 8.5"/><path d="M19.1 4.9C23 8.8 23 15.1 19.1 19.1"/>',
+  back:'<path d="m15 18-6-6 6-6"/>',
+  chev:'<path d="m9 18 6-6-6-6"/>',
+  dl:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/>',
+  cloudok:'<path d="m17 15-5.5 5.5L9 18"/><path d="M5 17.7A7 7 0 1 1 15.7 8h1.8a4.5 4.5 0 0 1 1.5 8.7"/>',
+  route:'<circle cx="6" cy="19" r="3"/><path d="M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H15"/><circle cx="18" cy="5" r="3"/>',
+  mega:'<path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/>',
+  team:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+  seat:'<path d="M19 9V6a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v3"/><path d="M3 16a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-5a2 2 0 0 0-4 0v2H7v-2a2 2 0 0 0-4 0z"/><path d="M5 18v2M19 18v2"/>',
+  train:'<path d="M8 3.1V7a4 4 0 0 0 8 0V3.1"/><path d="m9 15-1-1M15 15l1-1"/><path d="M9 19c-2.8 0-5-2.2-5-5v-4a8 8 0 0 1 16 0v4c0 2.8-2.2 5-5 5z"/><path d="m8 19-2 3M16 19l2 3"/>',
+  bed:'<path d="M2 20v-8a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v8"/><path d="M4 10V6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v4"/><path d="M12 4v6"/><path d="M2 18h20"/>',
+  folder:'<path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2z"/>',
+  pen:'<path d="M21.17 6.81a1 1 0 0 0-3.98-3.99L3.84 16.17a2 2 0 0 0-.5.83l-1.32 4.35a.5.5 0 0 0 .62.63l4.35-1.32a2 2 0 0 0 .83-.5z"/><path d="m15 5 4 4"/>',
+  calen:'<path d="M8 2v4M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/>',
+  sms:'<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
+  cup:'<path d="M10 2v2M14 2v2M6 2v2"/><path d="M16 8a1 1 0 0 1 1 1v8a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1h14a4 4 0 1 1 0 8h-1"/>',
+  lug:'<path d="M6 20a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2"/><path d="M8 18V6a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v12"/><path d="M10 20h4"/><circle cx="16" cy="20" r="2"/><circle cx="8" cy="20" r="2"/>',
+  table:'<circle cx="12" cy="12" r="4"/><circle cx="12" cy="4" r="1.6"/><circle cx="12" cy="20" r="1.6"/><circle cx="4" cy="12" r="1.6"/><circle cx="20" cy="12" r="1.6"/><circle cx="6.3" cy="6.3" r="1.6"/><circle cx="17.7" cy="17.7" r="1.6"/><circle cx="17.7" cy="6.3" r="1.6"/><circle cx="6.3" cy="17.7" r="1.6"/>',
+  meal:'<path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3zm0 0v7"/>',
+  refresh:'<path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/>',
+  coin:'<rect width="20" height="12" x="2" y="6" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 12h.01M18 12h.01"/>',
+  phone:'<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>',
+  pin:'<path d="M20 10c0 5-5.54 10.19-7.4 11.8a1 1 0 0 1-1.2 0C9.54 20.19 4 15 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/>',
+  copy:'<rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>',
+  warn:'<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4M12 17h.01"/>',
+  mail:'<rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>',
+  shield:'<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/>',
+  gear:'<path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/>',
+  sunrise:'<path d="M12 2v8"/><path d="m4.93 10.93 1.41 1.41M17.66 12.34l1.41-1.41"/><path d="M2 18h2M20 18h2"/><path d="M22 22H2"/><path d="m8 6 4-4 4 4"/><path d="M16 18a4 4 0 0 0-8 0"/>',
+  camera:'<path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3z"/><circle cx="12" cy="13" r="3"/>',
 };
 const ic=(n,s)=>`<svg class="ic" viewBox="0 0 24 24" style="font-size:${s||18}px">${P[n]||""}</svg>`;
 
@@ -428,7 +434,7 @@ let ITIN = {
   ],
   2: [
     { t:"04:20", title:"自選 · 祝山日出", desc:"晨喚後搭遊園車前往祝山（加成遊園車包車兩台、每台最多19人）。預計日出 05:40，06:20 返程回飯店。點心：祝山站小舖現場點（領隊現場購買，50/人）。",
-      links:[["roster","點名報到"],["vendors:v_jiacheng","加成遊園車"]] },
+      links:[["optin:sunrise","日出名單"],["vendors:v_jiacheng","加成遊園車"]] },
     { t:"07:10", title:"早餐 · 麗景廳（現代館1F）", desc:"07:10–08:00 用餐（餐廳 07:00–10:00，最後進場 09:30）。", links:[] },
     { t:"08:00", title:"專車前往阿里山車站", desc:"阿里山賓館專車接送，08:30 抵達。",
       staff:["冠廷：協助行李上行李車（大巴停車場）","魏董及夫人行李放在遊覽車上（當日離團）"],
@@ -500,6 +506,7 @@ const FUNCS = [
   ["luggage","lug",    "行李點收"],
   ["docs",   "folder", "交班文件"],
   ["budget", "coin",   "預算表"],
+  ["optin:sunrise","sunrise","日出名單"],
 ];
 
 const ROSTER_FIELDS = [
@@ -533,7 +540,7 @@ function buildSeed(){
     tour:TOUR_SEED, pax:PAX_SEED, nights:NIGHTS_SEED, menu:MENU_SEED, meals,
     vendors:VENDORS_SEED, vendorTodo:VENDOR_TODO_SEED,
     budget:BUDGET_ITEMS_SEED, headcount:BUDGET_HEADCOUNT_SEED,
-    itin:ITIN_SEED, luggageRoute:LUGGAGE_ROUTE_SEED, hsrTrains:HSR_TRAINS_SEED, _seatVer:3, _menuVer:1, _budgetVer:1, _tourVer:1,
+    itin:ITIN_SEED, luggageRoute:LUGGAGE_ROUTE_SEED, hsrTrains:HSR_TRAINS_SEED, _seatVer:3, _menuVer:1, _budgetVer:1, _tourVer:2,
   });
 }
 /* 出廠預設另存一份，之後 TOUR / PAX… 這些名字都指向 S.data */
@@ -591,6 +598,11 @@ function bindData(){
     for(const k of ["ctrl","deadline","seats"]) if(TOUR[k]===undefined) TOUR[k]=seed.tour[k];
     S.data._tourVer=1;
   }
+  if((S.data._tourVer||0)<2){
+    const st=(ITIN[2]||[]).find(x=>x.title==="自選 · 祝山日出");
+    if(st){ st.links=(st.links||[]).filter(l=>l[0]!=="roster"); if(!st.links.some(l=>l[0]==="optin:sunrise")) st.links.unshift(["optin:sunrise","日出名單"]); }
+    S.data._tourVer=2;
+  }
   /* 一次性升級：舊資料裡泛用的「店家聯絡」捷徑換成 seed 指到特定店家的版本；分房補上飯店對應 */
   for(const d of Object.keys(ITIN)) (ITIN[d]||[]).forEach(st=>(st.links||[]).forEach(l=>{
     if(l[0]!=="vendors") return;
@@ -620,7 +632,7 @@ function DEFAULTS(){
   return { tab:"lead", page:null, day:1, seatTab:"hsr", homeTab:"list",
     rosterMode:"roll",
     fields:{orderNo:true,idNo:true,en:true,birth:true,tkt:true,pnr:true,meal:true,note:true},
-    roll:{1:{},2:{},3:{}}, notes:{}, orders:{}, lug:{}, sigs:[], budgetFinal:{}, vconf:{},
+    roll:{1:{},2:{},3:{}}, notes:{}, orders:{}, lug:{}, sigs:[], budgetFinal:{}, vconf:{}, optin:{},
     dl:{status:"idle",ts:null}, rev:0, savedAt:0 };
 }
 
@@ -647,6 +659,7 @@ let S = loadLocal() || DEFAULTS();
 /* 補齊舊版本存檔缺少的欄位 */
 if(!S.budgetFinal) S.budgetFinal={};
 if(!S.vconf) S.vconf={};
+if(!S.optin) S.optin={};
 if(!S.sigs) S.sigs=[];
 if(typeof S.rev!=="number") S.rev=0;
 
@@ -829,7 +842,7 @@ const NAVS=[["home","home","首頁"],["lead","flag","帶團中"]];
 function goTab(t){ S.tab=t; S.page=null; save(); render(); }
 function goPage(p){
   if(p&&p.startsWith("vendors:")){ openVendorModal(p.slice(8)); return; }
-  if(p&&p.includes(":")){ const [a,b]=p.split(":"); S.page=a; if(a==="seats") S.seatTab=b; }
+  if(p&&p.includes(":")){ const [a,b]=p.split(":"); S.page=a; if(a==="seats") S.seatTab=b; if(a==="optin") S.optKey=b; }
   else S.page=p;
   S.tab="lead"; save(); render();
 }
@@ -1077,7 +1090,7 @@ function renderLead(hdr,scr){
     <div class="trow"><span class="k">旅客名單</span><span class="v">${GUESTS().length}人 / ${done}人 <span style="color:var(--ink3);font-size:11px;font-weight:400">(KK/已報到)</span>　<span class="pill gray">工作人員 ${PAX.length-GUESTS().length}</span></span></div>
   </div>
   <div class="fgrid">${FUNCS.map(([id,icn,lb])=>`
-    <button class="fbtn" data-p="${id}"><span class="fic">${ic(icn,24)}</span><span class="flb">${lb}</span></button>`).join("")}
+    <button class="fbtn" data-p="${id}"><span class="fic">${ic(icn,28)}</span><span class="flb">${lb}</span></button>`).join("")}
   </div>
   <div class="collapse"><span id="rcToggle" style="cursor:pointer">RC/TP/OP ⌄</span><span class="qlink" id="qlink">Q 信箱</span></div>
   <div class="rcbox" id="rcbox" style="display:none">
@@ -2615,6 +2628,48 @@ function svgTables(){
 }
 
 /* ---------- 同意書（離隊切結） ---------- */
+/* ---------- 自選活動名單（勾誰要去，存在 S.optin[key]） ---------- */
+const OPTINS={
+  sunrise:{ title:"祝山日出 自選名單", day:2, cap:38,
+    desc:"9/21 04:20 晨喚 → 04:40 遊園車出發 → 05:40 日出 → 06:20 返回飯店。加成遊園車包車 2 台，每台最多 19 人。",
+    hint:"前一晚問清楚誰要去，勾起來；晨喚只叫有勾的人。日出點心領隊現場買，50/人。" },
+};
+PAGES.optin=(hdr,scr)=>{
+  const key=S.optKey||"sunrise", O=OPTINS[key]||OPTINS.sunrise;
+  hbar(hdr,O.title,{back:true});
+  const rec=S.optin[key]||(S.optin[key]={});
+  const GO={"貴賓":0,"雄獅主管":1,"工作人員":2};
+  const people=PAX.filter(p=>p.days.includes(O.day)).sort((a,b)=>(GO[a.group]??9)-(GO[b.group]??9));
+  const on=people.filter(p=>rec[p.id]);
+  const el=document.createElement("div");
+  el.className="pagepad";
+  el.innerHTML=`
+  <div class="card optsum">
+    <div class="optbig"><b>${on.length}</b><span>人要去</span>${O.cap?`<span class="pill ${on.length>O.cap?"amber":"gray"}">上限 ${O.cap} 人</span>`:""}</div>
+    <div class="optdesc">${esc(O.desc)}</div>
+    ${on.length?`<div class="optnames">${on.map(p=>`<span class="chip on">${esc(p.name)}</span>`).join("")}</div>`:""}
+  </div>
+  <p class="vs">${esc(O.hint)}　點名字切換，改完立刻存。</p>
+  <div class="optlist"></div>
+  <div style="display:flex;gap:9px;margin-top:6px">
+    <button class="btn sec" id="optAll">全部勾選</button><button class="btn sec" id="optNone">全部清除</button>
+  </div>`;
+  const list=el.querySelector(".optlist");
+  let lastGroup="";
+  people.forEach(p=>{
+    if(p.group!==lastGroup){ const h=document.createElement("h3"); h.className="sect"; h.textContent=p.group; list.appendChild(h); lastGroup=p.group; }
+    const ck=!!rec[p.id];
+    const r=document.createElement("div");
+    r.className="optrow2"+(ck?" on":"");
+    r.innerHTML=`<span class="ckbox">${ck?"✓":""}</span><span class="nm">${esc(p.name)}</span><span class="pill gray">${esc(p.rel)}</span>${p.meal?`<span class="pill amber">${esc(p.meal)}</span>`:""}`;
+    r.onclick=()=>{ if(rec[p.id]) delete rec[p.id]; else rec[p.id]=Date.now(); save(); render(); };
+    list.appendChild(r);
+  });
+  el.querySelector("#optAll").onclick=()=>{ people.forEach(p=>rec[p.id]=rec[p.id]||Date.now()); save(); render(); };
+  el.querySelector("#optNone").onclick=()=>confirmBox("清除全部勾選？",()=>{ S.optin[key]={}; save(); render(); });
+  scr.appendChild(el);
+};
+
 PAGES.consent=(hdr,scr)=>{
   hbar(hdr,"同意書 · 離隊切結",{back:true});
   const el=document.createElement("div");
@@ -2958,6 +3013,7 @@ $("#modal").addEventListener("click",e=>{ if(e.target.id==="modal") closeModal()
 
   if(!S.budgetFinal) S.budgetFinal={};
   if(!S.vconf) S.vconf={};
+  if(!S.optin) S.optin={};
   if(!S.sigs) S.sigs=[];
 
   /* 跟 iOS 要常駐儲存，避免空間不足時被清掉 */
