@@ -632,7 +632,7 @@ function DEFAULTS(){
   return { tab:"lead", page:null, day:1, seatTab:"hsr", homeTab:"list",
     rosterMode:"roll",
     fields:{orderNo:true,idNo:true,en:true,birth:true,tkt:true,pnr:true,meal:true,note:true},
-    roll:{1:{},2:{},3:{}}, notes:{}, orders:{}, lug:{}, sigs:[], budgetFinal:{}, budgetDeposit:{}, vconf:{}, optin:{},
+    roll:{1:{},2:{},3:{}}, notes:{}, orders:{}, lug:{}, sigs:[], budgetFinal:{}, budgetDeposit:{}, budgetNote:{}, vconf:{}, optin:{},
     dl:{status:"idle",ts:null}, rev:0, savedAt:0 };
 }
 
@@ -849,7 +849,7 @@ function goPage(p){
 function render(){
   bindData();
   document.body.classList.toggle("emode", !!S.editMode);
-  document.body.classList.toggle("wide-page", S.tab==="lead"&&S.page==="seats"&&S.seatTab==="hsr");
+  document.body.classList.toggle("wide-page", S.tab==="lead"&&((S.page==="seats"&&S.seatTab==="hsr")||S.page==="budget"));
   EDIT_HANDLER=null;
   if(!NAVS.some(n=>n[0]===S.tab)) S.tab="lead";
   if(S.page==="tables") S.page="meals";
@@ -2304,6 +2304,7 @@ PAGES.budget=(hdr,scr)=>{
   el.className="pagepad";
   const t=budgetTotals();
   if(!S.budgetDeposit) S.budgetDeposit={};
+  if(!S.budgetNote) S.budgetNote={};
   const cards=budgetCards();
   const dateOf=d=>{ const m=String(TOUR.dateTxt||"").match(/(\d{4})\/(\d{1,2})\/(\d{1,2})/); if(!m) return `第 ${d} 天`;
     const dt=new Date(+m[1],+m[2]-1,+m[3]+d-1); return `${dt.getFullYear()}${String(dt.getMonth()+1).padStart(2,"0")}${String(dt.getDate()).padStart(2,"0")}`; };
@@ -2328,7 +2329,8 @@ PAGES.budget=(hdr,scr)=>{
           rows+=`<td class="tot" rowspan="${n}"><span class="paylbl">${esc(c.pay)}</span><b>${hasAmt?"NTD "+nt(c.budget):"NTD 0"}</b></td>
             <td class="num edit" rowspan="${n}">${cash?`<input class="bgcell" data-k="${esc(c.key)}" data-f="dep" inputmode="numeric" value="${dep||""}" placeholder="0">`:"—"}</td>
             <td class="num" rowspan="${n}" id="rem_${esc(c.key)}">${cash?nt(c.budget-dep):"—"}</td>
-            <td class="num edit" rowspan="${n}">${cash?`<input class="bgcell fin" data-k="${esc(c.key)}" data-f="fin" inputmode="numeric" value="${fin!=null?fin:""}" placeholder="${nt(c.budget)}">`:`<span class="pill gray">${c.pay==="信用卡"?"公司刷卡":"公司轉帳"}</span>`}</td>`;
+            <td class="num edit" rowspan="${n}">${cash?`<input class="bgcell fin" data-k="${esc(c.key)}" data-f="fin" inputmode="numeric" value="${fin!=null?fin:""}" placeholder="${nt(c.budget)}">`:`<span class="pill gray">${c.pay==="信用卡"?"公司刷卡":"公司轉帳"}</span>`}</td>
+            <td class="edit notecell" rowspan="${n}"><textarea class="bgnote2" data-k="${esc(c.key)}" rows="2" placeholder="備註">${esc(S.budgetNote[c.key]||"")}</textarea></td>`;
         }
         rows+=`</tr>`;
       });
@@ -2355,15 +2357,15 @@ PAGES.budget=(hdr,scr)=>{
   </div>
   <div class="card bgtablewrap">
     <table class="bgtable">
-      <thead><tr><th>日期</th><th>元件</th><th>訂購明細</th><th>數量</th><th>單位</th><th>項次單價</th><th>小計</th><th>TOTAL</th><th>已付訂金</th><th>剩餘金額</th><th>實付金額</th></tr></thead>
+      <thead><tr><th>日期</th><th>元件</th><th>訂購明細</th><th>數量</th><th>單位</th><th>項次單價</th><th>小計</th><th>TOTAL</th><th>已付訂金</th><th>剩餘金額</th><th>實付金額</th><th>備註</th></tr></thead>
       <tbody>${rows}</tbody>
       <tfoot><tr><td colspan="7" class="rep"><b>領隊報告：</b><textarea class="bgreport" id="bgReport" rows="3" placeholder="超支原因、店家未收款、發票缺漏…">${esc(S.budgetReport||"")}</textarea></td>
-        <td colspan="4" class="grand"><span>TOTAL：</span><b>現金 ${nt(t.cash)} NTD</b><span class="sub">實付 ${nt(t.cashFinal)} NTD</span></td></tr>
-      <tr class="sign"><td colspan="4">主管：______________</td><td colspan="4">審帳：______________</td><td colspan="3">領隊：______________</td></tr></tfoot>
+        <td colspan="5" class="grand"><span>TOTAL：</span><b>現金 ${nt(t.cash)} NTD</b><span class="sub">實付 ${nt(t.cashFinal)} NTD</span></td></tr>
+      <tr class="sign"><td colspan="4">主管：______________</td><td colspan="4">審帳：______________</td><td colspan="4">領隊：______________</td></tr></tfoot>
     </table>
   </div>
   <p class="vs">「已付訂金」與「實付金額」直接在格子裡填，填完自動存；剩餘金額＝TOTAL－已付訂金。愛玉、甜甜圈單價空白，實付填現場金額。</p>
-  <button class="btn sec" id="bgReset" style="margin-top:4px">清空已填的訂金與實付</button>`;
+  <button class="btn sec" id="bgReset" style="margin-top:4px">清空已填的訂金、實付與備註</button>`;
   scr.appendChild(el);
 
   el.querySelectorAll(".bgcell").forEach(inp=>{
@@ -2375,9 +2377,10 @@ PAGES.budget=(hdr,scr)=>{
       save();
     });
   });
+  el.querySelectorAll(".bgnote2").forEach(ta=>ta.addEventListener("input",()=>{ const v=ta.value.trim(); if(v) S.budgetNote[ta.dataset.k]=v; else delete S.budgetNote[ta.dataset.k]; save(); }));
   el.querySelector("#bgReport").onchange=e=>{ S.budgetReport=e.target.value; save(); toast("領隊報告已存"); };
   el.querySelector("#bgReset").onclick=()=>confirmBox("清空所有已填的訂金與實付金額？此動作無法復原。",()=>{
-    S.budgetFinal={}; S.budgetDeposit={}; save(); render(); toast("已清空");
+    S.budgetFinal={}; S.budgetDeposit={}; S.budgetNote={}; save(); render(); toast("已清空");
   });
   editBar(el,{add:()=>editBudget(null),addLabel:"新增項目",reset:()=>resetSection("budget"),resetLabel:"還原 Budget 表"});
   EDIT_HANDLER=k=>{
