@@ -689,7 +689,7 @@ const SKEY_B = "tle920_v3_bak";   /* localStorage 第二份，主檔毀損時的
 function DEFAULTS(){
   return { tab:"lead", page:null, day:1, seatTab:"hsr", homeTab:"list",
     rosterMode:"roll",
-    fields:{orderNo:true,idNo:true,en:true,birth:true,tkt:true,pnr:true,meal:true,note:true},
+    fields:{idNo:false,birth:false},   /* 其他欄位預設顯示（見 ROSTER_FIELDS） */
     roll:{1:{},2:{},3:{}}, notes:{}, orders:{}, lug:{}, sigs:[], budgetFinal:{}, budgetDeposit:{}, budgetNote:{}, vconf:{}, optin:{}, seating:{},
     dl:{status:"idle",ts:null}, rev:0, savedAt:0 };
 }
