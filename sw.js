@@ -2,8 +2,8 @@
  * 山上訊號時有時無，純 cache-first 會讓更新永遠推不上去，純 network-first 又會在
  * 訊號微弱時卡住畫面——所以取中間：先問網路、限時、失敗退快取、成功就順手更新快取。
  * 改任何檔案不需要動這裡；想強制所有 iPad 清掉舊快取時，把 CACHE 的版號加一即可。 */
-const CACHE = "tle920-v3";
-const SHELL = ["./", "./index.html", "./app.js", "./menu-img.js", "./manifest.json", "./icon.png", "./icon-180.png"];
+const CACHE = "tle920-v4";
+const SHELL = ["./", "./index.html", "./app.js", "./menu-img.js", "./floor-img.js", "./manifest.json", "./icon.png", "./icon-180.png"];
 const NET_TIMEOUT = 3000;
 
 self.addEventListener("install", (e) => {

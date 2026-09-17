@@ -2708,11 +2708,21 @@ PAGES.rooms=(hdr,scr)=>{
   tb.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{ S.night=+t.dataset.n; save(); render(); });
   scr.appendChild(tb);
   const N=NIGHTS.find(n=>n.key===night)||NIGHTS[0];
+  const PLANS={1:[["d1_6f","6F"],["d1_7f","7F"],["d1_8f","8F"],["d1_9f","9F"]],2:[["d2_6f","6F"]]};
+  const plans=(typeof FLOOR_IMG!=="undefined")?(PLANS[N.key]||[]).filter(([k])=>FLOOR_IMG[k]).map(([key,label])=>({key,label})):[];
+  if(!S.floor) S.floor={};
+  const fk=plans.find(p=>p.key===S.floor[N.key])?S.floor[N.key]:(plans[0]||{}).key, cur=plans.find(p=>p.key===fk)||{};
   const el=document.createElement("div");
   el.className="pagepad";
   el.innerHTML=`<div class="vs" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><b style="flex:1">${esc(N.date)}｜${esc(N.hotel)}</b>
     ${N.vendor&&vendor(N.vendor)?`<button class="chip" data-vm="${esc(N.vendor)}">${ic("phone",13)}飯店聯絡</button>`:""}${ebtn("__night",true)}</div>
   ${N.info?`<div class="card" style="font-size:12.5px;line-height:1.7;color:var(--ink2)"><b style="color:var(--ink)">房型</b>　${esc(N.info)}</div>`:""}
+  ${plans.length?`<div class="card floorwrap">
+    <div class="cardh">樓層平面圖 <span class="pill gray">產品部 9/16 原圖</span></div>
+    <div class="floortabs">${plans.map(p=>`<button class="tab${p.key===fk?" on":""}" data-fp="${p.key}">${esc(p.label)}</button>`).join("")}</div>
+    <div class="zw"><img class="zin" src="${FLOOR_IMG[fk]}" alt="${esc(cur.label)}"></div>
+    <div class="zoomhint">兩指縮放、拖曳；＋－回 1:1。圖上綠框＝我們的分房，藍點＝主管家庭房。</div>
+  </div>`:""}
   <p class="vs">發放房卡時照表引導；魏董伉儷、柳董 9/21 提前返北，第二晚無房。異動請用「手寫備註」記下。</p>
   <div class="roomgrid">${N.rooms.map((r,i)=>`
     <div class="roomcard">${ebtn(String(i))}<div class="no">${esc(r.no)}</div>
@@ -2720,6 +2730,8 @@ PAGES.rooms=(hdr,scr)=>{
       ${r.note?`<span class="pill amber">${esc(r.note)}</span>`:""}</div>
       <div class="gs">${(r.who||[]).map(esc).join("、")}</div></div>`).join("")}</div>`;
   el.querySelectorAll("[data-vm]").forEach(b=>b.onclick=()=>openVendorModal(b.dataset.vm));
+  el.querySelectorAll("[data-fp]").forEach(b=>b.onclick=()=>{ S.floor[N.key]=b.dataset.fp; save(); render(); });
+  el.querySelectorAll(".floorwrap .zw").forEach(zoomify);
   editBar(el,{add:()=>editRoom(N,null),addLabel:"新增房間",reset:()=>resetSection("nights"),resetLabel:"還原預設分房"});
   EDIT_HANDLER=k=>{
     if(k==="__night") editForm("飯店資料",[{k:"date",label:"日期",ph:"9/20(日)"},{k:"hotel",label:"飯店",required:true},{k:"info",label:"房型說明",type:"textarea",rows:2},
