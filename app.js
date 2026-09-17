@@ -533,10 +533,14 @@ const FUNCS = [
   ["ink",    "pen",    "手寫備註"],
 ];
 
+/* 團體大表的欄位：全部都能勾選隱藏；第三個值＝預設是否顯示 */
 const ROSTER_FIELDS = [
-  ["orderNo","訂單編號"],["idNo","身分證號"],["en","英文名"],["birth","生日"],
-  ["tkt","高鐵票種"],["pnr","訂位代號"],["meal","特殊餐食"],["note","備註"],
+  ["grp","名義",true],["seq","序",true],["rel","關係",true],["title","職稱",true],["en","英文名",true],["days","在團",true],
+  ["orderNo","訂單編號",true],["idNo","身分證號",false],["birth","生日",false],["tkt","高鐵票種",true],
+  ["hsrGo","高鐵去",true],["hsrBack","高鐵回",true],["pnr","訂位代號",true],["train","福森號",true],
+  ["room1","9/20 房",true],["room2","9/21 房",true],["meal","特殊餐食",true],["note","備註",true],
 ];
+const fld=k=>{ const d=ROSTER_FIELDS.find(f=>f[0]===k); const v=(S.fields||{})[k]; return v===undefined?(d?d[2]:true):!!v; };
 
 
 /* 高鐵車次（原本在座位圖區，因可編輯資料層載入時要讀，移到這裡） */
@@ -1358,9 +1362,10 @@ PAGES.roster=(hdr,scr)=>{
 function rosterList(scr){
   const cks=document.createElement("div");
   cks.className="fieldcks";
-  cks.innerHTML=ROSTER_FIELDS.map(([k,lb])=>`<span class="fck${S.fields[k]?" on":""}" data-k="${k}">
-    <span class="ckbox">${S.fields[k]?"✓":""}</span>${lb}</span>`).join("");
-  cks.querySelectorAll(".fck").forEach(f=>f.onclick=()=>{ S.fields[f.dataset.k]=!S.fields[f.dataset.k]; save(); render(); });
+  cks.innerHTML=ROSTER_FIELDS.map(([k,lb])=>`<span class="fck${fld(k)?" on":""}" data-k="${k}">
+    <span class="ckbox">${fld(k)?"✓":""}</span>${lb}</span>`).join("")+`<span class="fck all" data-all="1">全部顯示</span>`;
+  cks.querySelectorAll(".fck[data-k]").forEach(f=>f.onclick=()=>{ S.fields[f.dataset.k]=!fld(f.dataset.k); save(); render(); });
+  cks.querySelector("[data-all]").onclick=()=>{ ROSTER_FIELDS.forEach(([k])=>S.fields[k]=true); save(); render(); };
   scr.appendChild(cks);
   const el=document.createElement("div");
   el.className="pagepad";
@@ -1378,34 +1383,36 @@ function rosterList(scr){
   const dayTxt=p=>{ const d=p.days||[]; if(d.length===3) return `<span class="dimtxt">全程</span>`; if(!d.length) return `<span class="pill gray">未在團</span>`;
     return `<span class="pill amber">${d.map(x=>"9/"+(19+x)).join("、")}</span>`; };
   const seatTxt=(seat,pnr,tbc,extra)=>{ if(!seat||seat==="—") return `<span class="dimtxt">—</span>`;
-    return `<b>${esc(seat)}</b>${S.fields.pnr&&pnr&&pnr!=="—"?`<i class="pnr">${esc(pnr)}</i>`:""}${tbc?` <span class="pill amber">票待確認</span>`:""}${extra||""}`; };
-  const cols=[["名義",""],["序",""],["姓名",""],["關係",""]];
-  if(S.fields.en) cols.push(["英文",""]);
-  cols.push(["在團",""]);
-  if(S.fields.orderNo) cols.push(["訂單編號",""]);
-  if(S.fields.idNo) cols.push(["身分證號",""]);
-  if(S.fields.birth) cols.push(["生日",""]);
-  if(S.fields.tkt) cols.push(["票種",""]);
-  cols.push(["高鐵去 0203",""],["高鐵回",""],["福森號",""],["9/20 房",""],["9/21 房",""]);
-  if(S.fields.meal) cols.push(["特殊餐食",""]);
-  if(S.fields.note) cols.push(["備註",""]);
+    return `<b>${esc(seat)}</b>${fld("pnr")&&pnr&&pnr!=="—"?`<i class="pnr">${esc(pnr)}</i>`:""}${tbc?` <span class="pill amber">票待確認</span>`:""}${extra||""}`; };
+  const cols=[];
+  if(fld("grp")) cols.push(["名義"]); if(fld("seq")) cols.push(["序"]); cols.push(["姓名"]); if(fld("rel")) cols.push(["關係"]);
+  if(fld("en")) cols.push(["英文"]); if(fld("days")) cols.push(["在團"]);
+  if(fld("orderNo")) cols.push(["訂單編號"]); if(fld("idNo")) cols.push(["身分證號"]); if(fld("birth")) cols.push(["生日"]); if(fld("tkt")) cols.push(["票種"]);
+  if(fld("hsrGo")) cols.push(["高鐵去 0203"]); if(fld("hsrBack")) cols.push(["高鐵回"]); if(fld("train")) cols.push(["福森號"]);
+  if(fld("room1")) cols.push(["9/20 房"]); if(fld("room2")) cols.push(["9/21 房"]);
+  if(fld("meal")) cols.push(["特殊餐食"]); if(fld("note")) cols.push(["備註"]);
   const N1=NIGHTS.find(n=>n.key===1), N2=NIGHTS.find(n=>n.key===2);
   let lastG="";
   const rows=people.map((p,i)=>{
     const g=grpName(p), gh=g!==lastG?`<tr class="ghead ${cls(g)}"><td colspan="${cols.length}">${esc(g==="2731"?"董事・貴賓":g)}</td></tr>`:""; lastG=g;
     const back = (p.days||[]).includes(3) ? seatTxt(p.hsrBack,p.pnrBk,p.hsrBackTbc,"") : (seat672(p)?seatTxt(seat672(p),"",t672.tbc&&t672.tbc.includes(seat672(p)),` <span class="pill blue">0672 提前返北</span>`):`<span class="dimtxt">—</span>`);
     const go = p.hsr609 ? seatTxt(p.hsr609,"",false,` <span class="pill blue">0609 9/21 加入</span>`) : seatTxt(p.hsrGo,p.pnrGo,p.hsrGoTbc, p.board?` <span class="pill blue">${esc(p.board)}上車</span>`:"");
-    const tds=[`<td class="gm">${esc(g)}</td>`,`<td class="sq">${i+1}</td>`,`<td class="nm">${ebtn(p.id,true)}${esc(p.name)}${p.title?`<small>${esc(p.title)}</small>`:""}</td>`,`<td class="rl">${esc(p.rel||"")}</td>`];
-    if(S.fields.en) tds.push(`<td class="en">${esc(p.en||"")}</td>`);
-    tds.push(`<td class="dy">${dayTxt(p)}</td>`);
-    if(S.fields.orderNo) tds.push(`<td class="mono">${esc(p.orderNo||"")}</td>`);
-    if(S.fields.idNo) tds.push(`<td class="mono">${esc(p.idNo||"")}</td>`);
-    if(S.fields.birth) tds.push(`<td class="mono">${esc(p.birth||"")}</td>`);
-    if(S.fields.tkt) tds.push(`<td class="tk">${esc(p.tkt||"")}</td>`);
-    tds.push(`<td class="st">${go}</td>`,`<td class="st">${back}</td>`,`<td class="st">${p.trainSeat?`<b>${esc(p.trainSeat)}</b>`:`<span class="dimtxt">—</span>`}</td>`,
-      `<td class="rm">${(p.days||[]).includes(1)?roomCell(N1,p):`<span class="dimtxt">—</span>`}</td>`,`<td class="rm">${(p.days||[]).includes(2)?roomCell(N2,p):`<span class="dimtxt">—</span>`}</td>`);
-    if(S.fields.meal) tds.push(`<td class="ml">${p.meal?`<span class="pill amber">${esc(p.meal)}</span>`:""}</td>`);
-    if(S.fields.note) tds.push(`<td class="nt">${esc(p.note||"")}</td>`);
+    const tds=[];
+    if(fld("grp")) tds.push(`<td class="gm">${esc(g)}</td>`); if(fld("seq")) tds.push(`<td class="sq">${i+1}</td>`);
+    tds.push(`<td class="nm">${ebtn(p.id,true)}${esc(p.name)}${fld("title")&&p.title?`<small>${esc(p.title)}</small>`:""}</td>`);
+    if(fld("rel")) tds.push(`<td class="rl">${esc(p.rel||"")}</td>`);
+    if(fld("en")) tds.push(`<td class="en">${esc(p.en||"")}</td>`);
+    if(fld("days")) tds.push(`<td class="dy">${dayTxt(p)}</td>`);
+    if(fld("orderNo")) tds.push(`<td class="mono">${esc(p.orderNo||"")}</td>`);
+    if(fld("idNo")) tds.push(`<td class="mono">${esc(p.idNo||"")}</td>`);
+    if(fld("birth")) tds.push(`<td class="mono">${esc(p.birth||"")}</td>`);
+    if(fld("tkt")) tds.push(`<td class="tk">${esc(p.tkt||"")}</td>`);
+    if(fld("hsrGo")) tds.push(`<td class="st">${go}</td>`); if(fld("hsrBack")) tds.push(`<td class="st">${back}</td>`);
+    if(fld("train")) tds.push(`<td class="st">${p.trainSeat?`<b>${esc(p.trainSeat)}</b>`:`<span class="dimtxt">—</span>`}</td>`);
+    if(fld("room1")) tds.push(`<td class="rm">${(p.days||[]).includes(1)?roomCell(N1,p):`<span class="dimtxt">—</span>`}</td>`);
+    if(fld("room2")) tds.push(`<td class="rm">${(p.days||[]).includes(2)?roomCell(N2,p):`<span class="dimtxt">—</span>`}</td>`);
+    if(fld("meal")) tds.push(`<td class="ml">${p.meal?`<span class="pill amber">${esc(p.meal)}</span>`:""}</td>`);
+    if(fld("note")) tds.push(`<td class="nt">${esc(p.note||"")}</td>`);
     return gh+`<tr class="prow ${cls(g)}">${tds.join("")}</tr>`;
   }).join("");
   el.innerHTML=`<div class="card rtablewrap"><div class="cardh">團體大表 <span class="pill gray">${PAX.length} 人</span>
