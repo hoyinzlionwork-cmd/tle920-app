@@ -945,7 +945,7 @@ function goPage(p){
 function render(){
   bindData();
   S.editMode=false;   /* 編輯改成長按，沒有編輯模式了 */
-  document.body.classList.toggle("wide-page", S.tab==="lead"&&((S.page==="seats"&&S.seatTab==="hsr")||S.page==="budget"||S.page==="rooms"));
+  document.body.classList.toggle("wide-page", S.tab==="lead"&&((S.page==="seats"&&S.seatTab==="hsr")||S.page==="budget"||S.page==="rooms"||(S.page==="roster"&&S.rosterMode==="list")));
   EDIT_HANDLER=null;
   if(!NAVS.some(n=>n[0]===S.tab)) S.tab="lead";
   if(S.page && !PAGES[S.page]) S.page=null;   /* 舊存檔指到已拿掉的頁面（例如交班文件）就回帶團中 */
@@ -1035,7 +1035,7 @@ function editBar(parent, {add, addLabel="新增", reset, resetLabel="還原此�
 let LP_MODAL=null;   /* 彈窗（店家資訊）內的長按處理 */
 function tagLongPress(root){
   root.querySelectorAll(".ebtn").forEach(b=>{
-    const host=b.closest(".reccard,.rollcard,.vcard,.roomcard,.bgitem,.ordrow,td.det,.bh1,.tinfo,.stop,.card")||b.parentElement;
+    const host=b.closest("tr.prow,.reccard,.rollcard,.vcard,.roomcard,.bgitem,.ordrow,td.det,.bh1,.tinfo,.stop,.card")||b.parentElement;
     if(host){ host.dataset.lp=b.dataset.e; host.classList.add("lp"); }
   });
 }
@@ -1364,25 +1364,54 @@ function rosterList(scr){
   scr.appendChild(cks);
   const el=document.createElement("div");
   el.className="pagepad";
-  let lastGroup="";
-  const ORDER={"貴賓":0,"雄獅主管":1,"工作人員":2};
-  const sorted=[...PAX].sort((a,b)=>ORDER[a.group]-ORDER[b.group]);
-  el.innerHTML=sorted.map(p=>{
-    const rows=[];
-    if(S.fields.orderNo) rows.push(["訂單編號",p.orderNo]);
-    rows.push(["中文姓名",`<b>${esc(p.name)}</b>　<span class="pill gray">${esc(p.rel)}</span>`]);
-    if(S.fields.en&&p.en)   rows.push(["英文名",p.en]);
-    if(p.title) rows.push(["職稱",esc(p.title)]);
-    if(S.fields.idNo) rows.push(["身分證號",p.idNo]);
-    if(S.fields.birth)rows.push(["生日",p.birth]);
-    if(S.fields.tkt)  rows.push(["高鐵票種",p.tkt]);
-    if(S.fields.pnr)  rows.push(["訂位代號",`去 ${p.pnrGo}　回 ${p.pnrBk}`]);
-    if(S.fields.meal) rows.push(["特殊餐食",p.meal?`<span class="pill amber">${esc(p.meal)}</span>`:"—"]);
-    if(S.fields.note) rows.push(["備註",p.note?esc(p.note):"—"]);
-    const gh = p.group!==lastGroup ? `<h3 class="sect">${p.group}</h3>` : "";
-    lastGroup=p.group;
-    return gh+`<div class="reccard">${ebtn(p.id)}${rows.map(([k,v])=>`<div class="rr"><span class="k">${k}</span><span class="v">${v}</span></div>`).join("")}</div>`;
+  /* 照分房表「BY 人」的排法：董事 → 主管 → 合作夥伴 → 工作人員；重要資訊用色塊標出 */
+  const ORDER={"貴賓":0,"雄獅主管":1,"工作人員":3};
+  const people=[...PAX].sort((a,b)=>(a.id==="p23"?2:ORDER[a.group]??9)-(b.id==="p23"?2:ORDER[b.group]??9));
+  const grpName=p=>p.group==="貴賓"?(p.id==="p23"?"合作夥伴":"2731"):p.group;
+  const cls=g=>g==="2731"?"g-vip":g==="雄獅主管"?"g-mgr":g==="合作夥伴"?"g-pt":"g-stf";
+  const norm=x=>String(x||"").replace(/\s/g,"");
+  const roomOf=(N,p)=>N&&N.rooms.find(r=>(r.who||[]).some(w=>norm(w)===norm(p.name)||norm(w).startsWith(norm(p.name))));
+  const roomCell=(N,p)=>{ const r=roomOf(N,p); if(!r) return `<span class="dimtxt">—</span>`;
+    const love=/愛心/.test((r.type||"")+(r.note||"")); return `<b>${esc(r.no)}</b>${love?` <span class="pill amber">愛心</span>`:""}`; };
+  const t672=(HSR_TRAINS[2]||[]).find(t=>t.no==="0672"), fixed672=t672&&t672.fixed?Object.entries(t672.fixed).find(([k,v])=>v===undefined):null;
+  const seat672=p=>{ if(!t672||!t672.fixed) return ""; const e=Object.entries(t672.fixed).find(([k,v])=>v===p.id); return e?e[0]:""; };
+  const dayTxt=p=>{ const d=p.days||[]; if(d.length===3) return `<span class="dimtxt">全程</span>`; if(!d.length) return `<span class="pill gray">未在團</span>`;
+    return `<span class="pill amber">${d.map(x=>"9/"+(19+x)).join("、")}</span>`; };
+  const seatTxt=(seat,pnr,tbc,extra)=>{ if(!seat||seat==="—") return `<span class="dimtxt">—</span>`;
+    return `<b>${esc(seat)}</b>${S.fields.pnr&&pnr&&pnr!=="—"?`<i class="pnr">${esc(pnr)}</i>`:""}${tbc?` <span class="pill amber">票待確認</span>`:""}${extra||""}`; };
+  const cols=[["名義",""],["序",""],["姓名",""],["關係",""]];
+  if(S.fields.en) cols.push(["英文",""]);
+  cols.push(["在團",""]);
+  if(S.fields.orderNo) cols.push(["訂單編號",""]);
+  if(S.fields.idNo) cols.push(["身分證號",""]);
+  if(S.fields.birth) cols.push(["生日",""]);
+  if(S.fields.tkt) cols.push(["票種",""]);
+  cols.push(["高鐵去 0203",""],["高鐵回",""],["福森號",""],["9/20 房",""],["9/21 房",""]);
+  if(S.fields.meal) cols.push(["特殊餐食",""]);
+  if(S.fields.note) cols.push(["備註",""]);
+  const N1=NIGHTS.find(n=>n.key===1), N2=NIGHTS.find(n=>n.key===2);
+  let lastG="";
+  const rows=people.map((p,i)=>{
+    const g=grpName(p), gh=g!==lastG?`<tr class="ghead ${cls(g)}"><td colspan="${cols.length}">${esc(g==="2731"?"董事・貴賓":g)}</td></tr>`:""; lastG=g;
+    const back = (p.days||[]).includes(3) ? seatTxt(p.hsrBack,p.pnrBk,p.hsrBackTbc,"") : (seat672(p)?seatTxt(seat672(p),"",t672.tbc&&t672.tbc.includes(seat672(p)),` <span class="pill blue">0672 提前返北</span>`):`<span class="dimtxt">—</span>`);
+    const go = p.hsr609 ? seatTxt(p.hsr609,"",false,` <span class="pill blue">0609 9/21 加入</span>`) : seatTxt(p.hsrGo,p.pnrGo,p.hsrGoTbc, p.board?` <span class="pill blue">${esc(p.board)}上車</span>`:"");
+    const tds=[`<td class="gm">${esc(g)}</td>`,`<td class="sq">${i+1}</td>`,`<td class="nm">${ebtn(p.id,true)}${esc(p.name)}${p.title?`<small>${esc(p.title)}</small>`:""}</td>`,`<td class="rl">${esc(p.rel||"")}</td>`];
+    if(S.fields.en) tds.push(`<td class="en">${esc(p.en||"")}</td>`);
+    tds.push(`<td class="dy">${dayTxt(p)}</td>`);
+    if(S.fields.orderNo) tds.push(`<td class="mono">${esc(p.orderNo||"")}</td>`);
+    if(S.fields.idNo) tds.push(`<td class="mono">${esc(p.idNo||"")}</td>`);
+    if(S.fields.birth) tds.push(`<td class="mono">${esc(p.birth||"")}</td>`);
+    if(S.fields.tkt) tds.push(`<td class="tk">${esc(p.tkt||"")}</td>`);
+    tds.push(`<td class="st">${go}</td>`,`<td class="st">${back}</td>`,`<td class="st">${p.trainSeat?`<b>${esc(p.trainSeat)}</b>`:`<span class="dimtxt">—</span>`}</td>`,
+      `<td class="rm">${(p.days||[]).includes(1)?roomCell(N1,p):`<span class="dimtxt">—</span>`}</td>`,`<td class="rm">${(p.days||[]).includes(2)?roomCell(N2,p):`<span class="dimtxt">—</span>`}</td>`);
+    if(S.fields.meal) tds.push(`<td class="ml">${p.meal?`<span class="pill amber">${esc(p.meal)}</span>`:""}</td>`);
+    if(S.fields.note) tds.push(`<td class="nt">${esc(p.note||"")}</td>`);
+    return gh+`<tr class="prow ${cls(g)}">${tds.join("")}</tr>`;
   }).join("");
+  el.innerHTML=`<div class="card rtablewrap"><div class="cardh">團體大表 <span class="pill gray">${PAX.length} 人</span>
+      <span class="legendline"><span class="pill amber">黃＝要特別注意</span><span class="pill blue">藍＝行程不同</span></span></div>
+    <table class="rtable byp roster"><thead><tr>${cols.map(([c])=>`<th>${c}</th>`).join("")}</tr></thead><tbody>${rows}</tbody></table></div>
+    <p class="vs">上方勾選要顯示的欄位。長按任何一列可以修改該旅客。</p>`;
   editBar(el,{add:()=>editPax(null),addLabel:"新增旅客",reset:()=>resetSection("pax"),resetLabel:"還原預設名單"});
   EDIT_HANDLER=id=>editPax(pax(id));
   scr.appendChild(el);
