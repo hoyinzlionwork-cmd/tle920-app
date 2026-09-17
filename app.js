@@ -947,7 +947,7 @@ function render(){
   bindData();
   S.editMode=false;   /* 編輯改成長按，沒有編輯模式了 */
   document.body.classList.toggle("wide-page", S.tab==="lead"&&((S.page==="seats"&&S.seatTab==="hsr")||S.page==="budget"||S.page==="rooms"||(S.page==="roster"&&S.rosterMode==="list")));
-  EDIT_HANDLER=null;
+  EDIT_HANDLER=null; window.LB_WIRE=null;
   if(!NAVS.some(n=>n[0]===S.tab)) S.tab="lead";
   if(S.page && !PAGES[S.page]) S.page=null;   /* 舊存檔指到已拿掉的頁面（例如交班文件）就回帶團中 */
   const nav=$("#nav");
@@ -1504,9 +1504,8 @@ PAGES.seats=(hdr,scr)=>{
     };
   }
   el.querySelectorAll(".cartabs .tab").forEach(b=>b.onclick=()=>{ S.hsrCar[b.dataset.tk]=+b.dataset.car; save(); render(); });
-  el.querySelectorAll(".seat.mine,.seatg.mine").forEach(s=>s.addEventListener("click",()=>{
-    const p=pax(s.dataset.p); if(p) openPaxModal(p);
-  }));
+  const wireHsr=root=>root.querySelectorAll(".seat.mine,.seatg.mine").forEach(s=>s.addEventListener("click",ev=>{ ev.stopPropagation(); const p=pax(s.dataset.p); if(p) openPaxModal(p); }));
+  wireHsr(el); window.LB_WIRE=wireHsr;
   if(!el.isConnected) scr.appendChild(el);
 };
 /* 轉向時橫式／直式要重排 */
@@ -1791,17 +1790,58 @@ function svgCarThsrc(carNo, seatMap, t){
 function openLightbox(inner, title){
   closeLightbox();
   const box=document.createElement("div"); box.id="lightbox";
-  box.innerHTML=`<div class="lbhead"><span class="lbtitle">${esc(title||"")}</span><span class="lbhint">兩指縮放・雙擊放大・拖曳移動</span><button class="lbx" title="關閉">✕</button></div>
-    <div class="lbbody"><div class="zw"></div></div>`;
-  const clone=inner.cloneNode(true); clone.style.transform=""; clone.classList.remove("zin");
-  box.querySelector(".zw").appendChild(clone);
+  box.innerHTML=`<div class="lbhead"><span class="lbtitle">${esc(title||"")}</span><span class="lbhint">兩指縮放・雙擊放大・拖曳移動</span>
+      <span class="lbzoom"><button data-z="out">－</button><span class="lbpct">100%</span><button data-z="in">＋</button><button data-z="fit">符合</button></span>
+      <button class="lbx" title="關閉">✕</button></div>
+    <div class="lbbody"><div class="lbstage"></div></div>`;
+  const clone=inner.cloneNode(true); clone.style.transform=""; clone.classList.remove("zin"); clone.classList.add("lbimg");
+  const stage=box.querySelector(".lbstage"), body=box.querySelector(".lbbody");
+  stage.appendChild(clone);
   document.body.appendChild(box);
   document.body.classList.add("lb-open");
   box.querySelector(".lbx").onclick=closeLightbox;
-  box.addEventListener("click",e=>{ if(e.target===box||e.target.classList.contains("lbbody")) closeLightbox(); });
-  requestAnimationFrame(()=>{ zoomify(box.querySelector(".zw")); if(window.LB_WIRE) window.LB_WIRE(clone); });
+  /* 全螢幕縮放引擎：先「符合畫面」，之後不受原圖大小限制，整張圖放大到 12 倍都行 */
+  let base={w:0,h:0}, s=1, tx=0, ty=0, minS=1;
+  const pct=box.querySelector(".lbpct");
+  const ratio=()=>{ if(clone.tagName.toLowerCase()==="img") return (clone.naturalWidth||4)/(clone.naturalHeight||3);
+    const vb=(clone.getAttribute("viewBox")||"").split(/[\s,]+/).map(Number); return vb.length===4&&vb[3]?vb[2]/vb[3]:(clone.clientWidth||4)/(clone.clientHeight||3); };
+  const fit=()=>{ const W=body.clientWidth, H=body.clientHeight, r=ratio();
+    base.w=Math.min(W, H*r); base.h=base.w/r;                       /* contain */
+    clone.style.width=base.w+"px"; clone.style.height=base.h+"px";
+    s=1; tx=(W-base.w)/2; ty=(H-base.h)/2; apply(); };
+  const apply=()=>{ const W=body.clientWidth, H=body.clientHeight, cw=base.w*s, ch=base.h*s;
+    tx = cw<=W ? (W-cw)/2 : Math.min(0,Math.max(W-cw,tx));
+    ty = ch<=H ? (H-ch)/2 : Math.min(0,Math.max(H-ch,ty));
+    stage.style.transform=`translate(${tx}px,${ty}px) scale(${s})`; pct.textContent=Math.round(s*100)+"%"; };
+  const zoomAt=(f,cx,cy)=>{ const ns=Math.min(12,Math.max(minS,s*f)); f=ns/s; tx=cx-(cx-tx)*f; ty=cy-(cy-ty)*f; s=ns; apply(); };
+  const rel=e=>{ const r=body.getBoundingClientRect(); return [e.clientX-r.left,e.clientY-r.top]; };
+  const ptrs=new Map(); let pinch=null, drag=null, lastTap=0, moved=false;
+  body.addEventListener("pointerdown",e=>{ ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY}); try{ body.setPointerCapture(e.pointerId); }catch(_){}
+    if(ptrs.size===2){ const [p,q]=[...ptrs.values()]; const r=body.getBoundingClientRect();
+      pinch={d:Math.hypot(p.x-q.x,p.y-q.y),s0:s,cx:(p.x+q.x)/2-r.left,cy:(p.y+q.y)/2-r.top,tx0:tx,ty0:ty}; drag=null; }
+    else if(ptrs.size===1){ drag={x:e.clientX,y:e.clientY,tx0:tx,ty0:ty}; moved=false; } });
+  body.addEventListener("pointermove",e=>{ if(!ptrs.has(e.pointerId)) return; ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    if(pinch&&ptrs.size===2){ const [p,q]=[...ptrs.values()]; const d=Math.hypot(p.x-q.x,p.y-q.y); const r=body.getBoundingClientRect();
+      const cx=(p.x+q.x)/2-r.left, cy=(p.y+q.y)/2-r.top, ns=Math.min(12,Math.max(minS,pinch.s0*d/pinch.d)), f=ns/pinch.s0;
+      tx=cx-(pinch.cx-pinch.tx0)*f; ty=cy-(pinch.cy-pinch.ty0)*f; s=ns; apply(); }
+    else if(drag&&ptrs.size===1){ const dx=e.clientX-drag.x, dy=e.clientY-drag.y; if(Math.hypot(dx,dy)>4) moved=true; tx=drag.tx0+dx; ty=drag.ty0+dy; apply(); } });
+  const up=e=>{ ptrs.delete(e.pointerId);
+    if(ptrs.size===0){ const now=Date.now();
+      if(!pinch&&!moved){ if(now-lastTap<320){ const [cx,cy]=rel(e); if(s>1.5){ fit(); } else zoomAt(2.5,cx,cy); lastTap=0; } else lastTap=now; }
+      pinch=null; drag=null; }
+    else if(ptrs.size===1){ pinch=null; const [p]=[...ptrs.values()]; drag={x:p.x,y:p.y,tx0:tx,ty0:ty}; } };
+  body.addEventListener("pointerup",up); body.addEventListener("pointercancel",up);
+  body.addEventListener("wheel",e=>{ e.preventDefault(); const [cx,cy]=rel(e); zoomAt(e.deltaY<0?1.15:1/1.15,cx,cy); },{passive:false});
+  box.querySelectorAll(".lbzoom button").forEach(bt=>bt.onclick=ev=>{ ev.stopPropagation(); const W=body.clientWidth,H=body.clientHeight;
+    if(bt.dataset.z==="fit") fit(); else zoomAt(bt.dataset.z==="in"?1.5:1/1.5,W/2,H/2); });
+  /* 點座位仍可看貴賓：拖過就不算點 */
+  stage.addEventListener("click",e=>{ if(moved){ e.stopPropagation(); e.preventDefault(); } },true);
+  window.addEventListener("resize",fit);
+  box._cleanup=()=>window.removeEventListener("resize",fit);
+  const start=()=>{ fit(); if(window.LB_WIRE) window.LB_WIRE(clone); };
+  if(clone.tagName.toLowerCase()==="img"&&!clone.complete) clone.onload=start; else requestAnimationFrame(start);
 }
-function closeLightbox(){ const b=document.getElementById("lightbox"); if(b) b.remove(); document.body.classList.remove("lb-open"); }
+function closeLightbox(){ const b=document.getElementById("lightbox"); if(b){ if(b._cleanup) b._cleanup(); b.remove(); } document.body.classList.remove("lb-open"); }
 function zoomify(wrap){
   const inner=wrap.firstElementChild; if(!inner||wrap.dataset.zoom) return;
   wrap.dataset.zoom="1"; inner.classList.add("zin");
@@ -1828,6 +1868,9 @@ function zoomify(wrap){
   wrap.addEventListener("wheel",e=>{ if(!e.ctrlKey&&!e.metaKey) return; e.preventDefault(); const [cx,cy]=rel(e); zoomAt(e.deltaY<0?1.15:1/1.15,cx,cy); },{passive:false});
   const bar=document.createElement("div"); bar.className="zoombar";
   const inBox=!!wrap.closest("#lightbox");
+  wrap.addEventListener("click",e=>{ if(inBox||wrap.classList.contains("zoomed")||e.target.closest(".zoombar")) return;
+    if(e.target.closest(".seat.mine,.seatg.mine,.sseat")) return;
+    openLightbox(inner, wrap.dataset.title||""); });
   bar.innerHTML=`<button data-z="in" title="放大">＋</button><button data-z="out" title="縮小">－</button><button data-z="reset" title="還原">1:1</button>${inBox?"":`<button data-z="box" title="全螢幕">⤢</button>`}`;
   bar.querySelectorAll("button").forEach(b=>b.onclick=ev=>{ ev.stopPropagation();
     if(b.dataset.z==="box") openLightbox(inner, wrap.dataset.title||"");
@@ -1870,7 +1913,7 @@ function svgHsr(containerW){
       ${tabs}
       <div class="cars">${[cur].map(c=>`
         <div class="carblk">
-          <div class="zw">${svgCarThsrc(c,map,t)}</div>
+          <div class="zw" data-title="高鐵 ${esc(t.no)} · ${c} 車">${svgCarThsrc(c,map,t)}</div>
           <div class="zoomhint">兩指縮放・放大後可拖曳・雙擊切換</div>
         </div>`).join("")}</div>
     </div>`;
@@ -2047,7 +2090,6 @@ PAGES.fusen=(hdr,scr)=>{
   const wireSeats=root=>root.querySelectorAll(".seatg.mine").forEach(s=>s.addEventListener("click",ev=>{ ev.stopPropagation(); const p=pax(s.dataset.p); if(p) openPaxModal(p); }));
   wireSeats(el); window.LB_WIRE=wireSeats;
   const zw=el.querySelector(".fusencar .zw"); zw.dataset.title=`福森號 ${SG.label} · ${car} 車 ${L.name}`;
-  zw.querySelector("svg").addEventListener("click",e=>{ if(!zw.classList.contains("zoomed")) openLightbox(zw.firstElementChild, zw.dataset.title); });
   el.querySelectorAll(".zw").forEach(zoomify);
   scr.appendChild(el);
 };
@@ -2804,7 +2846,7 @@ PAGES.rooms=(hdr,scr)=>{
     const f=curF, list=rooms.filter(x=>x.f===f), img=planOf(f);
     return `<h3 class="sect">${f}F <span class="efhint">${list.filter(x=>(x.r.who||[]).length).length} 間・${list.reduce((n,x)=>n+(x.r.who||[]).length,0)} 人</span></h3>
     <div class="floorsec${img?"":" noplan"}">
-      ${img?`<div class="card floorwrap"><div class="zw"><img class="zin" src="${img}" alt="${f}F 平面圖"></div><div class="zoomhint">產品部 9/16 原圖・兩指縮放、拖曳；＋－回 1:1</div></div>`:""}
+      ${img?`<div class="card floorwrap"><div class="zw" data-title="${esc(N.hotel)} ${f}F 平面圖"><img class="zin" src="${img}" alt="${f}F 平面圖"></div><div class="zoomhint">產品部 9/16 原圖・兩指縮放、拖曳；＋－回 1:1</div></div>`:""}
       <div class="roomgrid floorrooms">${list.map(card).join("")}</div>
     </div>`; })()}`;
   el.querySelectorAll("[data-vm]").forEach(b=>b.onclick=()=>openVendorModal(b.dataset.vm));
