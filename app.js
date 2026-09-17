@@ -440,7 +440,7 @@ let ITIN = {
     { t:"06:30", title:"高鐵 0203 台北 → 嘉義", desc:"06:30 台北發車，07:20 台中（柳教授、村煌董上車），07:43 抵嘉義。商務 6 車、經濟 5 車。",
       links:[["seats:hsr","高鐵座位表"]] },
     { t:"08:00", title:"專車前往北門車站", desc:"嘉義高鐵站出站上巴士（43 客座大巴、四排椅），08:40 抵達。車上備福森保溫瓶溫水＋每日一箱紙盒水。",
-      staff:["村煌董安排導覽（待確認）"], links:[["seats:bus","遊覽車座位表"]] },
+      staff:["村煌董安排導覽（待確認）"], links:[] },
     { t:"09:10", title:"北門車站 報到 · 福森號 A 段", desc:"報到 09:10–09:20，地點：北門車站新站 林鐵售票口旁（嘉義市東區忠孝路306號）。09:30 月台上車。",
       links:[["roster","點名報到"],["fusen","福森號座位"]] },
     { t:"09:30", title:"福森號 A 段（北門→十字路）", desc:"09:52 鹿滿站復古拍照 → 10:41 樟腦寮站月台音樂表演 → 11:32 第三景觀台俯瞰嘉南平原 → 12:36 奮起湖 → 12:56 多林（緩行）。午餐：福森號九宮格。",
@@ -560,7 +560,7 @@ function buildSeed(){
     tour:TOUR_SEED, pax:PAX_SEED, nights:NIGHTS_SEED, menu:MENU_SEED, meals,
     vendors:VENDORS_SEED, vendorTodo:VENDOR_TODO_SEED,
     budget:BUDGET_ITEMS_SEED, headcount:BUDGET_HEADCOUNT_SEED,
-    itin:ITIN_SEED, luggageRoute:LUGGAGE_ROUTE_SEED, hsrTrains:HSR_TRAINS_SEED, _seatVer:3, _menuVer:1, _budgetVer:1, _tourVer:2, _docVer:4,
+    itin:ITIN_SEED, luggageRoute:LUGGAGE_ROUTE_SEED, hsrTrains:HSR_TRAINS_SEED, _seatVer:3, _menuVer:1, _budgetVer:1, _tourVer:2, _docVer:5,
   });
 }
 /* 出廠預設另存一份，之後 TOUR / PAX… 這些名字都指向 S.data */
@@ -647,6 +647,11 @@ function bindData(){
     const t664b=(HSR_TRAINS[3]||[]).find(x=>x.no==="0664"); if(t664b) t664b.unused=Object.assign({},t664b.unused,{ "6車 6E":"04421386 已訂・螘金花 9/15 取消" });
     for(const k of Object.keys(S.seating||{})) (S.seating[k].tables||[]).forEach(t=>{ t.seats=t.seats.map(v=>v==="p15"?null:v); });
     S.data._docVer=4;
+  }
+  if((S.data._docVer||0)<5){
+    for(const d of Object.keys(ITIN)) (ITIN[d]||[]).forEach(st=>{ if(st.links) st.links=st.links.filter(l=>l[0]!=="seats:bus"); });
+    if(S.seatTab==="bus") S.seatTab="hsr";
+    S.data._docVer=5;
   }
   if((S.data._tourVer||0)<2){
     const st=(ITIN[2]||[]).find(x=>x.title==="自選 · 祝山日出");
@@ -934,7 +939,7 @@ const NAVS=[["home","home","首頁"],["lead","flag","帶團中"]];
 function goTab(t){ S.tab=t; S.page=null; save(); render(); }
 function goPage(p){
   if(p&&p.startsWith("vendors:")){ openVendorModal(p.slice(8)); return; }
-  if(p&&p.includes(":")){ const [a,b]=p.split(":"); S.page=a; if(a==="seats") S.seatTab=b; if(a==="optin") S.optKey=b; if(a==="tables") S.mealId=b; }
+  if(p&&p.includes(":")){ const [a,b]=p.split(":"); S.page=a; if(a==="seats") S.seatTab=(b==="bus"?"hsr":b); if(a==="optin") S.optKey=b; if(a==="tables") S.mealId=b; }
   else S.page=p;
   S.tab="lead"; save(); render();
 }
@@ -1077,7 +1082,7 @@ const PAX_FIELDS=[
   {k:"meal",label:"特殊餐食",ph:"忌生食／海鮮…"},{k:"note",label:"備註",type:"textarea",rows:2},
 ];
 const linkOpts=()=>FUNCS.map(([id,,lb])=>[id,lb])
-  .concat([["seats:hsr","高鐵座位表"],["seats:bus","遊覽車座位表"],["consent","離隊切結"],["storage","資料保全"]])
+  .concat([["seats:hsr","高鐵座位表"],["consent","離隊切結"],["storage","資料保全"]])
   .concat(VENDORS.map(v=>["vendors:"+v.id, v.name+" 資訊"]));
 const linkLabel=v=>{ const o=linkOpts().find(x=>x[0]===v); return o?o[1]:v; };
 const ITIN_FIELDS=()=>[
@@ -1475,21 +1480,12 @@ function rosterRoll(scr){
 
 /* ---------- 座位表 ---------- */
 PAGES.seats=(hdr,scr)=>{
-  hbar(hdr,S.seatTab==="bus"?"遊覽車座位圖":"高鐵座位圖",{back:true});
-  const tb=document.createElement("div");
-  tb.className="tabbar";
-  tb.innerHTML=`<button class="tab" data-t="hsr">🚄 高鐵</button>
-    <button class="tab" data-t="bus">🚌 遊覽車</button>`;
-  tb.querySelectorAll(".tab").forEach(t=>{
-    t.classList.toggle("on",t.dataset.t===S.seatTab);
-    t.onclick=()=>{ S.seatTab=t.dataset.t; save(); render(); };
-  });
-  scr.appendChild(tb);
-  if(S.seatTab==="train"){ S.seatTab="hsr"; }
-  if(S.seatTab==="hsr") dayPills(scr);
+  hbar(hdr,"高鐵座位圖",{back:true});
+  S.seatTab="hsr";   /* 只剩高鐵；遊覽車座位圖已拿掉 */
+  dayPills(scr);
   const el=document.createElement("div");
   el.className="pagepad";
-  if(S.seatTab==="hsr"){
+  {
     el.classList.add("wide");   /* 座位圖在 iPad 橫放要吃滿寬度才排得下橫式 */
     el.innerHTML=`<div id="seatArea"></div>
       <p class="vs">座位依開票紀錄對位。實際入座以現場票面為準。</p>`;
@@ -1506,13 +1502,6 @@ PAGES.seats=(hdr,scr)=>{
       editForm("編輯車次",[{k:"no",label:"車次",required:true},{k:"route",label:"路線／時間"},{k:"dir",label:"方向",type:"select",opts:["南下","北上"]},{k:"tag",label:"標籤"}],
         t,{onSave:o=>{ Object.assign(t,o); dataChanged("已儲存"); }});
     };
-  }else{
-    el.innerHTML=`<div class="card"><div class="seatwrap" id="seatArea"></div>
-      <div class="legend"><span><span class="sw" style="background:#FDECEE;border-color:#C8102E"></span>本團座位</span>
-      <span><span class="sw"></span>其他座位</span><span>點座位查看貴賓</span></div>
-      <p class="vs" style="margin:8px 0 0">座位對應為示意，實際以林鐵配位／現場安排為準。</p></div>`;
-    el.querySelector("#seatArea").innerHTML = `<div class="zw">${S.seatTab==="train"?svgTrain():svgBus()}</div>`;
-    el.querySelectorAll(".zw").forEach(zoomify);
   }
   el.querySelectorAll(".cartabs .tab").forEach(b=>b.onclick=()=>{ S.hsrCar[b.dataset.tk]=+b.dataset.car; save(); render(); });
   el.querySelectorAll(".seat.mine,.seatg.mine").forEach(s=>s.addEventListener("click",()=>{
@@ -2063,53 +2052,6 @@ PAGES.fusen=(hdr,scr)=>{
   scr.appendChild(el);
 };
 
-function svgTrain(){
-  const byCar={4:{},5:{}};
-  PAX.forEach(p=>{ const m=(p.trainSeat||"").match(/^([45])車 (\d+)號$/); if(m) byCar[m[1]][+m[2]]=p; });
-  const tlm=TRAIN_TL.seat.match(/^([45])車 (\d+)號$/);
-  let out=`<div style="font-weight:800;margin-bottom:4px;font-size:13.5px">阿里山林鐵 · 福森號（配位 25 席：24 位＋領隊 1）</div>
-  <p class="vs" style="margin:0 0 8px">9/20 A段：北門→鹿滿→樟腦寮→第三景觀台→奮起湖→多林→十字路｜9/21 C段：阿里山→二萬坪→十字路→奮起湖</p>`;
-  const CARS=[{car:5,seats:17,label:"第 5 車廂（貴賓 · 1–17號）"},{car:4,seats:8,label:"第 4 車廂（主管 · 1–8號）"}];
-  for(const {car,seats,label} of CARS){
-    const perRow=Math.min(9,seats);
-    const rows=Math.ceil(seats/perRow);
-    const w=40+perRow*68, h=26+rows*54;
-    out+=`<div style="font-size:12.5px;font-weight:700;color:#8E8E93;margin:10px 0 4px">${label}</div>
-    <svg viewBox="0 0 ${w} ${h}" width="${w}" style="max-width:100%">
-    <rect x="4" y="4" width="${w-8}" height="${h-8}" rx="20" fill="#FAF7F2" stroke="#C9C9CF" stroke-width="2"/>`;
-    for(let no=1;no<=seats;no++){
-      const r=Math.floor((no-1)/perRow), c=(no-1)%perRow;
-      const isTL = tlm && +tlm[1]===car && +tlm[2]===no;
-      const p=byCar[car][no];
-      if(isTL){
-        const x=26+c*68, y=16+r*54;
-        out+=`<rect class="seat mine" x="${x}" y="${y}" width="58" height="42" rx="6" style="fill:#FFF3E0;stroke:#FF9500"></rect>
-        <text class="seatlb" x="${x+29}" y="${y+12}">${no}號</text>
-        <text class="seatnm" x="${x+29}" y="${y+35}" style="fill:#C77700">領隊</text>`;
-      }else{
-        out+=seatRect(26+c*68,16+r*54,58,42,`${no}號`,p?p.name:"",p?p.id:null);
-      }
-    }
-    out+=`</svg>`;
-  }
-  return out;
-}
-function svgBus(){
-  /* 巴士座位（示意，實際依現場安排） */
-  const seatOrder=GUESTS().filter(p=>p.days.includes(1));
-  const cols=["A","B","C","D"], seatOf={};
-  seatOrder.forEach((p,i)=>{ seatOf[`${Math.floor(i/4)+2}${cols[i%4]}`]=p; });
-  let svg=`<div style="font-weight:800;margin-bottom:8px;font-size:13.5px">遊覽車（嘉義高鐵站↔北門↔阿里山 接駁）</div>
-  <svg viewBox="0 0 720 260" width="720" style="max-width:100%">
-  <rect x="4" y="4" width="712" height="252" rx="24" fill="none" stroke="#C9C9CF" stroke-width="2"/>
-  <rect x="16" y="14" width="60" height="44" rx="8" fill="#F0F0F2"/><text x="46" y="40" text-anchor="middle" font-size="10" fill="#8E8E93">司機</text>`;
-  for(let r=0;r<10;r++) for(let c=0;c<4;c++){
-    const label=`${r+1}${cols[c]}`, p=seatOf[label];
-    svg+=seatRect(90+r*62,14+c*48+(c>=2?46:0),54,42,label,p?p.name:"",p?p.id:null);
-  }
-  svg+=`<text x="400" y="130" text-anchor="middle" font-size="10" fill="#B9B9BF">走 道</text></svg>`;
-  return svg;
-}
 function openPaxModal(p){
   const ord=S.orders[p.id];
   openModal(`${p.name} · ${p.rel}`,`
