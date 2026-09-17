@@ -305,11 +305,11 @@ let MEALS = {
   1:[["早餐","高鐵站發放（領隊領取）","阜杭豆漿 招牌厚餅夾蛋＋豆漿・需 20 個雄獅小紅袋（品項待確認）","OK",["v_fuhang"]],
      ["午餐","福森號列車上","福森號九宮格（列車費用內含）","OK",["v_fusen"]],
      ["小點","十字路站・鳴心咖啡","樟腦寮區間統計致電預約、十字路站領取外帶（菜單待確認）","待確認",["v_mingxin"]],
-     ["晚餐","阿里山賓館・神木廳（大包廂）","合菜・餐廳已安排分菜｜最多 22 位・2,280/人（房費內含 1,000/人）｜巴黎與岳聰總坐外面","OK",["v_alishan"]]],
+     ["晚餐","阿里山賓館・外場地（3F 中餐廳＋舞台）","合菜分菜・魏董＆魏董夫人備無海鮮套餐｜A 桌 11／B 桌 10（現場改平行）｜2,280/人（房費內含 1,000/人）","OK",["v_alishan"]]],
   2:[["早餐","阿里山賓館・麗景廳（現代館1F）","07:00–10:00（最後進場 09:30）","OK",["v_alishan"]],
      ["點心","祝山站小舖","日出行程・現場點","待確認",["v_zhushan"]],
      ["小點","奮起湖老街","甜甜圈＋愛玉・裝袋拿著吃","OK",["v_donut","v_aiyu"]],
-     ["午餐","山芙蓉 無菜單料理","8 菜 1 湯：肉類×2、豆腐×1、蛋料理×1、湯品×1，其餘由主廚依當日食材搭配 2–3 道","OK",["v_fkuo"]],
+     ["午餐","山芙蓉 無菜單料理","無菜單套餐式（忌食已提供餐廳）・A 長桌 10／B 桌 7／C 桌 6・戴董加入、魏董伉儷午餐後離團","OK",["v_fkuo"]],
      ["茶席","小山霂茗（林園製茶）","老闆親自接待・每桌 7 人分 3–4 桌、每桌一位茶師","OK",["v_xiaoshan","v_linyuan"]],
      ["晚餐","阿里山英迪格・HUFU氛饗亭（宴會廳C）","套餐式・座位圖 20 人（A 桌 10／B 桌 9），見「分桌」","OK",["v_indigo"]]],
   3:[["早餐","阿里山英迪格・粟餐廳（1F）","07:00–10:30","OK",["v_indigo"]],
@@ -336,10 +336,10 @@ let VENDORS = [
     note:"作業手冊規劃：10:07–10:41 樟腦寮區間由領隊統計後致電預約，13:20 十字路站領取。",
     warn:"網路資訊寫「不接受訂位」，與車上預點的計畫衝突。須先與店家談定流程，含 22 杯的產能與備料時間。" },
 
-  { id:"v_alishan", name:"阿里山賓館", sub:"D1 晚餐 神木廳／D2 早餐 麗景廳／住宿兩晚", days:[1,2], slots:["晚餐","早餐","住宿"],
+  { id:"v_alishan", name:"阿里山賓館", sub:"D1 晚餐 3F 中餐廳外場地／D2 早餐 麗景廳／住宿一晚", days:[1,2], slots:["晚餐","早餐","住宿"],
     tel:["05-267-9811"], email:"service@alishanhotel.com.tw", addr:"嘉義縣阿里山鄉香林村16號",
     hours:"麗景廳早餐 07:00–10:00（最後進場 09:30）",
-    note:"神木廳大包廂最多 22 位・2,280/人（房費內含 1,000/人）。合菜，餐廳已安排分菜。" },
+    note:"晚餐改在 3F 中餐廳外場地（加舞台），A、B 兩圓桌改平行。2,280/人（房費內含 1,000/人）。合菜分菜，魏董伉儷備無海鮮套餐。" },
 
   { id:"v_zhushan", name:"祝山站小舖", sub:"D2 點心・日出行程", days:[2], slots:["點心"],
     tel:[], addr:"祝山車站",
@@ -457,10 +457,10 @@ let ITIN = {
       links:[["luggage","行李點收"],["vendors:v_suwana","雨備 宿瓦納咖啡屋"]] },
     { t:"14:00", title:"水山巨木步道（導覽）", desc:"14:00–15:20 領隊導覽。導覽耳機可否沿用福森號設備待確認。", links:[] },
     { t:"15:30", title:"行李與桌牌前置", desc:"行李車抵達阿里山賓館。",
-      staff:["冠廷：行李、入房禮請飯店放入房","冠廷：前往神木廳放置桌牌"], links:[["luggage","行李點收"]] },
+      staff:["冠廷：行李、入房禮請飯店放入房","冠廷：前往 3F 中餐廳外場地放置桌牌"], links:[["luggage","行李點收"]] },
     { t:"16:30", title:"阿里山賓館 Check-in", desc:"16:30–16:45 辦理入住【現代館】。行李服務每件 $50／單趟。",
       links:[["rooms","分房表"],["luggage","行李點收"]] },
-    { t:"18:00", title:"晚餐 · 神木廳（大包廂）", desc:"最多 22 位、2,280/人。合菜，餐廳已安排分菜。開席時間待確認。",
+    { t:"18:00", title:"晚餐 · 3F 中餐廳外場地（加舞台）", desc:"A 桌 11／B 桌 10，主要出入口在舞台右側。2,280/人。合菜分菜，魏董伉儷無海鮮套餐。開席時間待確認。",
       staff:["巴黎（陳婉如）與岳聰總坐外面"], links:[["meals","餐食・分桌"]] },
   ],
   2: [
@@ -560,7 +560,7 @@ function buildSeed(){
     tour:TOUR_SEED, pax:PAX_SEED, nights:NIGHTS_SEED, menu:MENU_SEED, meals,
     vendors:VENDORS_SEED, vendorTodo:VENDOR_TODO_SEED,
     budget:BUDGET_ITEMS_SEED, headcount:BUDGET_HEADCOUNT_SEED,
-    itin:ITIN_SEED, luggageRoute:LUGGAGE_ROUTE_SEED, hsrTrains:HSR_TRAINS_SEED, _seatVer:3, _menuVer:1, _budgetVer:1, _tourVer:2, _docVer:1,
+    itin:ITIN_SEED, luggageRoute:LUGGAGE_ROUTE_SEED, hsrTrains:HSR_TRAINS_SEED, _seatVer:3, _menuVer:1, _budgetVer:1, _tourVer:2, _docVer:2,
   });
 }
 /* 出廠預設另存一份，之後 TOUR / PAX… 這些名字都指向 S.data */
@@ -625,6 +625,14 @@ function bindData(){
     S.data.nights=seed.nights; NIGHTS=S.data.nights;
     for(const d of [2,3]) (MEALS[d]||[]).forEach((m,i)=>{ const sm=(seed.meals[d]||[])[i]; if(sm && m.place===sm.place && /HUFU 套餐（菜單調整中）|合菜（需分菜）・800\/人｜是否品茗/.test(m.menu)) m.menu=sm.menu; });
     S.data._docVer=1;
+  }
+  if((S.data._docVer||0)<2){
+    const fix=(d,i,test)=>{ const m=(MEALS[d]||[])[i], sm=(seed.meals[d]||[])[i]; if(m&&sm&&test.test(m.menu||"")){ m.place=sm.place; m.menu=sm.menu; } };
+    fix(1,3,/餐廳已安排分菜/); fix(2,3,/8 菜 1 湯/);
+    const st=(ITIN[1]||[]).find(x=>x.t==="18:00"&&/神木廳/.test(x.title)); const ss=(seed.itin[1]||[]).find(x=>x.t==="18:00");
+    if(st&&ss){ st.title=ss.title; st.desc=ss.desc; st.staff=ss.staff; }
+    const va=VENDORS.find(v=>v.id==="v_alishan"), sva=seed.vendors.find(v=>v.id==="v_alishan"); if(va&&sva&&/神木廳/.test(va.note||"")){ va.sub=sva.sub; va.note=sva.note; }
+    S.data._docVer=2;
   }
   if((S.data._tourVer||0)<2){
     const st=(ITIN[2]||[]).find(x=>x.title==="自選 · 祝山日出");
@@ -2148,12 +2156,12 @@ PAGES.meals=(hdr,scr)=>{
     ${specials.map(p=>`<div style="font-size:13px;padding:3px 0;display:flex;gap:8px;align-items:baseline">
       <b style="min-width:64px">${esc(p.name)}</b><span class="pill amber">${esc(p.meal)}</span></div>`).join("")}
     <div style="font-size:12.5px;line-height:1.7;color:#8A6400;margin-top:9px;padding-top:9px;border-top:1px dashed #E8D08A">
-      <b>分菜提醒</b>　D1 神木廳、D3 優遊吧斯為合菜，餐廳已安排分菜；午間桌菜從簡避免浪費。<br>
+      <b>分菜提醒</b>　D1 阿里山賓館外場地、D3 優遊吧斯為合菜，餐廳已安排分菜；午間桌菜從簡避免浪費。<br>
       <b>座位提醒</b>　D1 晚宴：巴黎（陳婉如）與岳聰總坐外面。
     </div>
   </div>
 
-  <h3 class="sect">第 ${S.day} 天餐食 · ${TOUR.dates[S.day-1]}<span class="efhint">每家餐廳各自分桌，點「分桌」打開</span></h3>
+  <h3 class="sect">第 ${S.day} 天餐食 · ${TOUR.dates[S.day-1]}<span class="efhint">有產品部座位圖的餐次才有「分桌」</span></h3>
   ${(MEALS[S.day]||[]).map((m,i)=>{
     const {slot,place,menu,st,vids}=m;
     const st_=seatingOf(m), seated=st_.tables.reduce((n,t)=>n+t.seats.filter(Boolean).length,0), custom=!!S.seating[m.id];
@@ -2168,7 +2176,7 @@ PAGES.meals=(hdr,scr)=>{
         ${ebtn(String(i),true)}<span class="pill ${st==="OK"?"green":"amber"}">${esc(st)}</span>
       </div>
       <div style="font-size:13px;color:var(--ink2);margin-top:6px;line-height:1.65">${esc(menu)}</div>
-      <div class="links"><button class="chip tblopen" data-tb="${esc(m.id)}">${ic("meal",13)}分桌 · ${st_.tables.length} 桌 ${seated} 人${custom?"":"（預設）"}</button>${calls}${info}</div>
+      <div class="links">${hasSeating(m)?`<button class="chip tblopen" data-tb="${esc(m.id)}">${ic("meal",13)}分桌 · ${st_.tables.length} 桌 ${seated} 人${custom?"（已調整）":""}</button>`:""}${calls}${info}</div>
     </div>`;
   }).join("")}
   <p class="vs">山芙蓉與優遊吧斯皆為原住民風味，菜單已協調避免重複。電話為網路查得資訊，撥號前請先確認窗口。</p>`;
@@ -2732,6 +2740,13 @@ function editRoom(N,i){
  * 位子可異動：長按名字 → 抬起 → 拖到別的位子（互換）、空位（搬過去）、桌子（加入）、未入座區（移出）。 */
 /* 9/17 官方座位圖（產品部 PDF）：順時針、從 12 點方向開始；用姓名對到 PAX */
 const SEAT_DOC = {
+  d1m3:{ note:"合菜分菜・魏董＆魏董夫人備無海鮮套餐・舞台在上方，主要出入口在右下（A、B 桌現場改平行）", tables:[
+    { name:"A 桌（11 人）", who:["王文傑","魏寶生","趙秋芬","游慧茹","盧希鵬","邱浩軒","利明献","張郁芬","張振明","陳萱","陳聖德"] },
+    { name:"B 桌（10 人）", who:["凌瓏","游張松","王　雍","劉惟珺","鄭兆剛","黃信川","王村煌","王岳聰","陳曉穎","柳婉郁"] } ] },
+  d2m3:{ note:"無菜單料理、套餐式，忌食已由冠廷提供餐廳・戴董來、魏董及夫人走・廁所在上方，門在下方（C 桌後）", tables:[
+    { name:"A 桌（10 人・長桌）", shape:"long", dir:"v", split:5, who:["張郁芬","柳婉郁","黃信川","盧希鵬","游慧茹","利明献","g:龔處長","王文傑","魏寶生","趙秋芬"], side:["左排（上→下）","右排（上→下）"] },
+    { name:"B 桌（7 人・長桌）",  shape:"long", dir:"h", split:3, who:["游張松","戴啟珩","張振明","王　雍","凌瓏","陳聖德","陳萱"], side:["上排（廁所側）","下排"] },
+    { name:"C 桌（6 人・長桌）",  shape:"long", dir:"h", split:3, who:["王村煌","陳曉穎","邱浩軒","王岳聰","鄭兆剛","劉惟珺"], side:["上排","下排（門側）"], door:"下方：門" } ] },
   d2m5:{ note:"套餐式・座位圖 20 人", tables:[
     { name:"A 桌（10 人）", who:["王文傑","利明献","張郁芬","游慧茹","盧希鵬","邱浩軒","劉惟珺","張振明","陳萱","陳聖德"] },
     { name:"B 桌（9 人）",  who:["凌瓏","王　雍","游張松","黃信川","王村煌","戴啟珩","陳曉穎","王岳聰","鄭兆剛"] } ] },
@@ -2739,14 +2754,17 @@ const SEAT_DOC = {
     { name:"大桌（19 人）", who:["王文傑","利明献","張郁芬","邱浩軒","黃信川","陳曉穎","王岳聰","王村煌","戴啟珩","凌瓏","陳聖德","陳萱","張振明","劉惟珺","鄭兆剛","游張松","王　雍","游慧茹","盧希鵬"], door:"6 點方向：正門" },
     { name:"小桌（16 人）", who:[], cap:8 } ] },
 };
+/* 座位值：PAX 的 id，或 "g:姓名"＝名單外的來賓（例：龔處長） */
+function seatPerson(v){ if(!v) return null; if(String(v).startsWith("g:")) return {id:v,name:v.slice(2),group:"來賓",guest:true}; return pax(v); }
 function defaultSeating(m){
   const day=+String(m.id||"").match(/^d(\d)/)?.[1] || S.day;
   const here=PAX.filter(p=>p.days.includes(day));
   const doc=SEAT_DOC[m.id];
   if(doc){
-    const byName=n=>{ const p=PAX.find(x=>x.name.replace(/\s/g,"")===n.replace(/\s/g,"")); return p?p.id:null; };
+    const byName=n=>{ if(n.startsWith("g:")) return n; const p=PAX.find(x=>x.name.replace(/\s/g,"")===n.replace(/\s/g,"")); return p?p.id:null; };
     return { note:doc.note, tables:doc.tables.map(t=>{ const ids=t.who.map(byName).filter(Boolean);
-      return { name:t.name, door:t.door||"", seats:ids.concat(Array(Math.max(0,(t.cap||ids.length)-ids.length)).fill(null)) }; }) };
+      return { name:t.name, door:t.door||"", shape:t.shape||"round", dir:t.dir||"h", split:t.split||0, side:t.side||null,
+               seats:ids.concat(Array(Math.max(0,(t.cap||ids.length)-ids.length)).fill(null)) }; }) };
   }
   const t1=here.filter(p=>p.table===1).map(p=>p.id), t2=here.filter(p=>p.table===2).map(p=>p.id);
   const pad=a=>a.concat(Array(Math.max(2, (Math.ceil((a.length+2)/2)*2)-a.length)).fill(null));
@@ -2761,9 +2779,10 @@ function svgRoundTable(t){
     <text x="${cx}" y="${cy-6}" text-anchor="middle" font-size="15" font-weight="800" fill="#7A5200">${esc(t.name.split("（")[0])}</text>
     <text x="${cx}" y="${cy+14}" text-anchor="middle" font-size="12" fill="#A87800">${t.seats.filter(Boolean).length} 人</text>`;
   t.seats.forEach((pid,i)=>{
-    const a=-Math.PI/2 + i*2*Math.PI/n, x=cx+R*Math.cos(a), y=cy+R*Math.sin(a), p=pid&&pax(pid);
+    const a=-Math.PI/2 + i*2*Math.PI/n, x=cx+R*Math.cos(a), y=cy+R*Math.sin(a), p=seatPerson(pid);
+    out+=`<text x="${cx+(R+r+9)*Math.cos(a)}" y="${cy+(R+r+9)*Math.sin(a)+3}" text-anchor="middle" font-size="9" fill="#B9B9BF">${i+1}</text>`;
     if(!p){ out+=`<circle cx="${x}" cy="${y}" r="${r}" fill="#fff" stroke="#C9C9CF" stroke-width="1.5" stroke-dasharray="4 3"/>`; return; }
-    const g=p.group==="貴賓"?["#FFF7F7","#F3C3C8"]:p.group==="雄獅主管"?["#F5F8FF","#C9D8F5"]:["#FAFAFB","#D5D5DA"];
+    const g=p.group==="貴賓"?["#FFF7F7","#F3C3C8"]:p.group==="雄獅主管"?["#F5F8FF","#C9D8F5"]:p.guest?["#FFFBE6","#E8C98A"]:["#FAFAFB","#D5D5DA"];
     const nm=p.name.replace(/\s/g,"").slice(0,4), two=nm.length>2;
     out+=`<circle cx="${x}" cy="${y}" r="${r}" fill="${g[0]}" stroke="${g[1]}" stroke-width="1.8"/>`;
     if(two&&r<22) out+=`<text x="${x}" y="${y-2}" text-anchor="middle" font-size="${fs}" font-weight="800" fill="#333336">${esc(nm.slice(0,2))}</text><text x="${x}" y="${y+fs}" text-anchor="middle" font-size="${fs}" font-weight="800" fill="#333336">${esc(nm.slice(2))}</text>`;
@@ -2772,18 +2791,48 @@ function svgRoundTable(t){
   if(t.door) out+=`<rect x="${cx-70}" y="${W-22}" width="140" height="18" rx="4" fill="#E5E5EA"/><text x="${cx}" y="${W-9}" text-anchor="middle" font-size="11" fill="#333336">門 · ${esc(t.door)}</text>`;
   return out+"</svg>";
 }
+/* 長桌圖：seats 前 split 個在第一側（上排或左排），其餘在第二側；每側由左到右／由上到下 */
+function svgLongTable(t){
+  const n=t.seats.length, sp=t.split||Math.ceil(n/2), s1=t.seats.slice(0,sp), s2=t.seats.slice(sp), m=Math.max(s1.length,s2.length,1);
+  const vert=t.dir==="v", step=64, r=22, len=m*step+20;
+  const W=vert?260:len+40, H=vert?len+40:250, cx=W/2, cy=H/2;
+  let out=`<svg class="roundtbl long${vert?" v":""}" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">`;
+  if(vert) out+=`<rect x="${cx-28}" y="${cy-len/2}" width="56" height="${len}" rx="8" fill="#FFF3D6" stroke="#E8C98A" stroke-width="2"/>
+    <text x="${cx}" y="${cy+5}" text-anchor="middle" font-size="15" font-weight="800" fill="#7A5200" transform="rotate(-90 ${cx} ${cy})">${esc(t.name.split("（")[0])}</text>`;
+  else out+=`<rect x="${cx-len/2}" y="${cy-28}" width="${len}" height="56" rx="8" fill="#FFF3D6" stroke="#E8C98A" stroke-width="2"/>
+    <text x="${cx}" y="${cy+5}" text-anchor="middle" font-size="15" font-weight="800" fill="#7A5200">${esc(t.name.split("（")[0])}</text>`;
+  const draw=(pid,idx,x,y)=>{
+    const p=seatPerson(pid);
+    out+=`<text x="${x}" y="${y-r-5}" text-anchor="middle" font-size="9" fill="#B9B9BF">${idx+1}</text>`;
+    if(!p){ out+=`<circle cx="${x}" cy="${y}" r="${r}" fill="#fff" stroke="#C9C9CF" stroke-width="1.5" stroke-dasharray="4 3"/>`; return; }
+    const g=p.group==="貴賓"?["#FFF7F7","#F3C3C8"]:p.group==="雄獅主管"?["#F5F8FF","#C9D8F5"]:p.guest?["#FFFBE6","#E8C98A"]:["#FAFAFB","#D5D5DA"];
+    const nm=p.name.replace(/\s/g,"").slice(0,4);
+    out+=`<circle cx="${x}" cy="${y}" r="${r}" fill="${g[0]}" stroke="${g[1]}" stroke-width="1.8"/><text x="${x}" y="${y+4}" text-anchor="middle" font-size="11" font-weight="800" fill="#333336">${esc(nm)}</text>`;
+  };
+  [s1,s2].forEach((side,si)=>{
+    const off=si===0?-70:70, start=(vert?cy:cx)-((side.length-1)*step)/2;
+    side.forEach((pid,i)=>{ const pos=start+i*step; if(vert) draw(pid,si===0?i:sp+i,cx+off,pos); else draw(pid,si===0?i:sp+i,pos,cy+off); });
+    if(t.side&&t.side[si]){ const lx=vert?cx+off:cx, ly=vert?cy-len/2-14:(si===0?cy-70-r-16:cy+70+r+18);
+      out+=`<text x="${lx}" y="${vert?(si===0?ly:ly):ly}" text-anchor="middle" font-size="10" fill="#8E8E93">${esc(t.side[si])}</text>`; }
+  });
+  if(t.door) out+=`<rect x="${cx-60}" y="${H-20}" width="120" height="16" rx="4" fill="#E5E5EA"/><text x="${cx}" y="${H-8}" text-anchor="middle" font-size="10" fill="#333336">門 · ${esc(t.door)}</text>`;
+  return out+"</svg>";
+}
 function seatingOf(m){
   const st=S.seating[m.id];
   if(st && Array.isArray(st.tables)) return st;
   return defaultSeating(m);
 }
 function ensureSeating(m){ if(!S.seating[m.id]) S.seating[m.id]=clone(seatingOf(m)); return S.seating[m.id]; }
+/* 只有產品部給了座位圖（或領隊自己排過）的餐次才有分桌 */
+function hasSeating(m){ return !!(m && (SEAT_DOC[m.id] || S.seating[m.id])); }
 function mealById(id){ for(const d of Object.keys(MEALS)) for(const m of MEALS[d]||[]) if(m.id===id) return {m,day:+d}; return null; }
 
 PAGES.tables=(hdr,scr)=>{
   const found=mealById(S.mealId)||{m:(MEALS[S.day]||[])[0],day:S.day};
   if(!found.m){ goPage("meals"); return; }
   const {m,day}=found;
+  if(!hasSeating(m)){ goPage("meals"); return; }
   hbar(hdr,"分桌 · "+m.place,{back:true});
   hdr.querySelector(".backbtn").onclick=()=>goPage("meals");
   const st=seatingOf(m), custom=!!S.seating[m.id];
@@ -2792,13 +2841,13 @@ PAGES.tables=(hdr,scr)=>{
   const pool=here.filter(p=>!seatedIds.has(p.id));
   const GO={"貴賓":0,"雄獅主管":1,"工作人員":2};
   pool.sort((a,b)=>(GO[a.group]??9)-(GO[b.group]??9));
-  const chip=(pid,t,i)=>{ const p=pax(pid); if(!p) return `<div class="tseat empty" data-t="${t}" data-i="${i}"></div>`;
-    const g=p.group==="貴賓"?"vip":p.group==="雄獅主管"?"mgr":"stf";
-    return `<div class="tseat ${g}" data-t="${t}" data-i="${i}" data-p="${p.id}"><b>${esc(p.name)}</b>${p.meal?`<i>${esc(p.meal)}</i>`:""}</div>`; };
+  const chip=(pid,t,i)=>{ const p=seatPerson(pid); const no=i>=0?`<s>${i+1}</s>`:""; if(!p) return `<div class="tseat empty" data-t="${t}" data-i="${i}">${no}</div>`;
+    const g=p.group==="貴賓"?"vip":p.group==="雄獅主管"?"mgr":p.guest?"gst":"stf";
+    return `<div class="tseat ${g}" data-t="${t}" data-i="${i}" data-p="${esc(p.id)}">${no}<b>${esc(p.name)}</b>${p.meal?`<i>${esc(p.meal)}</i>`:p.guest?`<i>來賓</i>`:""}</div>`; };
   const el=document.createElement("div");
   el.className="pagepad";
   el.innerHTML=`
-  <div class="mealswitch">${(MEALS[day]||[]).map(x=>`<button class="tab${x.id===m.id?" on":""}" data-m="${esc(x.id)}">${esc(x.slot)}・${esc(x.place.split("・")[0])}</button>`).join("")}</div>
+  <div class="mealswitch">${[1,2,3].flatMap(d=>(MEALS[d]||[]).filter(hasSeating).map(x=>`<button class="tab${x.id===m.id?" on":""}" data-m="${esc(x.id)}">D${d} ${esc(x.slot)}・${esc(x.place.split("・")[0].split("（")[0])}</button>`)).join("")}</div>
   ${st.note?`<div class="card" style="font-size:13px;line-height:1.6;background:#FFF3D6;border-color:#E8C98A;color:#7A5200"><b>產品部座位圖</b>　${esc(st.note)}　<span style="color:#A87800">圓桌圖 12 點方向＝第 1 位，順時針。</span></div>`:""}
   <div class="card tblhint"><span>${ic("hand",16)}</span><span><b>長按名字</b>抬起來，拖到別的位子就互換；拖到空位是搬過去；拖到「未入座」是移出。改完自動存，只影響這家餐廳。</span>
     <span class="pill ${custom?"green":"gray"}">${custom?"已自訂":"預設分桌"}</span></div>
@@ -2806,7 +2855,7 @@ PAGES.tables=(hdr,scr)=>{
     ${st.tables.map((t,ti)=>{ const n=t.seats.filter(Boolean).length;
       return `<div class="card tcard tzone" data-t="${ti}">
         <div class="thead"><b class="tname" data-t="${ti}">${esc(t.name)}</b><span class="pill redln">${n} 人</span><button class="notebtn" data-tedit="${ti}">✎ 桌名／位數</button></div>
-        ${t.seats.length>2?`<div class="roundwrap">${svgRoundTable(t)}</div>`:""}
+        ${t.seats.length>2?`<div class="roundwrap">${t.shape==="long"?svgLongTable(t):svgRoundTable(t)}</div>`:""}
         <div class="tseats">${t.seats.map((pid,i)=>chip(pid,ti,i)).join("")}</div>
       </div>`; }).join("")}
     <div class="card tcard pool tzone" data-t="pool">
@@ -2826,9 +2875,9 @@ PAGES.tables=(hdr,scr)=>{
   el.querySelector("#tblReset").onclick=()=>confirmBox("還原成預設分桌？這家餐廳自訂的位子會清掉。",()=>{ delete S.seating[m.id]; save(); render(); toast("已還原"); });
   el.querySelector("#tblCopy").onclick=()=>{
     const all=[]; for(const d of [1,2,3]) for(const x of MEALS[d]||[]) all.push(x);
-    const idx=all.findIndex(x=>x.id===m.id); const prev=all.slice(0,idx).reverse().find(x=>S.seating[x.id]);
+    const idx=all.findIndex(x=>x.id===m.id); const prev=all.slice(0,idx).reverse().find(x=>hasSeating(x));
     if(!prev){ toast("前面的餐次都還沒自訂分桌"); return; }
-    confirmBox(`把「${prev.place}」的分桌複製過來？`,()=>{ S.seating[m.id]=clone(S.seating[prev.id]); save(); render(); toast("已複製"); });
+    confirmBox(`把「${prev.place}」的分桌複製過來？`,()=>{ S.seating[m.id]=clone(seatingOf(prev)); save(); render(); toast("已複製"); });
   };
   el.querySelectorAll("[data-tedit]").forEach(b=>b.onclick=()=>{
     const ti=+b.dataset.tedit, cur=ensureSeating(m), t=cur.tables[ti];
