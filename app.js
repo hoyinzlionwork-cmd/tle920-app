@@ -937,11 +937,23 @@ function toast(msg){
 }
 const NAVS=[["home","home","首頁"],["lead","flag","帶團中"]];
 function goTab(t){ S.tab=t; S.page=null; save(); render(); }
-function goPage(p){
+/* 上一頁：記住走過的頁面（只在這次開啟期間），標題列「上一頁」照原路退回；「首頁」直接回帶團中 */
+const NAV_HIST=[];
+const navSnap=()=>({tab:S.tab,page:S.page,seatTab:S.seatTab,mealId:S.mealId,optKey:S.optKey,night:S.night,fusenSeg:S.fusenSeg,fusenCar:S.fusenCar});
+const navSame=(a,b)=>a.tab===b.tab&&a.page===b.page&&a.seatTab===b.seatTab&&a.mealId===b.mealId&&a.optKey===b.optKey;
+function goPage(p,opts={}){
   if(p&&p.startsWith("vendors:")){ openVendorModal(p.slice(8)); return; }
+  if(!opts.back){ const cur=navSnap(); if(!NAV_HIST.length||!navSame(NAV_HIST[NAV_HIST.length-1],cur)) NAV_HIST.push(cur); if(NAV_HIST.length>40) NAV_HIST.shift(); }
   if(p&&p.includes(":")){ const [a,b]=p.split(":"); S.page=a; if(a==="seats") S.seatTab=(b==="bus"?"hsr":b); if(a==="optin") S.optKey=b; if(a==="tables") S.mealId=b; }
   else S.page=p;
-  S.tab="lead"; save(); render();
+  S.tab="lead"; if(p===null) NAV_HIST.length=0; save(); render();
+}
+function goBack(){
+  const cur=navSnap(); let prev=null;
+  while(NAV_HIST.length){ const c=NAV_HIST.pop(); if(!navSame(c,cur)){ prev=c; break; } }
+  if(!prev){ goPage(null,{back:true}); return; }
+  Object.assign(S,{tab:prev.tab,page:prev.page,seatTab:prev.seatTab,mealId:prev.mealId,optKey:prev.optKey,night:prev.night,fusenSeg:prev.fusenSeg,fusenCar:prev.fusenCar});
+  save(); render();
 }
 function render(){
   bindData();
@@ -966,13 +978,13 @@ function render(){
 }
 function hbar(hdr,title,{back=false,dark=false}={}){
   hdr.innerHTML=`<div class="hbar${dark?" dark":""}">
-    <div class="hleft">${back?`<button class="backbtn">${ic("back",16)}</button>`:""}</div>
+    <div class="hleft">${back?`<button class="backbtn" title="上一頁">${ic("back",16)}<span>上一頁</span></button><button class="homebtn" title="首頁">${ic("home",16)}<span>首頁</span></button>`:""}</div>
     <div class="htitle">${esc(title)}</div>
     <div class="hright">
       <button class="iconbtn" style="color:var(--red)">${ic("live",19)}</button></div>
   </div>`;
-  const bk=hdr.querySelector(".backbtn");
-  if(bk) bk.onclick=()=>goPage(null);
+  const bk=hdr.querySelector(".backbtn"); if(bk) bk.onclick=goBack;
+  const hm=hdr.querySelector(".homebtn"); if(hm) hm.onclick=()=>goPage(null);
 }
 
 /* ============================================================ 通用編輯表單
@@ -2975,7 +2987,6 @@ PAGES.tables=(hdr,scr)=>{
   const {m,day}=found;
   if(!hasSeating(m)){ goPage("meals"); return; }
   hbar(hdr,"分桌 · "+m.place,{back:true});
-  hdr.querySelector(".backbtn").onclick=()=>goPage("meals");
   const st=seatingOf(m), custom=!!S.seating[m.id];
   const here=PAX.filter(p=>p.days.includes(day));
   const seatedIds=new Set(st.tables.flatMap(t=>t.seats.filter(Boolean)));
