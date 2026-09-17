@@ -1796,6 +1796,21 @@ function svgCarThsrc(carNo, seatMap, t){
 /* ===== 兩指縮放／拖曳：座位圖共用 =====
  * 沒放大時單指照常捲頁面（touch-action: pan-y）；兩指捏合放大、放大後單指拖曳、雙擊切換 1x/2x；
  * 右上角 ＋ － 1:1。不用 pointer capture，座位本身的點擊才不會被吃掉。 */
+/* 光箱：把座位圖／平面圖放到全螢幕黑底，可雙指縮放、拖曳；座位一樣可以點 */
+function openLightbox(inner, title){
+  closeLightbox();
+  const box=document.createElement("div"); box.id="lightbox";
+  box.innerHTML=`<div class="lbhead"><span class="lbtitle">${esc(title||"")}</span><span class="lbhint">兩指縮放・雙擊放大・拖曳移動</span><button class="lbx" title="關閉">✕</button></div>
+    <div class="lbbody"><div class="zw"></div></div>`;
+  const clone=inner.cloneNode(true); clone.style.transform=""; clone.classList.remove("zin");
+  box.querySelector(".zw").appendChild(clone);
+  document.body.appendChild(box);
+  document.body.classList.add("lb-open");
+  box.querySelector(".lbx").onclick=closeLightbox;
+  box.addEventListener("click",e=>{ if(e.target===box||e.target.classList.contains("lbbody")) closeLightbox(); });
+  requestAnimationFrame(()=>{ zoomify(box.querySelector(".zw")); if(window.LB_WIRE) window.LB_WIRE(clone); });
+}
+function closeLightbox(){ const b=document.getElementById("lightbox"); if(b) b.remove(); document.body.classList.remove("lb-open"); }
 function zoomify(wrap){
   const inner=wrap.firstElementChild; if(!inner||wrap.dataset.zoom) return;
   wrap.dataset.zoom="1"; inner.classList.add("zin");
@@ -1821,8 +1836,11 @@ function zoomify(wrap){
   window.addEventListener("pointermove",move,{passive:false}); window.addEventListener("pointerup",up); window.addEventListener("pointercancel",up);
   wrap.addEventListener("wheel",e=>{ if(!e.ctrlKey&&!e.metaKey) return; e.preventDefault(); const [cx,cy]=rel(e); zoomAt(e.deltaY<0?1.15:1/1.15,cx,cy); },{passive:false});
   const bar=document.createElement("div"); bar.className="zoombar";
-  bar.innerHTML=`<button data-z="in" title="放大">＋</button><button data-z="out" title="縮小">－</button><button data-z="reset" title="還原">1:1</button>`;
-  bar.querySelectorAll("button").forEach(b=>b.onclick=ev=>{ ev.stopPropagation(); if(b.dataset.z==="reset"){s=1;tx=0;ty=0;apply();} else zoomAt(b.dataset.z==="in"?1.4:1/1.4,wrap.clientWidth/2,wrap.clientHeight/2); });
+  const inBox=!!wrap.closest("#lightbox");
+  bar.innerHTML=`<button data-z="in" title="放大">＋</button><button data-z="out" title="縮小">－</button><button data-z="reset" title="還原">1:1</button>${inBox?"":`<button data-z="box" title="全螢幕">⤢</button>`}`;
+  bar.querySelectorAll("button").forEach(b=>b.onclick=ev=>{ ev.stopPropagation();
+    if(b.dataset.z==="box") openLightbox(inner, wrap.dataset.title||"");
+    else if(b.dataset.z==="reset"){s=1;tx=0;ty=0;apply();} else zoomAt(b.dataset.z==="in"?1.4:1/1.4,wrap.clientWidth/2,wrap.clientHeight/2); });
   wrap.appendChild(bar);
 }
 /* 站名時刻拆成 chip：「台北 06:30 → 台中 07:20 → 嘉義 07:43」 */
@@ -2035,7 +2053,10 @@ PAGES.fusen=(hdr,scr)=>{
   <p class="vs">A 段與 C 段的 4 車相同；5 車兩段不同，請看各段。未配位的工作人員（薛永南、周冠廷、洪采吟、羅元榮）坐 4 車空位（1、9–16 號）。</p>`;
   el.querySelectorAll("[data-seg]").forEach(b=>b.onclick=()=>{ S.fusenSeg=b.dataset.seg; save(); render(); });
   el.querySelectorAll(".fcar").forEach(c=>c.addEventListener("click",()=>{ const n=+c.dataset.car; if(n===4||n===5){ S.fusenCar=n; save(); render(); } else toast(`${n} 車本團未使用`); }));
-  el.querySelectorAll(".seatg.mine").forEach(s=>s.addEventListener("click",()=>{ const p=pax(s.dataset.p); if(p) openPaxModal(p); }));
+  const wireSeats=root=>root.querySelectorAll(".seatg.mine").forEach(s=>s.addEventListener("click",ev=>{ ev.stopPropagation(); const p=pax(s.dataset.p); if(p) openPaxModal(p); }));
+  wireSeats(el); window.LB_WIRE=wireSeats;
+  const zw=el.querySelector(".fusencar .zw"); zw.dataset.title=`福森號 ${SG.label} · ${car} 車 ${L.name}`;
+  zw.querySelector("svg").addEventListener("click",e=>{ if(!zw.classList.contains("zoomed")) openLightbox(zw.firstElementChild, zw.dataset.title); });
   el.querySelectorAll(".zw").forEach(zoomify);
   scr.appendChild(el);
 };
