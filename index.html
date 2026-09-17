@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="19d26a5 2026-09-17T07:30Z">
+<meta name="build" content="7d7ca4a 2026-09-17T07:40Z">
 <title>導領e化平台 · 920董事會</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, minimum-scale=1, maximum-scale=5">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -509,6 +509,33 @@ body.lb-open{overflow:hidden}
 .roomcard .tp{font-size:11px;margin:4px 0 7px;display:flex;gap:4px;flex-wrap:wrap}
 .roomcard .gs{font-size:13.5px;line-height:1.6}
 
+/* ===== 餐廳分桌 清單 ===== */
+.mealgrid{display:grid;gap:10px}
+.mealcard2{position:relative;display:grid;grid-template-columns:72px 1fr auto;gap:14px;align-items:center;background:var(--paper);border:1px solid var(--line);border-radius:var(--r);
+  padding:14px 12px 14px 14px;box-shadow:var(--sh-1);cursor:pointer;transition:transform .08s,box-shadow .12s}
+.mealcard2:active{transform:scale(.995);box-shadow:none}
+.mdate{display:flex;flex-direction:column;align-items:flex-start;gap:2px;border-right:1px solid var(--line2);padding-right:12px;align-self:stretch;justify-content:center}
+.mdate b{font-size:20px;font-weight:900;color:var(--red);line-height:1;letter-spacing:.01em}
+.mdate span{font-size:11px;color:var(--ink2);font-variant-numeric:tabular-nums;white-space:nowrap;letter-spacing:-.01em}
+.mdate em{font-style:normal;font-size:11px;font-weight:800;color:var(--ink);background:var(--line2);border-radius:5px;padding:1px 6px;margin-top:4px}
+.mmain{min-width:0;display:flex;flex-direction:column;gap:5px}
+.mname{font-size:16px;font-weight:800;line-height:1.3;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.mtables{display:flex;flex-wrap:wrap;gap:6px 10px;font-size:12.5px;color:var(--ink2);font-variant-numeric:tabular-nums}
+.mtables b{color:var(--ink);font-weight:800}
+.mtables .msum{color:var(--ink3)}
+.mmenu{font-size:12.5px;color:var(--ink2);line-height:1.55;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.macts{display:flex;align-items:center;gap:6px}
+.mact{width:38px;height:38px;border-radius:10px;border:1px solid var(--line);background:var(--paper);color:var(--red);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;text-decoration:none;box-shadow:var(--sh-1)}
+.mact:active{background:var(--red-bg)}
+.mgo{color:var(--ink3);display:inline-flex;margin-left:2px}
+.mealspec{padding:0;overflow:hidden}
+.speclist{display:grid;grid-template-columns:1fr 1fr;gap:0}
+.specrow{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--line2);font-size:13.5px}
+.specrow b{min-width:64px}
+.specrow span{color:#9A5B00;background:#FFF1DC;border-radius:5px;padding:2px 7px;font-size:12px;font-weight:700}
+.specnotes{padding:10px 14px 12px;font-size:12.5px;line-height:1.7;color:var(--ink2);display:grid;gap:4px;background:#FAFAFB}
+.specnotes b{color:var(--ink);margin-right:8px;font-weight:800}
+@media (max-width:520px){ .mealcard2{grid-template-columns:66px 1fr;gap:10px} .macts{grid-column:2;justify-content:flex-end} .speclist{grid-template-columns:1fr} }
 /* ===== 分桌（拖拉） ===== */
 .mealswitch{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
 .mealswitch .tab{font-size:12.5px;padding:7px 13px}

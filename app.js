@@ -1048,7 +1048,7 @@ function editBar(parent, {add, addLabel="新增", reset, resetLabel="還原此�
 let LP_MODAL=null;   /* 彈窗（店家資訊）內的長按處理 */
 function tagLongPress(root){
   root.querySelectorAll(".ebtn").forEach(b=>{
-    const host=b.closest("tr.prow,.reccard,.rollcard,.vcard,.roomcard,.bgitem,.ordrow,td.det,.bh1,.tinfo,.stop,.card")||b.parentElement;
+    const host=b.closest("tr.prow,.mealcard2,.reccard,.rollcard,.vcard,.roomcard,.bgitem,.ordrow,td.det,.bh1,.tinfo,.stop,.card")||b.parentElement;
     if(host){ host.dataset.lp=b.dataset.e; host.classList.add("lp"); }
   });
 }
@@ -2239,34 +2239,42 @@ PAGES.meals=(hdr,scr)=>{
   /* 只放產品部有給座位圖的 4 家餐廳；早餐發放、福森號九宮格、點心這類不在這裡（行程表有） */
   const list=[1,2,3].flatMap(d=>(MEALS[d]||[]).map((m,i)=>({m,i,d})).filter(x=>hasSeating(x.m)));
   el.innerHTML=`
+  <div class="mealgrid">
   ${list.map(({m,i,d})=>{
     const {slot,place,menu,st,vids}=m;
-    const st_=seatingOf(m), seated=st_.tables.reduce((n,t)=>n+t.seats.filter(Boolean).length,0), custom=!!S.seating[m.id];
-    const vs=(vids||[]).map(vendor).filter(Boolean);
-    const calls=vs.map(v=>(v.tel||[]).length?`<a class="chip" href="${telHref(v.tel[0])}">${ic("phone",13)}${esc(v.name)}</a>`:"").join("");
-    const info=vs.length?`<button class="chip" data-vm="${esc(vs.map(v=>v.id).join(","))}">${ic("pin",13)}店家資訊</button>`:"";
-    return `<div class="card mealcard">
-      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-        <span class="pill red">D${d} ${esc(TOUR.dates[d-1]||"")}</span><span class="pill redln">${esc(slot)}</span><b style="font-size:15px;flex:1">${esc(place)}</b>
-        ${ebtn(d+":"+i,true)}<span class="pill ${st==="OK"?"green":"amber"}">${esc(st)}</span>
+    const st_=seatingOf(m), custom=!!S.seating[m.id];
+    const tables=st_.tables.map(t=>({name:t.name.split("（")[0].replace(/\s/g,""),n:t.seats.filter(Boolean).length})).filter(t=>t.n);
+    const seated=tables.reduce((n,t)=>n+t.n,0);
+    const vs=(vids||[]).map(vendor).filter(Boolean), tel=vs.find(v=>(v.tel||[]).length);
+    return `<div class="mealcard2" data-tb="${esc(m.id)}">
+      ${ebtn(d+":"+i,true)}
+      <div class="mdate"><b>D${d}</b><span>${esc(String(TOUR.dates[d-1]||"").replace(/\s*\(/,"("))}</span><em>${esc(slot)}</em></div>
+      <div class="mmain">
+        <div class="mname">${esc(place)}${st!=="OK"?`<span class="pill amber">${esc(st)}</span>`:""}</div>
+        <div class="mtables">${tables.map(t=>`<span><b>${esc(t.name)}</b> ${t.n}</span>`).join("")}<span class="msum">共 ${seated} 人${custom?"・已調整":""}</span></div>
+        <div class="mmenu">${esc(menu)}</div>
       </div>
-      <div style="font-size:13px;color:var(--ink2);margin-top:6px;line-height:1.65">${esc(menu)}</div>
-      <div class="links"><button class="chip tblopen" data-tb="${esc(m.id)}">${ic("meal",13)}分桌 · ${st_.tables.length} 桌 ${seated} 人${custom?"（已調整）":""}</button>${calls}${info}</div>
+      <div class="macts">
+        ${tel?`<a class="mact" href="${telHref(tel.tel[0])}" title="撥號 ${esc(tel.name)}">${ic("phone",16)}</a>`:""}
+        ${vs.length?`<button class="mact" data-vm="${esc(vs.map(v=>v.id).join(","))}" title="店家資訊">${ic("pin",16)}</button>`:""}
+        <span class="mgo">${ic("chev",16)}</span>
+      </div>
     </div>`;
   }).join("")}
-
-  <h3 class="sect">特殊餐食（每餐皆需向餐廳確認）</h3>
-  <div class="card" style="border-color:#F5DFA0;background:#FFF8E6">
-    ${specials.map(p=>`<div style="font-size:13px;padding:3px 0;display:flex;gap:8px;align-items:baseline">
-      <b style="min-width:64px">${esc(p.name)}</b><span class="pill amber">${esc(p.meal)}</span></div>`).join("")}
-    <div style="font-size:12.5px;line-height:1.7;color:#8A6400;margin-top:9px;padding-top:9px;border-top:1px dashed #E8D08A">
-      <b>分菜提醒</b>　D1 阿里山賓館外場地、D3 優遊吧斯為合菜，餐廳已安排分菜；午間桌菜從簡避免浪費。<br>
-      <b>座位提醒</b>　D1 晚宴：巴黎（陳婉如）與岳聰總坐外面。
-    </div>
   </div>
-  <p class="vs">山芙蓉與優遊吧斯皆為原住民風味，菜單已協調避免重複。電話為網路查得資訊，撥號前請先確認窗口。其他餐點（早餐發放、福森號九宮格、點心）看行程表。</p>`;
-  el.querySelectorAll("[data-vm]").forEach(b=>b.onclick=()=>openVendorModal(b.dataset.vm));
-  el.querySelectorAll(".tblopen").forEach(b=>b.onclick=()=>goPage("tables:"+b.dataset.tb));
+
+  <h3 class="sect">特殊餐食 <span class="efhint">每餐向餐廳確認</span></h3>
+  <div class="card mealspec">
+    <div class="speclist">${specials.map(p=>`<div class="specrow"><b>${esc(p.name)}</b><span>${esc(p.meal)}</span></div>`).join("")}</div>
+    <div class="specnotes">
+      <div><b>分菜</b>阿里山賓館外場地（D1）、優遊吧斯（D3）為合菜，餐廳已安排分菜；午間桌菜從簡避免浪費。</div>
+      <div><b>座位</b>D1 晚宴：巴黎（陳婉如）與岳聰總坐外面。</div>
+      <div><b>其他餐點</b>早餐發放、福森號九宮格、奮起湖點心、茶席請看行程表。</div>
+    </div>
+  </div>`;
+  el.querySelectorAll(".mealcard2").forEach(c=>c.addEventListener("click",e=>{ if(e.target.closest(".mact")) return; goPage("tables:"+c.dataset.tb); }));
+  el.querySelectorAll("[data-vm]").forEach(b=>b.onclick=e=>{ e.stopPropagation(); openVendorModal(b.dataset.vm); });
+  el.querySelectorAll("a.mact").forEach(a=>a.addEventListener("click",e=>e.stopPropagation()));
   EDIT_HANDLER=k=>{ const [d,i]=String(k).split(":"); editMeal(+i,+d); };
   scr.appendChild(el);
 };
