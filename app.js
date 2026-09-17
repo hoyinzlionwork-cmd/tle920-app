@@ -130,7 +130,7 @@ let PAX = [
     trainSeat:"4車 7號", table:2, meal:"", note:"住宿 9/21–9/22（英迪格）" },
   { id:"p20", name:"邱浩軒", rel:"總經理",       en:"",       group:"雄獅主管", days:[1,2,3],
     idNo:"—", birth:"—", tkt:"經濟・成人", hsrGo:"5車 3C", hsrBack:"5車 3C", pnrGo:"—", pnrBk:"—",
-    trainSeat:"4車 8號", table:2, meal:"" },
+    trainSeat:"4車 8號", table:2, meal:"", note:"9/20 在嘉義高鐵站等貴賓，只搭回程" },
   { id:"p21", name:"戴啟珩", rel:"董事",         en:"",       group:"雄獅主管", days:[2,3],
     idNo:"—", birth:"—", tkt:"商務・敬老", hsrGo:"—", hsr609:"6車 3E", hsrBack:"6車 10E", pnrGo:"—", pnrBk:"—",
     trainSeat:"—", table:2, meal:"",
@@ -193,24 +193,25 @@ const HSR_0911 = {
 };
 /* 9/17 名單（____0920-0922 名單 PDF）：關係、英文名、職稱；新增工作人員羅元榮。座位、訂位代號不動。 */
 const DOC0917_PAX = {
-  p01:["董事長","Jason Wang","雄獅旅行社董事長"], p02:["董事長夫人","Vicky Lin","雄獅旅行社董事長夫人"],
-  p03:["董事長（新光人壽）","Mark Wei","新光人壽保險 董事長"], p04:["魏董夫人","Agnes Chao","新光人壽 董事長夫人"],
-  p05:["董事","Neo Yu","雄獅旅行社董事"], p06:["游董太太","Vicky Wang","雄獅旅行社董事夫人"],
-  p07:["董事","Eric Chen","雄獅董事・台灣商業銀行教父・前台北富邦銀董座"], p08:["陳董太太","Cindy Chang","雄獅旅行社董事夫人"],
-  p28:["陳董女兒","Lorraine Chen",""],
-  p09:["獨立董事","Peng Lu","雄獅獨董・台灣大哥大獨董・台科大教授"], p10:["盧董太太","Grace Yu","雄獅獨立董事夫人"],
-  p11:["獨立董事","Morris Li","雄獅獨董・中信商銀董事長"], p12:["利董太太","Fanny Chang","雄獅董事夫人"],
-  p13:["獨立董事","WY","雄獅獨董・台大農經博士"], p14:["旅天下獨立董事","CK Cheng","亞揪遊科技董事長・旅天下獨董"],
-  p15:["董事夫人","Cindy Yi","亞揪遊科技董事長夫人"],
-  p16:["董事總經理（不帶眷）","Andy Huang","雄獅旅行社董事總經理"], p17:["總經理","Eagle Wang",""], p18:["總經理","Ying Chen",""],
-  p19:["顧問","Weichun Liu",""], p20:["總經理","Sean Chiu",""], p21:["執行董事","Dianna Dai",""],
-  p23:["薰衣草森林董事長（合作夥伴）","Ed Wang",""],
-  p24:["副總經理（隨團）","Paris","TL"], p29:["經理（產品）","Tony","TL"], p25:["資深協理（鐵道）","Jimmy","TL"], p32:["工作人員","Tony","TL"],
-  p26:["經理（產品）","Jason","TL"], p30:["副總經理（產品）","Debbie","TL"], p27:["經理（嘉義）","Charis","TL"], p31:["領隊","薛永南","TL"],
+  /* [關係, 英文, 職稱, 稱謂]（0917 Google 名單第一頁） */
+  p01:["董事長","Jason Wang","雄獅旅行社董事長","董事長"], p02:["董事長夫人","Vicky Lin","雄獅旅行社董事長夫人","董事長"],
+  p03:["董事長（新光人壽）","Mark Wei","新光人壽保險 董事長","董事長"], p04:["魏董夫人","Agnes Chao","新光人壽 董事長夫人","女士"],
+  p05:["董事","Neo Yu","雄獅旅行社董事","董事"], p06:["游董太太","Vicky Wang","雄獅旅行社董事夫人","女士"],
+  p07:["董事","Eric Chen","雄獅董事・台灣商業銀行教父・前台北富邦銀董座","董事長"], p08:["陳董太太","Cindy Chang","雄獅旅行社董事夫人","女士"],
+  p28:["陳董女兒","Lorraine Chen","","小姐"],
+  p09:["獨立董事","Peng Lu","雄獅獨董・台灣大哥大獨董・台科大教授","獨立董事"], p10:["盧董太太","Grace Yu","雄獅獨立董事夫人","女士"],
+  p11:["獨立董事","Morris Li","雄獅獨董・中信商銀董事長","董事長"], p12:["利董太太","Fanny Chang","雄獅董事夫人","女士"],
+  p13:["獨立董事","WY","雄獅獨董・台大農經博士","獨立董事"], p14:["旅天下獨立董事","CK Cheng","亞揪遊科技董事長・旅天下獨董","創辦人"],
+  p15:["董事夫人","Cindy Yi","亞揪遊科技董事長夫人","女士"],
+  p16:["董事總經理（不帶眷）","Andy Huang","雄獅旅行社董事總經理","董事"], p17:["總經理","Eagle Wang","","總經理"], p18:["總經理","Ying Chen","","總經理"],
+  p19:["總經理","Weichun Liu","","顧問"], p20:["總經理","Sean Chiu","","總經理"], p21:["執行董事","Dianna Dai","","執行董事"],
+  p23:["薰衣草森林董事長（合作夥伴）","Ed Wang","","董事長"],
+  p24:["副總經理（隨團）","Paris","TL",""], p29:["經理（產品）","Tony","TL",""], p25:["資深協理（鐵道）","Jimmy","TL",""],
+  p26:["經理（產品）","Jason","TL",""], p30:["副總經理（產品）","Debbie","TL",""], p27:["經理（嘉義）","Charis","TL",""], p31:["領隊","薛永南","TL",""],
 };
 function applyDoc0917(list){
-  if(!list.find(p=>p.id==="p32")) list.push({ id:"p32", name:"羅元榮", rel:"工作人員", en:"Tony", group:"工作人員", days:[1,2,3], idNo:"—", birth:"—", tkt:"—", hsrGo:"—", hsrBack:"—", pnrGo:"—", pnrBk:"—", table:0, meal:"" });
-  list.forEach(p=>{ const d=DOC0917_PAX[p.id]; if(!d) return; p.rel=d[0]; p.en=d[1]; if(d[2]) p.title=d[2]; else delete p.title; });
+  const i32=list.findIndex(p=>p.id==="p32"); if(i32>=0) list.splice(i32,1);   /* 羅元榮 9/11 取消（0917 Google 名單） */
+  list.forEach(p=>{ const d=DOC0917_PAX[p.id]; if(!d) return; p.rel=d[0]; p.en=d[1]; if(d[2]) p.title=d[2]; else delete p.title; if(d[3]) p.hon=d[3]; else delete p.hon; });
   return list;
 }
 function applyHsr0911(list){
@@ -526,7 +527,7 @@ const FUNCS = [
 
 /* 團體大表的欄位：全部都能勾選隱藏；第三個值＝預設是否顯示 */
 const ROSTER_FIELDS = [
-  ["grp","名義",true],["seq","序",false],["rel","關係",true],["title","職稱",true],["en","英文名",true],["days","在團",true],
+  ["grp","名義",true],["seq","序",false],["hon","稱謂",true],["rel","關係",true],["title","職稱",true],["en","英文名",true],["days","在團",true],
   ["orderNo","訂單編號",true],["idNo","身分證號",true],["birth","生日",true],["tkt","高鐵票種",false],
   ["hsrGo","高鐵去",false],["hsrBack","高鐵回",false],["pnr","訂位代號",false],["train","福森號",false],
   ["room1","9/20 房",false],["room2","9/21 房",false],["meal","特殊餐食",true],["note","備註",true],
@@ -560,7 +561,7 @@ function buildSeed(){
     tour:TOUR_SEED, pax:PAX_SEED, nights:NIGHTS_SEED, menu:MENU_SEED, meals,
     vendors:VENDORS_SEED, vendorTodo:VENDOR_TODO_SEED,
     budget:BUDGET_ITEMS_SEED, headcount:BUDGET_HEADCOUNT_SEED,
-    itin:ITIN_SEED, luggageRoute:LUGGAGE_ROUTE_SEED, hsrTrains:HSR_TRAINS_SEED, _seatVer:3, _menuVer:1, _budgetVer:1, _tourVer:2, _docVer:5,
+    itin:ITIN_SEED, luggageRoute:LUGGAGE_ROUTE_SEED, hsrTrains:HSR_TRAINS_SEED, _seatVer:3, _menuVer:1, _budgetVer:1, _tourVer:2, _docVer:6,
   });
 }
 /* 出廠預設另存一份，之後 TOUR / PAX… 這些名字都指向 S.data */
@@ -652,6 +653,16 @@ function bindData(){
     for(const d of Object.keys(ITIN)) (ITIN[d]||[]).forEach(st=>{ if(st.links) st.links=st.links.filter(l=>l[0]!=="seats:bus"); });
     if(S.seatTab==="bus") S.seatTab="hsr";
     S.data._docVer=5;
+  }
+  /* 一次性：0917 Google 名單第一頁——稱謂、關係、特殊餐食（陳萱、王岳聰、張振明）、邱浩軒只搭回程、羅元榮 9/11 取消 */
+  if((S.data._docVer||0)<6){
+    applyDoc0917(PAX);
+    const setMeal=(id,v)=>{ const p=pax(id); if(p) p.meal=v; };
+    setMeal("p28","忌乳製品含起司"); setMeal("p17","忌乳製品含起司"); setMeal("p08","");
+    const p20=pax("p20"); if(p20&&!/只搭回程/.test(p20.note||"")) p20.note=[p20.note,"9/20 在嘉義高鐵站等貴賓，只搭回程"].filter(Boolean).join("；");
+    NIGHTS.forEach(n=>n.rooms.forEach(r=>{ r.who=(r.who||[]).filter(w=>w!=="羅元榮"); }));
+    for(const k of Object.keys(S.seating||{})) (S.seating[k].tables||[]).forEach(t=>{ t.seats=t.seats.map(v=>v==="p32"?null:v); });
+    S.data._docVer=6;
   }
   if((S.data._tourVer||0)<2){
     const st=(ITIN[2]||[]).find(x=>x.title==="自選 · 祝山日出");
@@ -1084,7 +1095,7 @@ function moveItem(arr,i,dir){ const j=i+dir; if(j<0||j>=arr.length) return false
 const GROUP_OPTS=["貴賓","雄獅主管","工作人員"];
 const PAX_FIELDS=[
   {k:"name",label:"姓名",required:true},{k:"rel",label:"稱謂／職稱",ph:"董事、董事長夫人…"},
-  {k:"en",label:"英文名"},{k:"title",label:"職稱（名單）"},{k:"group",label:"分組",type:"select",opts:GROUP_OPTS},
+  {k:"en",label:"英文名"},{k:"hon",label:"稱謂（現場稱呼）"},{k:"title",label:"職稱（名單）"},{k:"group",label:"分組",type:"select",opts:GROUP_OPTS},
   {k:"days",label:"在團日",type:"days"},{k:"table",label:"分桌",type:"select",opts:[[0,"不分桌"],[1,"第 1 桌"],[2,"第 2 桌"]]},
   {k:"idNo",label:"身分證號"},{k:"birth",label:"生日",ph:"1953/02/26"},{k:"tkt",label:"高鐵票種",ph:"商務・敬老"},
   {k:"hsrGo",label:"高鐵去程座位",ph:"6車 17A"},{k:"hsrBack",label:"高鐵回程座位",ph:"6車 6A"},
@@ -1394,7 +1405,7 @@ function rosterList(scr){
   const seatTxt=(seat,pnr,tbc,extra)=>{ if(!seat||seat==="—") return `<span class="dimtxt">—</span>`;
     return `<b>${esc(seat)}</b>${fld("pnr")&&pnr&&pnr!=="—"?`<i class="pnr">${esc(pnr)}</i>`:""}${tbc?` <span class="pill amber">票待確認</span>`:""}${extra||""}`; };
   const cols=[];
-  if(fld("grp")) cols.push(["名義"]); if(fld("seq")) cols.push(["序"]); cols.push(["姓名"]); if(fld("rel")) cols.push(["關係"]); if(fld("title")) cols.push(["職稱"]);
+  if(fld("grp")) cols.push(["名義"]); if(fld("seq")) cols.push(["序"]); cols.push(["姓名"]); if(fld("hon")) cols.push(["稱謂"]); if(fld("rel")) cols.push(["關係"]); if(fld("title")) cols.push(["職稱"]);
   if(fld("en")) cols.push(["英文"]); if(fld("days")) cols.push(["在團"]);
   if(fld("orderNo")) cols.push(["訂單編號"]); if(fld("idNo")) cols.push(["身分證號"]); if(fld("birth")) cols.push(["生日"]); if(fld("tkt")) cols.push(["票種"]);
   if(fld("hsrGo")) cols.push(["高鐵去 0203"]); if(fld("hsrBack")) cols.push(["高鐵回"]); if(fld("train")) cols.push(["福森號"]);
@@ -1409,6 +1420,7 @@ function rosterList(scr){
     const tds=[];
     if(fld("grp")) tds.push(`<td class="gm">${esc(g)}</td>`); if(fld("seq")) tds.push(`<td class="sq">${i+1}</td>`);
     tds.push(`<td class="nm">${ebtn(p.id,true)}${esc(p.name)}</td>`);
+    if(fld("hon")) tds.push(`<td class="hn">${p.hon?`<b>${esc(p.hon)}</b>`:""}</td>`);
     if(fld("rel")) tds.push(`<td class="rl">${esc(p.rel||"")}</td>`);
     if(fld("title")) tds.push(`<td class="tt">${esc(p.title||"")}</td>`);
     if(fld("en")) tds.push(`<td class="en">${esc(p.en||"")}</td>`);
@@ -2096,7 +2108,7 @@ PAGES.fusen=(hdr,scr)=>{
     <div class="zw">${svgFusenCar(car,map,seg)}</div>
     <div class="zoomhint">兩指縮放、拖曳；點座位看貴賓資料</div>
   </div>
-  <p class="vs">A 段與 C 段的 4 車相同；5 車兩段不同，請看各段。未配位的工作人員（薛永南、周冠廷、洪采吟、羅元榮）坐 4 車空位（1、9–16 號）。</p>`;
+  <p class="vs">A 段與 C 段的 4 車相同；5 車兩段不同，請看各段。未配位的工作人員（薛永南、周冠廷、洪采吟）坐 4 車空位（1、9–16 號）。</p>`;
   el.querySelectorAll("[data-seg]").forEach(b=>b.onclick=()=>{ S.fusenSeg=b.dataset.seg; save(); render(); });
   el.querySelectorAll(".fcar").forEach(c=>c.addEventListener("click",()=>{ const n=+c.dataset.car; if(n===4||n===5){ S.fusenCar=n; save(); render(); } else toast(`${n} 車本團未使用`); }));
   const wireSeats=root=>root.querySelectorAll(".seatg.mine").forEach(s=>s.addEventListener("click",ev=>{ ev.stopPropagation(); const p=pax(s.dataset.p); if(p) openPaxModal(p); }));
