@@ -535,10 +535,10 @@ const FUNCS = [
 
 /* 團體大表的欄位：全部都能勾選隱藏；第三個值＝預設是否顯示 */
 const ROSTER_FIELDS = [
-  ["grp","名義",true],["seq","序",true],["rel","關係",true],["title","職稱",true],["en","英文名",true],["days","在團",true],
-  ["orderNo","訂單編號",true],["idNo","身分證號",false],["birth","生日",false],["tkt","高鐵票種",true],
-  ["hsrGo","高鐵去",true],["hsrBack","高鐵回",true],["pnr","訂位代號",true],["train","福森號",true],
-  ["room1","9/20 房",true],["room2","9/21 房",true],["meal","特殊餐食",true],["note","備註",true],
+  ["grp","名義",true],["seq","序",false],["rel","關係",true],["title","職稱",true],["en","英文名",true],["days","在團",true],
+  ["orderNo","訂單編號",true],["idNo","身分證號",true],["birth","生日",true],["tkt","高鐵票種",false],
+  ["hsrGo","高鐵去",false],["hsrBack","高鐵回",false],["pnr","訂位代號",false],["train","福森號",false],
+  ["room1","9/20 房",false],["room2","9/21 房",false],["meal","特殊餐食",true],["note","備註",true],
 ];
 const fld=k=>{ const d=ROSTER_FIELDS.find(f=>f[0]===k); const v=(S.fields||{})[k]; return v===undefined?(d?d[2]:true):!!v; };
 
@@ -689,7 +689,7 @@ const SKEY_B = "tle920_v3_bak";   /* localStorage 第二份，主檔毀損時的
 function DEFAULTS(){
   return { tab:"lead", page:null, day:1, seatTab:"hsr", homeTab:"list",
     rosterMode:"roll",
-    fields:{idNo:false,birth:false},   /* 其他欄位預設顯示（見 ROSTER_FIELDS） */
+    fields:{}, fieldsVer:2,   /* 欄位預設見 ROSTER_FIELDS */
     roll:{1:{},2:{},3:{}}, notes:{}, orders:{}, lug:{}, sigs:[], budgetFinal:{}, budgetDeposit:{}, budgetNote:{}, vconf:{}, optin:{}, seating:{},
     dl:{status:"idle",ts:null}, rev:0, savedAt:0 };
 }
@@ -1385,7 +1385,7 @@ function rosterList(scr){
   const seatTxt=(seat,pnr,tbc,extra)=>{ if(!seat||seat==="—") return `<span class="dimtxt">—</span>`;
     return `<b>${esc(seat)}</b>${fld("pnr")&&pnr&&pnr!=="—"?`<i class="pnr">${esc(pnr)}</i>`:""}${tbc?` <span class="pill amber">票待確認</span>`:""}${extra||""}`; };
   const cols=[];
-  if(fld("grp")) cols.push(["名義"]); if(fld("seq")) cols.push(["序"]); cols.push(["姓名"]); if(fld("rel")) cols.push(["關係"]);
+  if(fld("grp")) cols.push(["名義"]); if(fld("seq")) cols.push(["序"]); cols.push(["姓名"]); if(fld("rel")) cols.push(["關係"]); if(fld("title")) cols.push(["職稱"]);
   if(fld("en")) cols.push(["英文"]); if(fld("days")) cols.push(["在團"]);
   if(fld("orderNo")) cols.push(["訂單編號"]); if(fld("idNo")) cols.push(["身分證號"]); if(fld("birth")) cols.push(["生日"]); if(fld("tkt")) cols.push(["票種"]);
   if(fld("hsrGo")) cols.push(["高鐵去 0203"]); if(fld("hsrBack")) cols.push(["高鐵回"]); if(fld("train")) cols.push(["福森號"]);
@@ -1399,8 +1399,9 @@ function rosterList(scr){
     const go = p.hsr609 ? seatTxt(p.hsr609,"",false,` <span class="pill blue">0609 9/21 加入</span>`) : seatTxt(p.hsrGo,p.pnrGo,p.hsrGoTbc, p.board?` <span class="pill blue">${esc(p.board)}上車</span>`:"");
     const tds=[];
     if(fld("grp")) tds.push(`<td class="gm">${esc(g)}</td>`); if(fld("seq")) tds.push(`<td class="sq">${i+1}</td>`);
-    tds.push(`<td class="nm">${ebtn(p.id,true)}${esc(p.name)}${fld("title")&&p.title?`<small>${esc(p.title)}</small>`:""}</td>`);
+    tds.push(`<td class="nm">${ebtn(p.id,true)}${esc(p.name)}</td>`);
     if(fld("rel")) tds.push(`<td class="rl">${esc(p.rel||"")}</td>`);
+    if(fld("title")) tds.push(`<td class="tt">${esc(p.title||"")}</td>`);
     if(fld("en")) tds.push(`<td class="en">${esc(p.en||"")}</td>`);
     if(fld("days")) tds.push(`<td class="dy">${dayTxt(p)}</td>`);
     if(fld("orderNo")) tds.push(`<td class="mono">${esc(p.orderNo||"")}</td>`);
@@ -3495,6 +3496,7 @@ $("#modal").addEventListener("click",e=>{ if(e.target.id==="modal") closeModal()
   if(!S.optin) S.optin={};
   if(!S.seating) S.seating={};
   if(!S.sigs) S.sigs=[];
+  if((S.fieldsVer||0)<2){ S.fields={}; S.fieldsVer=2; }   /* 團體大表欄位改版：套用新的預設勾選 */
 
   /* 跟 iOS 要常駐儲存，避免空間不足時被清掉 */
   HEALTH.persisted = await requestPersist();
