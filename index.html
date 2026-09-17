@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="7cc97b7 2026-09-17T10:37Z">
+<meta name="build" content="c8a328d 2026-09-17T10:59Z">
 <title>導領e化平台 · 920董事會</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, minimum-scale=1, maximum-scale=5">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -404,6 +404,19 @@ svg.ic{width:1em;height:1em;stroke:currentColor;fill:none;stroke-width:2;stroke-
 #lightbox .lbbody{flex:1;position:relative;overflow:hidden;touch-action:none;cursor:grab;-webkit-user-select:none;user-select:none}
 #lightbox .lbstage{position:absolute;left:0;top:0;transform-origin:0 0;will-change:transform}
 #lightbox .lbimg{display:block;background:#fff;border-radius:8px}
+#lightbox .lbnav{width:36px;height:36px;border-radius:50%;border:none;background:rgba(255,255,255,.12);color:#fff;font-size:22px;line-height:1;cursor:pointer}
+#lightbox .lbnav:active{background:rgba(255,255,255,.24)}
+#lightbox .lbdots{display:inline-flex;gap:6px;align-items:center}
+#lightbox .lbdots i{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.3);display:inline-block}
+#lightbox .lbdots i.on{background:#fff;width:18px;border-radius:4px}
+#lightbox .lbfoot{text-align:center;font-size:11.5px;color:#9A9AA3;padding:6px 12px calc(8px + var(--safe-bottom))}
+#lightbox .lbstage.slide-l{animation:lbSlideL .22s ease-out}
+#lightbox .lbstage.slide-r{animation:lbSlideR .22s ease-out}
+@keyframes lbSlideL{from{opacity:.2;translate:40px 0}to{opacity:1;translate:0 0}}
+@keyframes lbSlideR{from{opacity:.2;translate:-40px 0}to{opacity:1;translate:0 0}}
+.zw{cursor:zoom-in}
+.zw>.zin{transform:none!important}
+.pvbadge{position:absolute;right:8px;top:8px;font-size:11px;font-weight:700;color:var(--ink2);background:rgba(255,255,255,.92);border:1px solid var(--line);border-radius:8px;padding:4px 8px;pointer-events:none;box-shadow:var(--sh-1)}
 #lightbox svg.lbimg{overflow:visible}
 body.lb-open{overflow:hidden}
 @media (orientation:portrait){ #lightbox .zw{width:100%} }
@@ -572,6 +585,13 @@ body.lb-open{overflow:hidden}
 .tghost{position:fixed;z-index:200;pointer-events:none;transform:scale(1.08);box-shadow:0 10px 26px rgba(0,0,0,.28);opacity:.96}
 .tempty{font-size:12.5px;color:var(--ink3);padding:6px 2px}
 .roundwrap{display:flex;justify-content:center;margin:2px 0 10px}
+.roomcard2{margin-bottom:12px}
+.roomcard2 .thead{flex-wrap:wrap}
+.roomhint{margin-left:auto;font-size:12px;color:var(--ink3)}
+.roomwrap .zw{background:#fff;border:1px solid var(--line)}
+.roomplan{width:100%;height:auto;display:block}
+.roomplan text{font-family:"PingFang TC","Microsoft JhengHei",system-ui,sans-serif}
+.roomplan .tzone.over .tbl{stroke:#C8102E;stroke-width:3.5}
 /* 飯店樓層平面圖（原圖） */
 .rtablewrap{overflow-x:auto;padding:12px 10px}
 .rtable{border-collapse:collapse;width:100%;font-size:13px}

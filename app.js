@@ -1525,6 +1525,11 @@ PAGES.seats=(hdr,scr)=>{
     scr.appendChild(el);
     const w=el.clientWidth-28;   /* pagepad 兩側各 14 */
     el.querySelector("#seatArea").innerHTML=svgHsr(w);
+    el.querySelectorAll(".zw[data-train]").forEach(zw=>{
+      const t=(HSR_TRAINS[S.hsrDay]||[]).find(x=>x.no===zw.dataset.train); if(!t) return;
+      zw._slides=()=>{ const map=hsrSeatIndex(t); return t.cars.map(c=>({ title:`高鐵 ${t.no} · ${c} 車 ${HSR_CARS[c].cls}`, render:()=>svgCarThsrc(c,map,t) })); };
+      zw._slideIdx=Math.max(0,t.cars.indexOf(+zw.dataset.car));
+    });
     el.querySelectorAll(".zw").forEach(zoomify);
     const tc=document.createElement("div"); tc.className="card";
     tc.innerHTML=`<div style="font-weight:800;margin-bottom:8px;font-size:14px">本日車次</div>
@@ -1820,95 +1825,92 @@ function svgCarThsrc(carNo, seatMap, t){
  * 沒放大時單指照常捲頁面（touch-action: pan-y）；兩指捏合放大、放大後單指拖曳、雙擊切換 1x/2x；
  * 右上角 ＋ － 1:1。不用 pointer capture，座位本身的點擊才不會被吃掉。 */
 /* 光箱：把座位圖／平面圖放到全螢幕黑底，可雙指縮放、拖曳；座位一樣可以點 */
-function openLightbox(inner, title){
+/* 光箱：全螢幕；同一天有多節車廂（或多個樓層）時可左右滑切換；縮放不受原圖大小限制 */
+function openLightbox(src, idx, title){
   closeLightbox();
+  let slides = Array.isArray(src) ? src : [{ title: title||"", render: ()=>src.cloneNode(true) }];
+  if(!slides.length) return;
+  let cur = Math.min(Math.max(0, idx||0), slides.length-1);
   const box=document.createElement("div"); box.id="lightbox";
-  box.innerHTML=`<div class="lbhead"><span class="lbtitle">${esc(title||"")}</span><span class="lbhint">兩指縮放・雙擊放大・拖曳移動</span>
+  box.innerHTML=`<div class="lbhead">
+      <button class="lbnav" data-nav="-1" title="上一節">‹</button>
+      <span class="lbtitle"></span>
+      <span class="lbdots"></span>
+      <button class="lbnav" data-nav="1" title="下一節">›</button>
       <span class="lbzoom"><button data-z="out">－</button><span class="lbpct">100%</span><button data-z="in">＋</button><button data-z="fit">符合</button></span>
       <button class="lbx" title="關閉">✕</button></div>
-    <div class="lbbody"><div class="lbstage"></div></div>`;
-  const clone=inner.cloneNode(true); clone.style.transform=""; clone.classList.remove("zin"); clone.classList.add("lbimg");
-  const stage=box.querySelector(".lbstage"), body=box.querySelector(".lbbody");
-  stage.appendChild(clone);
-  document.body.appendChild(box);
-  document.body.classList.add("lb-open");
+    <div class="lbbody"><div class="lbstage"></div></div>
+    <div class="lbfoot">${slides.length>1?"左右滑動切換車廂・":""}兩指縮放・雙擊放大・拖曳移動・點座位看資料</div>`;
+  const stage=box.querySelector(".lbstage"), body=box.querySelector(".lbbody"), pct=box.querySelector(".lbpct");
+  document.body.appendChild(box); document.body.classList.add("lb-open");
   box.querySelector(".lbx").onclick=closeLightbox;
-  /* 全螢幕縮放引擎：先「符合畫面」，之後不受原圖大小限制，整張圖放大到 12 倍都行 */
-  let base={w:0,h:0}, s=1, tx=0, ty=0, minS=1;
-  const pct=box.querySelector(".lbpct");
-  const ratio=()=>{ if(clone.tagName.toLowerCase()==="img") return (clone.naturalWidth||4)/(clone.naturalHeight||3);
+  let clone=null, base={w:0,h:0}, s=1, tx=0, ty=0, minS=1;
+  const ratio=()=>{ if(!clone) return 4/3; if(clone.tagName.toLowerCase()==="img") return (clone.naturalWidth||4)/(clone.naturalHeight||3);
     const vb=(clone.getAttribute("viewBox")||"").split(/[\s,]+/).map(Number); return vb.length===4&&vb[3]?vb[2]/vb[3]:(clone.clientWidth||4)/(clone.clientHeight||3); };
-  const fit=()=>{ const W=body.clientWidth, H=body.clientHeight, r=ratio();
-    base.w=Math.min(W, H*r); base.h=base.w/r;                       /* contain */
-    clone.style.width=base.w+"px"; clone.style.height=base.h+"px";
-    s=1; tx=(W-base.w)/2; ty=(H-base.h)/2; apply(); };
   const apply=()=>{ const W=body.clientWidth, H=body.clientHeight, cw=base.w*s, ch=base.h*s;
     tx = cw<=W ? (W-cw)/2 : Math.min(0,Math.max(W-cw,tx));
     ty = ch<=H ? (H-ch)/2 : Math.min(0,Math.max(H-ch,ty));
     stage.style.transform=`translate(${tx}px,${ty}px) scale(${s})`; pct.textContent=Math.round(s*100)+"%"; };
+  const fit=()=>{ if(!clone) return; const W=body.clientWidth, H=body.clientHeight, r=ratio();
+    base.w=Math.min(W, H*r); base.h=base.w/r; clone.style.width=base.w+"px"; clone.style.height=base.h+"px";
+    s=1; tx=(W-base.w)/2; ty=(H-base.h)/2; apply(); };
   const zoomAt=(f,cx,cy)=>{ const ns=Math.min(12,Math.max(minS,s*f)); f=ns/s; tx=cx-(cx-tx)*f; ty=cy-(cy-ty)*f; s=ns; apply(); };
   const rel=e=>{ const r=body.getBoundingClientRect(); return [e.clientX-r.left,e.clientY-r.top]; };
-  const ptrs=new Map(); let pinch=null, drag=null, lastTap=0, moved=false;
-  body.addEventListener("pointerdown",e=>{ ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY}); try{ body.setPointerCapture(e.pointerId); }catch(_){}
-    if(ptrs.size===2){ const [p,q]=[...ptrs.values()]; const r=body.getBoundingClientRect();
+  const show=(i,dir)=>{
+    cur=(i+slides.length)%slides.length; const sl=slides[cur];
+    let el=sl.render(); if(typeof el==="string"){ const d=document.createElement("div"); d.innerHTML=el.trim(); el=d.firstElementChild; }
+    el.style.transform=""; el.classList.remove("zin"); el.classList.add("lbimg");
+    stage.innerHTML=""; stage.appendChild(el); clone=el;
+    if(dir){ stage.classList.remove("slide-l","slide-r"); void stage.offsetWidth; stage.classList.add(dir>0?"slide-l":"slide-r"); }
+    box.querySelector(".lbtitle").textContent=sl.title||"";
+    box.querySelector(".lbdots").innerHTML=slides.length>1?slides.map((x,j)=>`<i class="${j===cur?"on":""}"></i>`).join(""):"";
+    box.querySelectorAll(".lbnav").forEach(b=>b.style.visibility=slides.length>1?"visible":"hidden");
+    const start=()=>{ fit(); if(window.LB_WIRE) window.LB_WIRE(el); };
+    if(el.tagName.toLowerCase()==="img"&&!el.complete) el.onload=start; else requestAnimationFrame(start);
+  };
+  box.querySelectorAll(".lbnav").forEach(b=>b.onclick=ev=>{ ev.stopPropagation(); show(cur+ +b.dataset.nav, +b.dataset.nav); });
+  const ptrs=new Map(); let pinch=null, drag=null, lastTap=0, moved=false, swiped=false;
+  /* 不在 pointerdown 就抓 capture：抓了以後 click 會落在 body 而不是座位，座位就點不開了。等真的拖動／兩指才抓。 */
+  const grab=id=>{ try{ if(!body.hasPointerCapture(id)) body.setPointerCapture(id); }catch(_){} };
+  body.addEventListener("pointerdown",e=>{ ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    if(ptrs.size===2){ ptrs.forEach((_,id)=>grab(id)); const [p,q]=[...ptrs.values()]; const r=body.getBoundingClientRect();
       pinch={d:Math.hypot(p.x-q.x,p.y-q.y),s0:s,cx:(p.x+q.x)/2-r.left,cy:(p.y+q.y)/2-r.top,tx0:tx,ty0:ty}; drag=null; }
-    else if(ptrs.size===1){ drag={x:e.clientX,y:e.clientY,tx0:tx,ty0:ty}; moved=false; } });
+    else if(ptrs.size===1){ drag={x:e.clientX,y:e.clientY,tx0:tx,ty0:ty}; moved=false; swiped=false; } });
   body.addEventListener("pointermove",e=>{ if(!ptrs.has(e.pointerId)) return; ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
     if(pinch&&ptrs.size===2){ const [p,q]=[...ptrs.values()]; const d=Math.hypot(p.x-q.x,p.y-q.y); const r=body.getBoundingClientRect();
       const cx=(p.x+q.x)/2-r.left, cy=(p.y+q.y)/2-r.top, ns=Math.min(12,Math.max(minS,pinch.s0*d/pinch.d)), f=ns/pinch.s0;
       tx=cx-(pinch.cx-pinch.tx0)*f; ty=cy-(pinch.cy-pinch.ty0)*f; s=ns; apply(); }
-    else if(drag&&ptrs.size===1){ const dx=e.clientX-drag.x, dy=e.clientY-drag.y; if(Math.hypot(dx,dy)>4) moved=true; tx=drag.tx0+dx; ty=drag.ty0+dy; apply(); } });
-  const up=e=>{ ptrs.delete(e.pointerId);
+    else if(drag&&ptrs.size===1){ const dx=e.clientX-drag.x, dy=e.clientY-drag.y; if(Math.hypot(dx,dy)>4){ moved=true; grab(e.pointerId); }
+      if(s<=1.02 && slides.length>1){ stage.style.transform=`translate(${tx+dx*0.6}px,${ty}px) scale(${s})`; }   /* 沒放大：橫滑＝換車廂 */
+      else { tx=drag.tx0+dx; ty=drag.ty0+dy; apply(); } } });
+  const up=e=>{ const wasDrag=drag; ptrs.delete(e.pointerId);
     if(ptrs.size===0){ const now=Date.now();
-      if(!pinch&&!moved){ if(now-lastTap<320){ const [cx,cy]=rel(e); if(s>1.5){ fit(); } else zoomAt(2.5,cx,cy); lastTap=0; } else lastTap=now; }
+      if(wasDrag && s<=1.02 && slides.length>1){ const dx=e.clientX-wasDrag.x, dy=e.clientY-wasDrag.y;
+        if(Math.abs(dx)>60 && Math.abs(dx)>Math.abs(dy)*1.3){ show(cur+(dx<0?1:-1), dx<0?1:-1); swiped=true; } else apply(); }
+      if(!pinch&&!moved&&!swiped){ if(now-lastTap<320){ const [cx,cy]=rel(e); if(s>1.5){ fit(); } else zoomAt(2.5,cx,cy); lastTap=0; } else lastTap=now; }
       pinch=null; drag=null; }
     else if(ptrs.size===1){ pinch=null; const [p]=[...ptrs.values()]; drag={x:p.x,y:p.y,tx0:tx,ty0:ty}; } };
   body.addEventListener("pointerup",up); body.addEventListener("pointercancel",up);
   body.addEventListener("wheel",e=>{ e.preventDefault(); const [cx,cy]=rel(e); zoomAt(e.deltaY<0?1.15:1/1.15,cx,cy); },{passive:false});
   box.querySelectorAll(".lbzoom button").forEach(bt=>bt.onclick=ev=>{ ev.stopPropagation(); const W=body.clientWidth,H=body.clientHeight;
     if(bt.dataset.z==="fit") fit(); else zoomAt(bt.dataset.z==="in"?1.5:1/1.5,W/2,H/2); });
-  /* 點座位仍可看貴賓：拖過就不算點 */
-  stage.addEventListener("click",e=>{ if(moved){ e.stopPropagation(); e.preventDefault(); } },true);
-  window.addEventListener("resize",fit);
-  box._cleanup=()=>window.removeEventListener("resize",fit);
-  const start=()=>{ fit(); if(window.LB_WIRE) window.LB_WIRE(clone); };
-  if(clone.tagName.toLowerCase()==="img"&&!clone.complete) clone.onload=start; else requestAnimationFrame(start);
+  stage.addEventListener("click",e=>{ if(moved||swiped){ e.stopPropagation(); e.preventDefault(); } },true);
+  const onKey=e=>{ if(e.key==="Escape") closeLightbox(); if(e.key==="ArrowRight") show(cur+1,1); if(e.key==="ArrowLeft") show(cur-1,-1); };
+  window.addEventListener("resize",fit); window.addEventListener("keydown",onKey);
+  box._cleanup=()=>{ window.removeEventListener("resize",fit); window.removeEventListener("keydown",onKey); };
+  show(cur,0);
 }
 function closeLightbox(){ const b=document.getElementById("lightbox"); if(b){ if(b._cleanup) b._cleanup(); b.remove(); } document.body.classList.remove("lb-open"); }
+/* 頁面上的座位圖／平面圖只是預覽：點一下開光箱，所有縮放都在光箱裡做（頁面上不再跟捲動搶手勢） */
 function zoomify(wrap){
   const inner=wrap.firstElementChild; if(!inner||wrap.dataset.zoom) return;
   wrap.dataset.zoom="1"; inner.classList.add("zin");
-  let s=1,tx=0,ty=0; const ptrs=new Map(); let pinch=null, drag=null, lastTap=0;
-  const apply=()=>{ const W=wrap.clientWidth,H=wrap.clientHeight, cw=inner.clientWidth*s, ch=inner.clientHeight*s;
-    tx=cw<=W?0:Math.min(0,Math.max(W-cw,tx)); ty=ch<=H?0:Math.min(0,Math.max(H-ch,ty));
-    inner.style.transform=`translate(${tx}px,${ty}px) scale(${s})`; wrap.classList.toggle("zoomed",s>1.01); wrap.style.height=s>1.01?`${inner.clientHeight}px`:""; };
-  const zoomAt=(f,cx,cy)=>{ const ns=Math.min(4,Math.max(1,s*f)); f=ns/s; tx=cx-(cx-tx)*f; ty=cy-(cy-ty)*f; s=ns; apply(); };
-  const rel=e=>{ const r=wrap.getBoundingClientRect(); return [e.clientX-r.left,e.clientY-r.top]; };
-  wrap.addEventListener("pointerdown",e=>{ if(e.target.closest(".zoombar")) return; ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
-    if(ptrs.size===2){ const [a,b]=[...ptrs.values()]; const r=wrap.getBoundingClientRect();
-      pinch={d:Math.hypot(a.x-b.x,a.y-b.y),s0:s,cx:(a.x+b.x)/2-r.left,cy:(a.y+b.y)/2-r.top,tx0:tx,ty0:ty}; drag=null; }
-    else if(ptrs.size===1&&s>1){ drag={x:e.clientX,y:e.clientY,tx0:tx,ty0:ty,moved:false}; } });
-  const move=e=>{ if(!ptrs.has(e.pointerId)) return; ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
-    if(pinch&&ptrs.size===2){ const [a,b]=[...ptrs.values()]; const d=Math.hypot(a.x-b.x,a.y-b.y); const r=wrap.getBoundingClientRect();
-      const cx=(a.x+b.x)/2-r.left, cy=(a.y+b.y)/2-r.top, ns=Math.min(4,Math.max(1,pinch.s0*d/pinch.d)), f=ns/pinch.s0;
-      tx=cx-(pinch.cx-pinch.tx0)*f; ty=cy-(pinch.cy-pinch.ty0)*f; s=ns; apply(); e.preventDefault(); }
-    else if(drag&&ptrs.size===1){ const dx=e.clientX-drag.x, dy=e.clientY-drag.y; if(Math.abs(dx)+Math.abs(dy)>4) drag.moved=true; tx=drag.tx0+dx; ty=drag.ty0+dy; apply(); } };
-  const up=e=>{ if(!ptrs.has(e.pointerId)) return; ptrs.delete(e.pointerId);
-    if(ptrs.size===0){ const now=Date.now(); if(!pinch&&!(drag&&drag.moved)){ if(now-lastTap<320){ const [cx,cy]=rel(e); if(s>1.01){s=1;tx=0;ty=0;apply();} else zoomAt(2,cx,cy); lastTap=0; } else lastTap=now; }
-      pinch=null; drag=null; }
-    else if(ptrs.size<2) pinch=null; };
-  window.addEventListener("pointermove",move,{passive:false}); window.addEventListener("pointerup",up); window.addEventListener("pointercancel",up);
-  wrap.addEventListener("wheel",e=>{ if(!e.ctrlKey&&!e.metaKey) return; e.preventDefault(); const [cx,cy]=rel(e); zoomAt(e.deltaY<0?1.15:1/1.15,cx,cy); },{passive:false});
-  const bar=document.createElement("div"); bar.className="zoombar";
-  const inBox=!!wrap.closest("#lightbox");
-  wrap.addEventListener("click",e=>{ if(inBox||wrap.classList.contains("zoomed")||e.target.closest(".zoombar")) return;
+  const badge=document.createElement("span"); badge.className="pvbadge"; badge.innerHTML="⤢ 放大"; wrap.appendChild(badge);
+  wrap.addEventListener("click",e=>{
     if(e.target.closest(".seat.mine,.seatg.mine,.sseat")) return;
-    openLightbox(inner, wrap.dataset.title||""); });
-  bar.innerHTML=`<button data-z="in" title="放大">＋</button><button data-z="out" title="縮小">－</button><button data-z="reset" title="還原">1:1</button>${inBox?"":`<button data-z="box" title="全螢幕">⤢</button>`}`;
-  bar.querySelectorAll("button").forEach(b=>b.onclick=ev=>{ ev.stopPropagation();
-    if(b.dataset.z==="box") openLightbox(inner, wrap.dataset.title||"");
-    else if(b.dataset.z==="reset"){s=1;tx=0;ty=0;apply();} else zoomAt(b.dataset.z==="in"?1.4:1/1.4,wrap.clientWidth/2,wrap.clientHeight/2); });
-  wrap.appendChild(bar);
+    if(wrap._slides) openLightbox(wrap._slides(), wrap._slideIdx||0);
+    else openLightbox(inner, 0, wrap.dataset.title||"");
+  });
 }
 /* 站名時刻拆成 chip：「台北 06:30 → 台中 07:20 → 嘉義 07:43」 */
 function routeChips(route){
@@ -1946,8 +1948,8 @@ function svgHsr(containerW){
       ${tabs}
       <div class="cars">${[cur].map(c=>`
         <div class="carblk">
-          <div class="zw" data-title="高鐵 ${esc(t.no)} · ${c} 車">${svgCarThsrc(c,map,t)}</div>
-          <div class="zoomhint">兩指縮放・放大後可拖曳・雙擊切換</div>
+          <div class="zw" data-train="${esc(t.no)}" data-car="${c}" data-title="高鐵 ${esc(t.no)} · ${c} 車">${svgCarThsrc(c,map,t)}</div>
+          <div class="zoomhint">點圖放大・光箱裡左右滑切換車廂</div>
         </div>`).join("")}</div>
     </div>`;
   });
@@ -2028,62 +2030,80 @@ function svgFusenTrain(sel){
 
 /* 單節車廂平面圖：嚴格照原廠圖的位置畫（上排兩人座、下排單人座、小桌、車服座、空調、行李架、洗手間／駕駛艙） */
 function svgFusenCar(carNo, map, seg){
-  const L=FUSEN_LAYOUT[carNo], W=1000, H=300, dir=(FUSEN_SEG[seg]||{}).dir||"left";
-  const bx=18, bw=W-36, by=40, bh=220;          /* 車體 */
+  const L=FUSEN_LAYOUT[carNo], W=1000, H=310, dir=(FUSEN_SEG[seg]||{}).dir||"left";
+  const bx=18, bw=W-36, by=48, bh=224;          /* 車體 */
   const X=f=>bx+20+f*(bw-40);
-  let g=`<svg viewBox="0 0 ${W} ${H}" class="carsvg fusencarsvg" xmlns="http://www.w3.org/2000/svg">`;
+  const uid="fz"+carNo;
+  let g=`<svg viewBox="0 0 ${W} ${H}" class="carsvg fusencarsvg" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="${uid}-floor" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FBF1D8"/><stop offset="1" stop-color="#F3E3C0"/></linearGradient>
+    <linearGradient id="${uid}-shell" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E8D9B7"/><stop offset="1" stop-color="#D9C79F"/></linearGradient>
+    <linearGradient id="${uid}-wood" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#D2A06A"/><stop offset="1" stop-color="#B27A45"/></linearGradient>
+    <linearGradient id="${uid}-vip" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#D93A55"/><stop offset="1" stop-color="#B70D2A"/></linearGradient>
+    <linearGradient id="${uid}-glass" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#DCE9F3"/><stop offset="1" stop-color="#B9CEDF"/></linearGradient>
+    <filter id="${uid}-sh" x="-20%" y="-20%" width="140%" height="160%"><feDropShadow dx="0" dy="1.5" stdDeviation="1.4" flood-color="#6B4E1E" flood-opacity=".25"/></filter>
+  </defs>`;
   /* 運行方向 */
-  g+= dir==="left" ? `<path d="M120 18 L40 18" stroke="#2B6BE0" stroke-width="7" stroke-linecap="round"/><path d="M52 8 L36 18 L52 28" fill="none" stroke="#2B6BE0" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/><text x="132" y="23" font-size="13" font-weight="800" fill="#2B6BE0">運行方向</text>`
-                   : `<path d="M${W-120} 18 L${W-40} 18" stroke="#F28C1E" stroke-width="7" stroke-linecap="round"/><path d="M${W-52} 8 L${W-36} 18 L${W-52} 28" fill="none" stroke="#F28C1E" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/><text x="${W-132}" y="23" text-anchor="end" font-size="13" font-weight="800" fill="#F28C1E">運行方向</text>`;
-  /* 車體、車窗（上下各一排） */
-  g+=`<rect x="${bx}" y="${by}" width="${bw}" height="${bh}" rx="6" fill="#FBF2D5" stroke="#8E8E93" stroke-width="2"/>`;
-  for(let i=0;i<14;i++){ const wx=bx+30+i*(bw-60)/13; g+=`<rect x="${wx-22}" y="${by-5}" width="44" height="7" rx="2" fill="#333"/><rect x="${wx-22}" y="${by+bh-2}" width="44" height="7" rx="2" fill="#333"/>`; }
+  const arrow=(x1,x2,color,label,anchor)=>`<g><rect x="${Math.min(x1,x2)-10}" y="6" width="${Math.abs(x2-x1)+20+64}" height="24" rx="12" fill="${color}" fill-opacity=".1" transform="translate(${anchor==="end"?-64:0},0)"/>
+    <path d="M${x1} 18 L${x2} 18" stroke="${color}" stroke-width="5" stroke-linecap="round"/>
+    <path d="${x2<x1?`M${x2+11} 9 L${x2} 18 L${x2+11} 27`:`M${x2-11} 9 L${x2} 18 L${x2-11} 27`}" fill="none" stroke="${color}" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="${anchor==="end"?x1-14:x1+14}" y="23" text-anchor="${anchor}" font-size="13" font-weight="800" fill="${color}">${label}</text></g>`;
+  g+= dir==="left" ? arrow(120,40,"#2B6BE0","運行方向","start") : arrow(W-120,W-40,"#E07B12","運行方向","end");
+  /* 車體外殼、地板 */
+  g+=`<rect x="${bx}" y="${by}" width="${bw}" height="${bh}" rx="16" fill="url(#${uid}-shell)" stroke="#8C7A55" stroke-width="1.5"/>
+      <rect x="${bx+7}" y="${by+9}" width="${bw-14}" height="${bh-18}" rx="10" fill="url(#${uid}-floor)"/>`;
+  /* 車窗（上下各一排，玻璃色） */
+  for(let i=0;i<14;i++){ const wx=bx+34+i*(bw-68)/13;
+    g+=`<rect x="${wx-22}" y="${by-6}" width="44" height="12" rx="3" fill="url(#${uid}-glass)" stroke="#5F6B77" stroke-width="1.2"/><rect x="${wx-22}" y="${by+bh-6}" width="44" height="12" rx="3" fill="url(#${uid}-glass)" stroke="#5F6B77" stroke-width="1.2"/>`; }
+  /* 門柱 */
+  const post=(x)=>`<rect x="${x}" y="${by+10}" width="11" height="58" rx="3" fill="#4A4A50"/><rect x="${x}" y="${by+bh-68}" width="11" height="58" rx="3" fill="#4A4A50"/>`;
   /* 左端 */
   if(L.left==="toilet"){
-    g+=`<rect x="${bx+14}" y="${by+14}" width="34" height="26" rx="6" fill="none" stroke="#333" stroke-width="2"/><text x="${bx+31}" y="${by+32}" text-anchor="middle" font-size="12" fill="#333">D</text>
-        <path d="M${bx+14} ${by+70} L${bx+14} ${by+110} L${bx+150} ${by+130} L${bx+150} ${by+150} L${bx+14} ${by+150} Z" fill="#333"/>
-        <circle cx="${bx+128}" cy="${by+30}" r="12" fill="none" stroke="#333" stroke-width="2"/><line x1="${bx+128}" y1="${by+30}" x2="${bx+128}" y2="${by+18}" stroke="#333" stroke-width="2"/>
-        <rect x="${bx+118}" y="${by+55}" width="26" height="22" fill="#333"/>
-        <rect x="${X(.215)}" y="${by+6}" width="12" height="60" fill="#333"/><rect x="${X(.215)}" y="${by+bh-66}" width="12" height="60" fill="#333"/>`;
+    g+=`<rect x="${bx+16}" y="${by+16}" width="118" height="${bh-32}" rx="10" fill="#F1E6CE" stroke="#C9B58A" stroke-width="1"/>
+        <rect x="${bx+26}" y="${by+26}" width="40" height="30" rx="8" fill="#fff" stroke="#6B6B72" stroke-width="1.8"/><text x="${bx+46}" y="${by+46}" text-anchor="middle" font-size="12" font-weight="800" fill="#6B6B72">WC</text>
+        <text x="${bx+75}" y="${by+bh/2+4}" text-anchor="middle" font-size="11" font-weight="700" fill="#8A7550">洗手間</text>
+        <circle cx="${bx+112}" cy="${by+36}" r="11" fill="#fff" stroke="#6B6B72" stroke-width="1.8"/><line x1="${bx+112}" y1="${by+36}" x2="${bx+112}" y2="${by+26}" stroke="#6B6B72" stroke-width="2"/>
+        <path d="M${bx+16} ${by+bh-70} L${bx+134} ${by+bh-52} L${bx+134} ${by+bh-16} L${bx+16} ${by+bh-16} Z" fill="#4A4A50" opacity=".85"/>`
+        + post(X(.215));
   }else{
-    g+=`<rect x="${bx+16}" y="${by+20}" width="78" height="${bh-40}" rx="12" fill="none" stroke="#333" stroke-width="2.5"/>
-        <text x="${bx+55}" y="${by+80}" text-anchor="middle" font-size="18" font-weight="800" fill="#333">駕</text><text x="${bx+55}" y="${by+118}" text-anchor="middle" font-size="18" font-weight="800" fill="#333">駛</text><text x="${bx+55}" y="${by+156}" text-anchor="middle" font-size="18" font-weight="800" fill="#333">艙</text>
-        <rect x="${X(.125)}" y="${by+6}" width="12" height="60" fill="#333"/><rect x="${X(.125)}" y="${by+bh-66}" width="12" height="60" fill="#333"/>`;
+    g+=`<rect x="${bx+18}" y="${by+20}" width="82" height="${bh-40}" rx="14" fill="#F1E6CE" stroke="#4A4A50" stroke-width="2.5"/>
+        <text x="${bx+59}" y="${by+80}" text-anchor="middle" font-size="18" font-weight="800" fill="#3A3A40">駕</text><text x="${bx+59}" y="${by+116}" text-anchor="middle" font-size="18" font-weight="800" fill="#3A3A40">駛</text><text x="${bx+59}" y="${by+152}" text-anchor="middle" font-size="18" font-weight="800" fill="#3A3A40">艙</text>`
+        + post(X(.125));
   }
-  /* 右端門柱 */
-  g+=`<rect x="${X(.955)}" y="${by+6}" width="12" height="60" fill="#333"/><rect x="${X(.955)}" y="${by+bh-66}" width="12" height="60" fill="#333"/>`;
-  const seatW=52, seatH=40;
+  g+=post(X(.955));
+  const seatW=54, seatH=42;
   const drawSeat=(cx,cy,no,key)=>{
-    const p=map[key], mine=!!p, vip=p&&p.id==="p01"||p&&p.id==="p02";
-    const fill=mine?(vip?"#C8102E":"#fff"):"#F4F4F6", stroke=mine?"#C8102E":"#C9C9CF", tc=mine?(vip?"#fff":"#333336"):"#B9B9BF";
+    const p=map[key], mine=!!p, vip=p&&(p.id==="p01"||p.id==="p02");
+    const fill=mine?(vip?`url(#${uid}-vip)`:"#FFFFFF"):"#F6F2EA", stroke=mine?(vip?"#8A0A1F":"#C8102E"):"#D9CFBC", tc=mine?(vip?"#fff":"#1E1E24"):"#B9B0A0";
+    const back=mine?(vip?"#8A0A1F":"#F3C3C8"):"#E6DECF";
     const nm=p?p.name.replace(/\s+[A-Za-z].*$/,"").replace(/\s/g,"").slice(0,4):"";
-    return `<g class="seatg${mine?" mine":""}" ${p?`data-p="${esc(p.id)}"`:""} data-key="${key}">
-      <rect x="${cx-seatW/2}" y="${cy-seatH/2}" width="${seatW}" height="${seatH}" rx="7" fill="${fill}" stroke="${stroke}" stroke-width="${mine?2:1.5}"/>
-      <rect x="${cx-seatW/2+5}" y="${cy-seatH/2+4}" width="6" height="${seatH-8}" rx="2" fill="${mine?(vip?"#8A0A1F":"#F3C3C8"):"#E5E5EA"}"/>
-      ${p?`<text x="${cx+3}" y="${cy+4}" text-anchor="middle" font-size="${nm.length>3?9.5:11}" font-weight="800" fill="${tc}">${esc(nm)}</text>`
-         :`<text x="${cx+3}" y="${cy+5}" text-anchor="middle" font-size="13" font-weight="800" fill="#B9B9BF">${no==="crew"?"車服":no}</text>`}
-      <text x="${cx-seatW/2+3}" y="${cy-seatH/2-3}" font-size="8.5" fill="#8E8E93">${no==="crew"?"車服":no}</text>
+    return `<g class="seatg${mine?" mine":""}" ${p?`data-p="${esc(p.id)}"`:""} data-key="${key}" ${mine?`filter="url(#${uid}-sh)"`:""}>
+      <rect x="${cx-seatW/2}" y="${cy-seatH/2}" width="${seatW}" height="${seatH}" rx="9" fill="${fill}" stroke="${stroke}" stroke-width="${mine?2:1.4}"/>
+      <rect x="${cx-seatW/2+4}" y="${cy-seatH/2+4}" width="7" height="${seatH-8}" rx="3.5" fill="${back}"/>
+      ${p?`<text x="${cx+4}" y="${cy+4.5}" text-anchor="middle" font-size="${nm.length>3?9.5:11.5}" font-weight="800" fill="${tc}">${esc(nm)}</text>`
+         :`<text x="${cx+4}" y="${cy+5}" text-anchor="middle" font-size="13" font-weight="800" fill="#C6BCA9">${no==="crew"?"車服":no}</text>`}
+      <g><circle cx="${cx-seatW/2+2}" cy="${cy-seatH/2+1}" r="7.5" fill="${mine?"#C8102E":"#B9B0A0"}"/><text x="${cx-seatW/2+2}" y="${cy-seatH/2+4}" text-anchor="middle" font-size="${no==="crew"?6.5:8}" font-weight="800" fill="#fff">${no==="crew"?"服":no}</text></g>
     </g>`;
   };
-  const drawTable=(cx,cy)=>`<rect x="${cx-16}" y="${cy-30}" width="32" height="60" rx="8" fill="#C8935A" stroke="#A8743E" stroke-width="1"/><circle cx="${cx-5}" cy="${cy+22}" r="2" fill="#7A5220"/><circle cx="${cx+5}" cy="${cy+22}" r="2" fill="#7A5220"/>`;
-  const topY=by+52, botY=by+bh-52;
+  const drawTable=(cx,cy)=>`<g filter="url(#${uid}-sh)"><rect x="${cx-16}" y="${cy-31}" width="32" height="62" rx="10" fill="url(#${uid}-wood)" stroke="#8F5E2E" stroke-width="1"/><rect x="${cx-11}" y="${cy-26}" width="22" height="52" rx="7" fill="none" stroke="#FFFFFF" stroke-opacity=".28" stroke-width="1"/></g>`;
+  const topY=by+56, botY=by+bh-56;
   L.top.forEach(it=>{ const [t,a,f]=it, cx=X(t==="table"||t==="crew"||t==="ac"?a:f);
     if(t==="seat") g+=drawSeat(cx,topY,a,`${carNo}-${a}`);
-    else if(t==="bench"){ g+=drawSeat(cx,topY-2,a[0],`${carNo}-${a[0]}`)+drawSeat(cx,topY+44,a[1],`${carNo}-${a[1]}`); }
+    else if(t==="bench"){ g+=drawSeat(cx,topY-2,a[0],`${carNo}-${a[0]}`)+drawSeat(cx,topY+46,a[1],`${carNo}-${a[1]}`); }
     else if(t==="table") g+=drawTable(cx,topY+8);
     else if(t==="crew") g+=drawSeat(cx,topY,"crew",`${carNo}-crew`);
-    else if(t==="ac") g+=`<rect x="${cx-36}" y="${topY-22}" width="72" height="44" rx="4" fill="#FBF2D5" stroke="#333" stroke-width="2"/><text x="${cx}" y="${topY+5}" text-anchor="middle" font-size="13" font-weight="700" fill="#333">空調</text>`; });
+    else if(t==="ac") g+=`<rect x="${cx-36}" y="${topY-22}" width="72" height="44" rx="8" fill="#F1E6CE" stroke="#8C7A55" stroke-width="1.5"/><text x="${cx}" y="${topY+5}" text-anchor="middle" font-size="12.5" font-weight="800" fill="#6B5A3A">空調</text>`; });
   L.bot.forEach(it=>{ const [t,a,f]=it, cx=X(t==="table"||t==="crew"||t==="rack"?a:f);
     if(t==="seat") g+=drawSeat(cx,botY,a,`${carNo}-${a}`);
     else if(t==="table") g+=drawTable(cx,botY-8);
     else if(t==="crew") g+=drawSeat(cx,botY,"crew",`${carNo}-crew`);
-    else if(t==="rack") g+=`<rect x="${cx-40}" y="${botY-22}" width="80" height="44" fill="#F5E6C4" stroke="#333" stroke-width="1.5"/>${[0,1,2,3,4,5,6,7].map(i=>`<line x1="${cx-32+i*9}" y1="${botY-18}" x2="${cx-32+i*9}" y2="${botY+18}" stroke="#A8743E" stroke-width="1.5"/>`).join("")}<text x="${cx}" y="${botY+34}" text-anchor="middle" font-size="9" fill="#8E8E93">行李架</text>`; });
+    else if(t==="rack") g+=`<rect x="${cx-40}" y="${botY-22}" width="80" height="44" rx="6" fill="#F1E6CE" stroke="#8C7A55" stroke-width="1.2"/>${[0,1,2,3,4,5,6,7].map(i=>`<line x1="${cx-32+i*9}" y1="${botY-17}" x2="${cx-32+i*9}" y2="${botY+17}" stroke="#B27A45" stroke-width="1.6" stroke-linecap="round"/>`).join("")}<text x="${cx}" y="${botY+34}" text-anchor="middle" font-size="9" fill="#8A7550">行李架</text>`; });
   /* 圖例 */
-  g+=`<g font-size="11" fill="#8E8E93"><rect x="${bx}" y="${H-22}" width="14" height="14" rx="3" fill="#C8102E"/><text x="${bx+19}" y="${H-11}">董事長伉儷</text>
-      <rect x="${bx+96}" y="${H-22}" width="14" height="14" rx="3" fill="#fff" stroke="#C8102E" stroke-width="2"/><text x="${bx+115}" y="${H-11}">本團</text>
-      <rect x="${bx+160}" y="${H-22}" width="14" height="14" rx="3" fill="#F4F4F6" stroke="#C9C9CF"/><text x="${bx+179}" y="${H-11}">空位</text>
-      <rect x="${bx+224}" y="${H-22}" width="14" height="14" rx="3" fill="#C8935A"/><text x="${bx+243}" y="${H-11}">小桌</text>
-      <text x="${W-bx}" y="${H-11}" text-anchor="end">上排靠窗＋走道兩人座（小號靠窗）・下排單人座・依林鐵原廠配置圖</text></g>`;
+  g+=`<g font-size="11" fill="#6B6B76"><rect x="${bx}" y="${H-24}" width="14" height="14" rx="4" fill="url(#${uid}-vip)"/><text x="${bx+19}" y="${H-13}">董事長伉儷</text>
+      <rect x="${bx+96}" y="${H-24}" width="14" height="14" rx="4" fill="#fff" stroke="#C8102E" stroke-width="2"/><text x="${bx+115}" y="${H-13}">本團</text>
+      <rect x="${bx+160}" y="${H-24}" width="14" height="14" rx="4" fill="#F6F2EA" stroke="#D9CFBC"/><text x="${bx+179}" y="${H-13}">空位</text>
+      <rect x="${bx+224}" y="${H-24}" width="14" height="14" rx="4" fill="url(#${uid}-wood)"/><text x="${bx+243}" y="${H-13}">小桌</text>
+      <text x="${W-bx}" y="${H-13}" text-anchor="end">上排靠窗＋走道兩人座（小號靠窗）・下排單人座・依林鐵原廠配置圖</text></g>`;
   return g+"</svg>";
 }
 
@@ -2115,7 +2135,7 @@ PAGES.fusen=(hdr,scr)=>{
       <span class="fcsub" style="margin-left:auto">${seg==="A"?"運行方向 ←":"運行方向 →"}</span>
     </div>
     <div class="zw">${svgFusenCar(car,map,seg)}</div>
-    <div class="zoomhint">兩指縮放、拖曳；點座位看貴賓資料</div>
+    <div class="zoomhint">點圖放大・光箱裡左右滑切換 4 車／5 車</div>
   </div>
   <p class="vs">A 段與 C 段的 4 車相同；5 車兩段不同，請看各段。未配位的工作人員（薛永南、周冠廷、洪采吟）坐 4 車空位（1、9–16 號）。</p>`;
   el.querySelectorAll("[data-seg]").forEach(b=>b.onclick=()=>{ S.fusenSeg=b.dataset.seg; save(); render(); });
@@ -2123,6 +2143,7 @@ PAGES.fusen=(hdr,scr)=>{
   const wireSeats=root=>root.querySelectorAll(".seatg.mine").forEach(s=>s.addEventListener("click",ev=>{ ev.stopPropagation(); const p=pax(s.dataset.p); if(p) openPaxModal(p); }));
   wireSeats(el); window.LB_WIRE=wireSeats;
   const zw=el.querySelector(".fusencar .zw"); zw.dataset.title=`福森號 ${SG.label} · ${car} 車 ${L.name}`;
+  zw._slides=()=>[4,5].map(c=>({ title:`福森號 ${SG.label} · ${c} 車 ${FUSEN_LAYOUT[c].name}`, render:()=>svgFusenCar(c,map,seg) })); zw._slideIdx=car===4?0:1;
   el.querySelectorAll(".zw").forEach(zoomify);
   scr.appendChild(el);
 };
@@ -2892,7 +2913,9 @@ PAGES.rooms=(hdr,scr)=>{
     </div>`; })()}`;
   el.querySelectorAll("[data-vm]").forEach(b=>b.onclick=()=>openVendorModal(b.dataset.vm));
   el.querySelectorAll("[data-rv]").forEach(b=>b.onclick=()=>{ S.roomView=b.dataset.rv; save(); render(); });
-  el.querySelectorAll(".floorwrap .zw").forEach(zoomify);
+  el.querySelectorAll(".floorwrap .zw").forEach(zw=>{
+    const fl=floors.filter(f=>planOf(f)); zw._slides=()=>fl.map(f=>({ title:`${N.hotel} ${f}F 平面圖`, render:()=>{ const im=new Image(); im.src=planOf(f); return im; } })); zw._slideIdx=Math.max(0,fl.indexOf(curF));
+    zoomify(zw); });
   /* 樓層分頁：切換只顯示該層 */
   el.querySelectorAll("#floorJump [data-jf]").forEach(b=>b.onclick=()=>{ const v=b.dataset.jf; S.floor[N.key]=v==="other"?"other":+v; save(); render();
     requestAnimationFrame(()=>{ const j=$("#floorJump"); if(j) j.scrollIntoView({block:"start"}); }); });
@@ -2916,17 +2939,26 @@ function editRoom(N,i){
  * 位子可異動：長按名字 → 抬起 → 拖到別的位子（互換）、空位（搬過去）、桌子（加入）、未入座區（移出）。 */
 /* 9/17 官方座位圖（產品部 PDF）：順時針、從 12 點方向開始；用姓名對到 PAX */
 const SEAT_DOC = {
-  d1m3:{ note:"合菜分菜・魏董＆魏董夫人備無海鮮套餐・舞台在上方，主要出入口在右下（A、B 桌現場改平行）", tables:[
+  d1m3:{ note:"合菜分菜・魏董＆魏董夫人備無海鮮套餐・舞台在上方，主要出入口在右下（A、B 桌現場改平行）",
+    room:{ w:1000, h:650, marks:[ {type:"bar",x:300,y:28,w:400,h:46,label:"舞台"},
+      {type:"arrow",x1:940,y1:585,x2:690,y2:585,label:"主要出入口",lx:815,ly:628} ], tables:[ {t:1,x:250,y:350}, {t:0,x:750,y:350} ] }, tables:[
     { name:"A 桌（11 人）", who:["王文傑","魏寶生","趙秋芬","游慧茹","盧希鵬","邱浩軒","利明献","張郁芬","張振明","陳萱","陳聖德"] },
     { name:"B 桌（10 人）", who:["凌瓏","游張松","王　雍","劉惟珺","鄭兆剛","黃信川","王村煌","王岳聰","陳曉穎","柳婉郁"] } ] },
-  d2m3:{ note:"無菜單料理、套餐式，忌食已由冠廷提供餐廳・戴董來、魏董及夫人走・廁所在上方，門在下方（C 桌後）", tables:[
+  d2m3:{ note:"無菜單料理、套餐式，忌食已由冠廷提供餐廳・戴董來、魏董及夫人走・廁所在上方，門在下方（C 桌後）",
+    room:{ w:1000, h:800, marks:[ {type:"bar",x:400,y:28,w:200,h:44,label:"廁所"}, {type:"bar",x:110,y:700,w:350,h:40,label:"門"},
+      {type:"arrow",x1:345,y1:795,x2:345,y2:690} ], tables:[ {t:1,x:345,y:300}, {t:2,x:345,y:568}, {t:0,x:800,y:440} ] }, tables:[
     { name:"A 桌（10 人・長桌）", shape:"long", dir:"v", split:5, who:["張郁芬","柳婉郁","黃信川","盧希鵬","游慧茹","利明献","g:龔處長","王文傑","魏寶生","趙秋芬"], side:["左排（上→下）","右排（上→下）"] },
     { name:"B 桌（7 人・長桌）",  shape:"long", dir:"h", split:3, who:["游張松","戴啟珩","張振明","王　雍","凌瓏","陳聖德","陳萱"], side:["上排（廁所側）","下排"] },
     { name:"C 桌（6 人・長桌）",  shape:"long", dir:"h", split:3, who:["王村煌","陳曉穎","邱浩軒","王岳聰","鄭兆剛","劉惟珺"], side:["上排","下排（門側）"], door:"下方：門" } ] },
-  d2m5:{ note:"套餐式・座位圖 20 人", tables:[
+  d2m5:{ note:"套餐式・座位圖 20 人（產品部座位圖未標示門或舞台方位）",
+    room:{ w:1000, h:420, tables:[ {t:1,x:250,y:210,R:130}, {t:0,x:750,y:210,R:130} ] }, tables:[
     { name:"A 桌（10 人）", who:["王文傑","利明献","張郁芬","游慧茹","盧希鵬","邱浩軒","劉惟珺","張振明","陳萱","陳聖德"] },
     { name:"B 桌（9 人）",  who:["凌瓏","王　雍","游張松","黃信川","王村煌","戴啟珩","陳曉穎","王岳聰","鄭兆剛"] } ] },
-  d3m1:{ note:"大桌 19 人＋小桌 16 人・門在 6 點方向（正門／外場），側門與廁所在左", tables:[
+  d3m1:{ note:"大桌 19 人＋小桌 16 人・門在 6 點方向（正門／外場），側門與廁所在左",
+    room:{ w:1000, h:800, marks:[ {type:"bar",x:140,y:655,w:330,h:40,label:"門"}, {type:"bar",x:600,y:655,w:330,h:40,label:"門"},
+      {type:"arrow",x1:300,y1:748,x2:160,y2:748,color:"#5B8DD6",label:"側門及廁所方向",lx:325,ly:755,anchor:"start"},
+      {type:"arrow",x1:640,y1:712,x2:640,y2:788,color:"#5B8DD6",label:"外場及正門出入口",lx:668,ly:757,anchor:"start"} ],
+      tables:[ {t:0,x:500,y:370,R:220} ] }, tables:[
     { name:"大桌（19 人）", who:["王文傑","利明献","張郁芬","邱浩軒","黃信川","陳曉穎","王岳聰","王村煌","戴啟珩","凌瓏","陳聖德","陳萱","張振明","劉惟珺","鄭兆剛","游張松","王　雍","游慧茹","盧希鵬"], door:"6 點方向：正門" },
     { name:"小桌（16 人）", who:[], cap:8 } ] },
 };
@@ -2946,55 +2978,81 @@ function defaultSeating(m){
   const pad=a=>a.concat(Array(Math.max(2, (Math.ceil((a.length+2)/2)*2)-a.length)).fill(null));
   return { tables:[ {name:"第 1 桌（貴賓桌）",seats:pad(t1)}, {name:"第 2 桌（主管桌）",seats:pad(t2)} ] };
 }
-/* 圓桌圖：seats[0] 在 12 點方向，順時針；跟官方座位圖同一種畫法 */
-function svgRoundTable(t,ti){
-  const n=t.seats.length, W=420, cx=210, cy=210, R=n>14?152:140, r=Math.max(14,Math.min(24,Math.floor((2*Math.PI*R/Math.max(n,1))/2)-3));
-  const fs=r>=20?11.5:10;
-  let out=`<svg class="roundtbl" viewBox="0 0 ${W} ${W}" xmlns="http://www.w3.org/2000/svg">
-    <circle cx="${cx}" cy="${cy}" r="${R-r-14}" fill="#FFF3D6" stroke="#E8C98A" stroke-width="2"/>
-    <text x="${cx}" y="${cy-6}" text-anchor="middle" font-size="15" font-weight="800" fill="#7A5200">${esc(t.name.split("（")[0])}</text>
-    <text x="${cx}" y="${cy+14}" text-anchor="middle" font-size="12" fill="#A87800">${t.seats.filter(Boolean).length} 人</text>`;
-  t.seats.forEach((pid,i)=>{
-    const a=-Math.PI/2 + i*2*Math.PI/n, x=cx+R*Math.cos(a), y=cy+R*Math.sin(a), p=seatPerson(pid);
-    out+=`<text x="${cx+(R+r+9)*Math.cos(a)}" y="${cy+(R+r+9)*Math.sin(a)+3}" text-anchor="middle" font-size="9" fill="#B9B9BF">${i+1}</text>`;
-    out+=`<g class="sseat${p?"":" empty"}" data-t="${ti}" data-i="${i}"${p?` data-p="${esc(p.id)}"`:""}>`;
-    if(!p){ out+=`<circle cx="${x}" cy="${y}" r="${r}" fill="#fff" stroke="#C9C9CF" stroke-width="1.5" stroke-dasharray="4 3"/></g>`; return; }
-    const g=p.group==="貴賓"?["#FFF7F7","#F3C3C8"]:p.group==="雄獅主管"?["#F5F8FF","#C9D8F5"]:p.guest?["#FFFBE6","#E8C98A"]:["#FAFAFB","#D5D5DA"];
-    const nm=p.name.replace(/\s/g,"").slice(0,4), two=nm.length>2;
-    out+=`<circle cx="${x}" cy="${y}" r="${r}" fill="${g[0]}" stroke="${g[1]}" stroke-width="1.8"/>`;
-    if(two&&r<22) out+=`<text x="${x}" y="${y-2}" text-anchor="middle" font-size="${fs}" font-weight="800" fill="#333336">${esc(nm.slice(0,2))}</text><text x="${x}" y="${y+fs}" text-anchor="middle" font-size="${fs}" font-weight="800" fill="#333336">${esc(nm.slice(2))}</text>`;
-    else out+=`<text x="${x}" y="${y+4}" text-anchor="middle" font-size="${fs}" font-weight="800" fill="#333336">${esc(nm)}</text>`;
-    out+=`</g>`;
-  });
-  if(t.door) out+=`<rect x="${cx-70}" y="${W-22}" width="140" height="18" rx="4" fill="#E5E5EA"/><text x="${cx}" y="${W-9}" text-anchor="middle" font-size="11" fill="#333336">門 · ${esc(t.door)}</text>`;
-  return out+"</svg>";
+/* ---- 座位圖共用零件 ---- */
+const SEAT_FONT='font-family="PingFang TC,Microsoft JhengHei,system-ui,sans-serif"';
+function seatG(pid,ti,i,x,y,r){
+  const p=seatPerson(pid), fs=r>=20?11.5:10;
+  let out=`<g class="sseat${p?"":" empty"}" data-t="${ti}" data-i="${i}"${p?` data-p="${esc(p.id)}"`:""}>`;
+  if(!p) return out+`<circle cx="${x}" cy="${y}" r="${r}" fill="#fff" stroke="#C9C9CF" stroke-width="1.5" stroke-dasharray="4 3"/></g>`;
+  const g=p.group==="貴賓"?["#FFF7F7","#F3C3C8"]:p.group==="雄獅主管"?["#F5F8FF","#C9D8F5"]:p.guest?["#FFFBE6","#E8C98A"]:["#FAFAFB","#D5D5DA"];
+  const nm=p.name.replace(/\s/g,"").slice(0,4), two=nm.length>2&&r<22;
+  out+=`<circle cx="${x}" cy="${y}" r="${r}" fill="${g[0]}" stroke="${g[1]}" stroke-width="1.8"/>`;
+  if(two) out+=`<text x="${x}" y="${y-2}" text-anchor="middle" font-size="${fs}" font-weight="800" fill="#333336">${esc(nm.slice(0,2))}</text><text x="${x}" y="${y+fs}" text-anchor="middle" font-size="${fs}" font-weight="800" fill="#333336">${esc(nm.slice(2))}</text>`;
+  else out+=`<text x="${x}" y="${y+4}" text-anchor="middle" font-size="${fs}" font-weight="800" fill="#333336">${esc(nm)}</text>`;
+  return out+`</g>`;
 }
-/* 長桌圖：seats 前 split 個在第一側（上排或左排），其餘在第二側；每側由左到右／由上到下 */
-function svgLongTable(t,ti){
+/* 圓桌：seats[0] 在 12 點方向，順時針；跟產品部座位圖同一種畫法。回傳 <g>，給單桌圖跟全景圖共用 */
+function roundTableG(t,ti,cx,cy,R){
+  const n=t.seats.length, r=Math.max(14,Math.min(24,Math.floor((2*Math.PI*R/Math.max(n,1))/2)-3));
+  let out=`<g class="tzone" data-t="${ti}"><circle class="tbl" cx="${cx}" cy="${cy}" r="${R-r-14}" fill="#FFF3D6" stroke="#E8C98A" stroke-width="2"/>
+    <text x="${cx}" y="${cy-6}" text-anchor="middle" font-size="${R>180?22:15}" font-weight="800" fill="#7A5200">${esc(t.name.split("（")[0])}</text>
+    <text x="${cx}" y="${cy+(R>180?20:14)}" text-anchor="middle" font-size="${R>180?14:12}" fill="#A87800">${t.seats.filter(Boolean).length} 人</text>`;
+  t.seats.forEach((pid,i)=>{
+    const a=-Math.PI/2 + i*2*Math.PI/n, x=cx+R*Math.cos(a), y=cy+R*Math.sin(a);
+    out+=`<text x="${cx+(R+r+9)*Math.cos(a)}" y="${cy+(R+r+9)*Math.sin(a)+3}" text-anchor="middle" font-size="9" fill="#B9B9BF">${i+1}</text>`;
+    out+=seatG(pid,ti,i,x,y,r);
+  });
+  return out+"</g>";
+}
+/* 長桌：seats 前 split 個在第一側（上排或左排），其餘在第二側；每側由左到右／由上到下 */
+function longTableG(t,ti,cx,cy){
   const n=t.seats.length, sp=t.split||Math.ceil(n/2), s1=t.seats.slice(0,sp), s2=t.seats.slice(sp), m=Math.max(s1.length,s2.length,1);
   const vert=t.dir==="v", step=64, r=22, len=m*step+20;
-  const W=vert?260:len+40, H=vert?len+40:250, cx=W/2, cy=H/2;
-  let out=`<svg class="roundtbl long${vert?" v":""}" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">`;
-  if(vert) out+=`<rect x="${cx-28}" y="${cy-len/2}" width="56" height="${len}" rx="8" fill="#FFF3D6" stroke="#E8C98A" stroke-width="2"/>
+  let out=`<g class="tzone" data-t="${ti}">`;
+  if(vert) out+=`<rect class="tbl" x="${cx-28}" y="${cy-len/2}" width="56" height="${len}" rx="8" fill="#FFF3D6" stroke="#E8C98A" stroke-width="2"/>
     <text x="${cx}" y="${cy+5}" text-anchor="middle" font-size="15" font-weight="800" fill="#7A5200" transform="rotate(-90 ${cx} ${cy})">${esc(t.name.split("（")[0])}</text>`;
-  else out+=`<rect x="${cx-len/2}" y="${cy-28}" width="${len}" height="56" rx="8" fill="#FFF3D6" stroke="#E8C98A" stroke-width="2"/>
+  else out+=`<rect class="tbl" x="${cx-len/2}" y="${cy-28}" width="${len}" height="56" rx="8" fill="#FFF3D6" stroke="#E8C98A" stroke-width="2"/>
     <text x="${cx}" y="${cy+5}" text-anchor="middle" font-size="15" font-weight="800" fill="#7A5200">${esc(t.name.split("（")[0])}</text>`;
-  const draw=(pid,idx,x,y)=>{
-    const p=seatPerson(pid);
-    out+=`<text x="${x}" y="${y-r-5}" text-anchor="middle" font-size="9" fill="#B9B9BF">${idx+1}</text>`;
-    out+=`<g class="sseat${p?"":" empty"}" data-t="${ti}" data-i="${idx}"${p?` data-p="${esc(p.id)}"`:""}>`;
-    if(!p){ out+=`<circle cx="${x}" cy="${y}" r="${r}" fill="#fff" stroke="#C9C9CF" stroke-width="1.5" stroke-dasharray="4 3"/></g>`; return; }
-    const g=p.group==="貴賓"?["#FFF7F7","#F3C3C8"]:p.group==="雄獅主管"?["#F5F8FF","#C9D8F5"]:p.guest?["#FFFBE6","#E8C98A"]:["#FAFAFB","#D5D5DA"];
-    const nm=p.name.replace(/\s/g,"").slice(0,4);
-    out+=`<circle cx="${x}" cy="${y}" r="${r}" fill="${g[0]}" stroke="${g[1]}" stroke-width="1.8"/><text x="${x}" y="${y+4}" text-anchor="middle" font-size="11" font-weight="800" fill="#333336">${esc(nm)}</text></g>`;
-  };
   [s1,s2].forEach((side,si)=>{
     const off=si===0?-70:70, start=(vert?cy:cx)-((side.length-1)*step)/2;
-    side.forEach((pid,i)=>{ const pos=start+i*step; if(vert) draw(pid,si===0?i:sp+i,cx+off,pos); else draw(pid,si===0?i:sp+i,pos,cy+off); });
+    side.forEach((pid,i)=>{ const pos=start+i*step, idx=si===0?i:sp+i, x=vert?cx+off:pos, y=vert?pos:cy+off;
+      out+=`<text x="${x}" y="${y-r-5}" text-anchor="middle" font-size="9" fill="#B9B9BF">${idx+1}</text>`+seatG(pid,ti,idx,x,y,r); });
     if(t.side&&t.side[si]){ const lx=vert?cx+off:cx, ly=vert?cy-len/2-14:(si===0?cy-70-r-16:cy+70+r+18);
-      out+=`<text x="${lx}" y="${vert?(si===0?ly:ly):ly}" text-anchor="middle" font-size="10" fill="#8E8E93">${esc(t.side[si])}</text>`; }
+      out+=`<text x="${lx}" y="${ly}" text-anchor="middle" font-size="10" fill="#8E8E93">${esc(t.side[si])}</text>`; }
   });
-  if(t.door) out+=`<rect x="${cx-60}" y="${H-20}" width="120" height="16" rx="4" fill="#E5E5EA"/><text x="${cx}" y="${H-8}" text-anchor="middle" font-size="10" fill="#333336">門 · ${esc(t.door)}</text>`;
+  return out+"</g>";
+}
+function svgRoundTable(t,ti){
+  const W=420, R=t.seats.length>14?152:140;
+  let out=`<svg class="roundtbl" viewBox="0 0 ${W} ${W}" xmlns="http://www.w3.org/2000/svg">`+roundTableG(t,ti,W/2,W/2,R);
+  if(t.door) out+=`<rect x="${W/2-70}" y="${W-22}" width="140" height="18" rx="4" fill="#E5E5EA"/><text x="${W/2}" y="${W-9}" text-anchor="middle" font-size="11" fill="#333336">門 · ${esc(t.door)}</text>`;
+  return out+"</svg>";
+}
+function svgLongTable(t,ti){
+  const n=t.seats.length, sp=t.split||Math.ceil(n/2), m=Math.max(sp,n-sp,1), vert=t.dir==="v", len=m*64+20;
+  const W=vert?260:len+40, H=vert?len+40:250;
+  let out=`<svg class="roundtbl long${vert?" v":""}" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">`+longTableG(t,ti,W/2,H/2);
+  if(t.door) out+=`<rect x="${W/2-60}" y="${H-20}" width="120" height="16" rx="4" fill="#E5E5EA"/><text x="${W/2}" y="${H-8}" text-anchor="middle" font-size="10" fill="#333336">門 · ${esc(t.door)}</text>`;
+  return out+"</svg>";
+}
+/* 餐廳全景圖：照產品部座位圖的方位畫——舞台、門、廁所、出入口箭頭都放在原本的位置，桌子也照圖上的左右擺 */
+function svgRoom(st,room){
+  const W=room.w, H=room.h;
+  let out=`<svg class="roomplan" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
+    <defs><filter id="rm-sh" x="-10%" y="-10%" width="120%" height="130%"><feDropShadow dx="0" dy="1" stdDeviation="1.2" flood-color="#000" flood-opacity=".12"/></filter></defs>
+    <rect x="1" y="1" width="${W-2}" height="${H-2}" rx="14" fill="#FCFBF8" stroke="#E4E4EA"/>`;
+  const head=(x,y,dx,dy,c)=>{ const L=Math.hypot(dx,dy)||1, ux=dx/L, uy=dy/L, px=-uy, py=ux, b=14, h=22;
+    return `<polygon points="${x},${y} ${x-ux*h+px*b},${y-uy*h+py*b} ${x-ux*h-px*b},${y-uy*h-py*b}" fill="${c}"/>`; };
+  (room.marks||[]).forEach(mk=>{
+    if(mk.type==="bar") out+=`<g filter="url(#rm-sh)"><rect x="${mk.x}" y="${mk.y}" width="${mk.w}" height="${mk.h}" rx="5" fill="#E6E6EB" stroke="#B4B4BC" stroke-width="1.5"/></g>
+      <text x="${mk.x+mk.w/2}" y="${mk.y+mk.h/2+7}" text-anchor="middle" font-size="19" font-weight="800" fill="#2B2B30" letter-spacing="4">${esc(mk.label)}</text>`;
+    else if(mk.type==="arrow"){ const c=mk.color||"#E0281E", dx=mk.x2-mk.x1, dy=mk.y2-mk.y1, L=Math.hypot(dx,dy)||1;
+      out+=`<line x1="${mk.x1}" y1="${mk.y1}" x2="${mk.x2-dx/L*18}" y2="${mk.y2-dy/L*18}" stroke="${c}" stroke-width="12" stroke-linecap="round"/>`+head(mk.x2,mk.y2,dx,dy,c);
+      if(mk.label) out+=`<text x="${mk.lx}" y="${mk.ly}" text-anchor="${mk.anchor||"middle"}" font-size="17" font-weight="800" fill="#2B2B30">${esc(mk.label)}</text>`; }
+    else if(mk.type==="text") out+=`<text x="${mk.x}" y="${mk.y}" text-anchor="${mk.anchor||"middle"}" font-size="${mk.size||13}" fill="${mk.color||"#8E8E93"}">${esc(mk.label)}</text>`;
+  });
+  (room.tables||[]).forEach(pl=>{ const t=st.tables[pl.t]; if(!t) return;
+    out+= t.shape==="long" ? longTableG(t,pl.t,pl.x,pl.y) : roundTableG(t,pl.t,pl.x,pl.y,pl.R||(t.seats.length>14?200:140)); });
   return out+"</svg>";
 }
 function seatingOf(m){
@@ -3016,7 +3074,7 @@ PAGES.tables=(hdr,scr)=>{
   const {m,day}=found;
   if(!hasSeating(m)){ goPage("meals"); return; }
   hbar(hdr,"分桌 · "+m.place,{back:true});
-  const st=seatingOf(m), custom=!!S.seating[m.id];
+  const st=seatingOf(m), custom=!!S.seating[m.id], room=(SEAT_DOC[m.id]||{}).room||null;
   const here=PAX.filter(p=>p.days.includes(day));
   const seatedIds=new Set(st.tables.flatMap(t=>t.seats.filter(Boolean)));
   const pool=here.filter(p=>!seatedIds.has(p.id));
@@ -3030,13 +3088,15 @@ PAGES.tables=(hdr,scr)=>{
   el.innerHTML=`
   <div class="mealswitch">${[1,2,3].flatMap(d=>(MEALS[d]||[]).filter(hasSeating).map(x=>`<button class="tab${x.id===m.id?" on":""}" data-m="${esc(x.id)}">D${d} ${esc(x.slot)}・${esc(x.place.split("・")[0].split("（")[0])}</button>`)).join("")}</div>
   ${st.note?`<div class="card" style="font-size:13px;line-height:1.6;background:#FFF3D6;border-color:#E8C98A;color:#7A5200"><b>產品部座位圖</b>　${esc(st.note)}　<span style="color:#A87800">圓桌圖 12 點方向＝第 1 位，順時針。</span></div>`:""}
-  <div class="card tblhint"><span>${ic("hand",16)}</span><span><b>長按名字</b>（圓桌圖上或下方格子都可以）抬起來，拖到別的位子就互換；拖到空位是搬過去；拖到「未入座」是移出。改完自動存，只影響這家餐廳。</span>
+  <div class="card tblhint"><span>${ic("hand",16)}</span><span><b>長按名字</b>（全景圖上或下方格子都可以）抬起來，拖到別的位子就互換；拖到空位是搬過去；拖到「未入座」是移出。改完自動存，只影響這家餐廳。</span>
     <span class="pill ${custom?"green":"gray"}">${custom?"已自訂":"預設分桌"}</span></div>
+  ${room?`<div class="card tcard roomcard2"><div class="thead"><b>餐廳全景圖</b><span class="pill gray">方位照產品部座位圖</span><span class="roomhint">點空白處放大・長按名字拖拉</span></div>
+    <div class="roomwrap"><div class="zw" data-title="${esc(m.place)} 分桌圖">${svgRoom(st,room)}</div></div></div>`:""}
   <div class="tables">
     ${st.tables.map((t,ti)=>{ const n=t.seats.filter(Boolean).length;
       return `<div class="card tcard tzone" data-t="${ti}">
         <div class="thead"><b class="tname" data-t="${ti}">${esc(t.name)}</b><span class="pill redln">${n} 人</span><button class="notebtn" data-tedit="${ti}">✎ 桌名／位數</button></div>
-        ${t.seats.length>2?`<div class="roundwrap">${t.shape==="long"?svgLongTable(t,ti):svgRoundTable(t,ti)}</div>`:""}
+        ${t.seats.length>2&&!(room&&room.tables.some(x=>x.t===ti))?`<div class="roundwrap">${t.shape==="long"?svgLongTable(t,ti):svgRoundTable(t,ti)}</div>`:""}
         <div class="tseats">${t.seats.map((pid,i)=>chip(pid,ti,i)).join("")}</div>
       </div>`; }).join("")}
     <div class="card tcard pool tzone" data-t="pool">
@@ -3052,6 +3112,9 @@ PAGES.tables=(hdr,scr)=>{
   scr.appendChild(el);
 
   el.querySelectorAll(".mealswitch .tab").forEach(b=>b.onclick=()=>goPage("tables:"+b.dataset.m));
+  const rz=el.querySelector(".roomwrap .zw");
+  if(rz){ rz._slides=()=>[{ title:`${m.place} 分桌圖`, render:()=>svgRoom(st,room) }]; zoomify(rz);
+    window.LB_WIRE=root=>root.querySelectorAll(".sseat[data-p]").forEach(x=>x.addEventListener("click",ev=>{ ev.stopPropagation(); const p=seatPerson(x.dataset.p); if(p&&!p.guest) openPaxModal(p); })); }
   el.querySelector("#tblAdd").onclick=()=>{ const cur=ensureSeating(m); cur.tables.push({name:`第 ${cur.tables.length+1} 桌`,seats:Array(8).fill(null)}); save(); render(); };
   el.querySelector("#tblReset").onclick=()=>confirmBox("還原成預設分桌？這家餐廳自訂的位子會清掉。",()=>{ delete S.seating[m.id]; save(); render(); toast("已還原"); });
   el.querySelector("#tblCopy").onclick=()=>{
