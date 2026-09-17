@@ -2757,6 +2757,8 @@ PAGES.rooms=(hdr,scr)=>{
   const rooms=N.rooms.map((r,i)=>({r,i,f:floorOf(r)}));
   const floors=[...new Set(rooms.map(x=>x.f).filter(Boolean))].sort((a,b)=>a-b);
   const other=rooms.filter(x=>!x.f);
+  if(!S.floor) S.floor={};
+  const want=S.floor[N.key], curF=(want==="other"&&other.length)?"other":(floors.includes(want)?want:(floors[0]||"other"));
   const isSuite=t=>(t||"").includes("套")||(t||"").includes("豪華");
   const card=({r,i})=>`<div class="roomcard">${ebtn(String(i))}<div class="no">${esc(r.no)}</div>
       <div class="tp"><span class="pill ${isSuite(r.type)?"redln":"gray"}">${esc(r.type)}</span>${r.note?`<span class="pill amber">${esc(r.note)}</span>`:""}</div>
@@ -2775,28 +2777,19 @@ PAGES.rooms=(hdr,scr)=>{
     </tbody></table>
   </div>
   <p class="vs">發放房卡時照表引導；魏董伉儷、柳董 9/21 提前返北，第二晚無房。異動請用「手寫備註」記下。</p>
-  <div class="floorjump" id="floorJump">${floors.map(f=>`<button class="tab" data-jf="f${f}">${f}F</button>`).join("")}${other.length?`<button class="tab" data-jf="fother">其他</button>`:""}</div>
-  ${floors.map(f=>{ const list=rooms.filter(x=>x.f===f), img=planOf(f);
-    return `<h3 class="sect" id="f${f}">${f}F <span class="efhint">${list.filter(x=>(x.r.who||[]).length).length} 間・${list.reduce((n,x)=>n+(x.r.who||[]).length,0)} 人</span></h3>
+  <div class="floorjump" id="floorJump">${floors.map(f=>`<button class="tab${curF===f?" on":""}" data-jf="${f}">${f}F</button>`).join("")}${other.length?`<button class="tab${curF==="other"?" on":""}" data-jf="other">其他</button>`:""}</div>
+  ${curF==="other"?`<h3 class="sect">其他 <span class="efhint">工作人員・外宿</span></h3><div class="roomgrid">${other.map(card).join("")}</div>`:(()=>{
+    const f=curF, list=rooms.filter(x=>x.f===f), img=planOf(f);
+    return `<h3 class="sect">${f}F <span class="efhint">${list.filter(x=>(x.r.who||[]).length).length} 間・${list.reduce((n,x)=>n+(x.r.who||[]).length,0)} 人</span></h3>
     <div class="floorsec${img?"":" noplan"}">
       ${img?`<div class="card floorwrap"><div class="zw"><img class="zin" src="${img}" alt="${f}F 平面圖"></div><div class="zoomhint">產品部 9/16 原圖・兩指縮放、拖曳；＋－回 1:1</div></div>`:""}
       <div class="roomgrid floorrooms">${list.map(card).join("")}</div>
-    </div>`; }).join("")}
-  ${other.length?`<h3 class="sect" id="fother">其他</h3><div class="roomgrid">${other.map(card).join("")}</div>`:""}`;
+    </div>`; })()}`;
   el.querySelectorAll("[data-vm]").forEach(b=>b.onclick=()=>openVendorModal(b.dataset.vm));
   el.querySelectorAll(".floorwrap .zw").forEach(zoomify);
-  /* 樓層快速切換：點了捲到該層；捲動時亮起目前所在的樓層 */
-  const jump=el.querySelector("#floorJump"), scrEl=$("#screen");
-  jump.querySelectorAll("[data-jf]").forEach(b=>b.onclick=()=>{
-    const h=el.querySelector("#"+b.dataset.jf); if(!h) return;
-    const top=h.getBoundingClientRect().top-scrEl.getBoundingClientRect().top+scrEl.scrollTop-jump.offsetHeight-6;
-    scrEl.scrollTo({top,behavior:"smooth"});
-  });
-  const heads=[...el.querySelectorAll("h3.sect[id^='f']")];
-  const mark=()=>{ const y=scrEl.getBoundingClientRect().top+jump.offsetHeight+12; let cur=heads[0];
-    for(const h of heads){ if(h.getBoundingClientRect().top<=y) cur=h; }
-    jump.querySelectorAll(".tab").forEach(t=>t.classList.toggle("on",cur&&t.dataset.jf===cur.id)); };
-  scrEl.addEventListener("scroll",mark,{passive:true}); requestAnimationFrame(mark);
+  /* 樓層分頁：切換只顯示該層 */
+  el.querySelectorAll("#floorJump [data-jf]").forEach(b=>b.onclick=()=>{ const v=b.dataset.jf; S.floor[N.key]=v==="other"?"other":+v; save(); render();
+    requestAnimationFrame(()=>{ const j=$("#floorJump"); if(j) j.scrollIntoView({block:"start"}); }); });
   editBar(el,{add:()=>editRoom(N,null),addLabel:"新增房間"});
   EDIT_HANDLER=k=>{
     if(k==="__night") editForm("飯店資料",[{k:"date",label:"日期",ph:"9/20(日)"},{k:"hotel",label:"飯店",required:true},{k:"info",label:"房型說明",type:"textarea",rows:2},
