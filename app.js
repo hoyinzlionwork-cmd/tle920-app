@@ -2821,7 +2821,7 @@ function defaultSeating(m){
   return { tables:[ {name:"第 1 桌（貴賓桌）",seats:pad(t1)}, {name:"第 2 桌（主管桌）",seats:pad(t2)} ] };
 }
 /* 圓桌圖：seats[0] 在 12 點方向，順時針；跟官方座位圖同一種畫法 */
-function svgRoundTable(t){
+function svgRoundTable(t,ti){
   const n=t.seats.length, W=420, cx=210, cy=210, R=n>14?152:140, r=Math.max(14,Math.min(24,Math.floor((2*Math.PI*R/Math.max(n,1))/2)-3));
   const fs=r>=20?11.5:10;
   let out=`<svg class="roundtbl" viewBox="0 0 ${W} ${W}" xmlns="http://www.w3.org/2000/svg">
@@ -2831,18 +2831,20 @@ function svgRoundTable(t){
   t.seats.forEach((pid,i)=>{
     const a=-Math.PI/2 + i*2*Math.PI/n, x=cx+R*Math.cos(a), y=cy+R*Math.sin(a), p=seatPerson(pid);
     out+=`<text x="${cx+(R+r+9)*Math.cos(a)}" y="${cy+(R+r+9)*Math.sin(a)+3}" text-anchor="middle" font-size="9" fill="#B9B9BF">${i+1}</text>`;
-    if(!p){ out+=`<circle cx="${x}" cy="${y}" r="${r}" fill="#fff" stroke="#C9C9CF" stroke-width="1.5" stroke-dasharray="4 3"/>`; return; }
+    out+=`<g class="sseat${p?"":" empty"}" data-t="${ti}" data-i="${i}"${p?` data-p="${esc(p.id)}"`:""}>`;
+    if(!p){ out+=`<circle cx="${x}" cy="${y}" r="${r}" fill="#fff" stroke="#C9C9CF" stroke-width="1.5" stroke-dasharray="4 3"/></g>`; return; }
     const g=p.group==="貴賓"?["#FFF7F7","#F3C3C8"]:p.group==="雄獅主管"?["#F5F8FF","#C9D8F5"]:p.guest?["#FFFBE6","#E8C98A"]:["#FAFAFB","#D5D5DA"];
     const nm=p.name.replace(/\s/g,"").slice(0,4), two=nm.length>2;
     out+=`<circle cx="${x}" cy="${y}" r="${r}" fill="${g[0]}" stroke="${g[1]}" stroke-width="1.8"/>`;
     if(two&&r<22) out+=`<text x="${x}" y="${y-2}" text-anchor="middle" font-size="${fs}" font-weight="800" fill="#333336">${esc(nm.slice(0,2))}</text><text x="${x}" y="${y+fs}" text-anchor="middle" font-size="${fs}" font-weight="800" fill="#333336">${esc(nm.slice(2))}</text>`;
     else out+=`<text x="${x}" y="${y+4}" text-anchor="middle" font-size="${fs}" font-weight="800" fill="#333336">${esc(nm)}</text>`;
+    out+=`</g>`;
   });
   if(t.door) out+=`<rect x="${cx-70}" y="${W-22}" width="140" height="18" rx="4" fill="#E5E5EA"/><text x="${cx}" y="${W-9}" text-anchor="middle" font-size="11" fill="#333336">門 · ${esc(t.door)}</text>`;
   return out+"</svg>";
 }
 /* 長桌圖：seats 前 split 個在第一側（上排或左排），其餘在第二側；每側由左到右／由上到下 */
-function svgLongTable(t){
+function svgLongTable(t,ti){
   const n=t.seats.length, sp=t.split||Math.ceil(n/2), s1=t.seats.slice(0,sp), s2=t.seats.slice(sp), m=Math.max(s1.length,s2.length,1);
   const vert=t.dir==="v", step=64, r=22, len=m*step+20;
   const W=vert?260:len+40, H=vert?len+40:250, cx=W/2, cy=H/2;
@@ -2854,10 +2856,11 @@ function svgLongTable(t){
   const draw=(pid,idx,x,y)=>{
     const p=seatPerson(pid);
     out+=`<text x="${x}" y="${y-r-5}" text-anchor="middle" font-size="9" fill="#B9B9BF">${idx+1}</text>`;
-    if(!p){ out+=`<circle cx="${x}" cy="${y}" r="${r}" fill="#fff" stroke="#C9C9CF" stroke-width="1.5" stroke-dasharray="4 3"/>`; return; }
+    out+=`<g class="sseat${p?"":" empty"}" data-t="${ti}" data-i="${idx}"${p?` data-p="${esc(p.id)}"`:""}>`;
+    if(!p){ out+=`<circle cx="${x}" cy="${y}" r="${r}" fill="#fff" stroke="#C9C9CF" stroke-width="1.5" stroke-dasharray="4 3"/></g>`; return; }
     const g=p.group==="貴賓"?["#FFF7F7","#F3C3C8"]:p.group==="雄獅主管"?["#F5F8FF","#C9D8F5"]:p.guest?["#FFFBE6","#E8C98A"]:["#FAFAFB","#D5D5DA"];
     const nm=p.name.replace(/\s/g,"").slice(0,4);
-    out+=`<circle cx="${x}" cy="${y}" r="${r}" fill="${g[0]}" stroke="${g[1]}" stroke-width="1.8"/><text x="${x}" y="${y+4}" text-anchor="middle" font-size="11" font-weight="800" fill="#333336">${esc(nm)}</text>`;
+    out+=`<circle cx="${x}" cy="${y}" r="${r}" fill="${g[0]}" stroke="${g[1]}" stroke-width="1.8"/><text x="${x}" y="${y+4}" text-anchor="middle" font-size="11" font-weight="800" fill="#333336">${esc(nm)}</text></g>`;
   };
   [s1,s2].forEach((side,si)=>{
     const off=si===0?-70:70, start=(vert?cy:cx)-((side.length-1)*step)/2;
@@ -2874,6 +2877,9 @@ function seatingOf(m){
   return defaultSeating(m);
 }
 function ensureSeating(m){ if(!S.seating[m.id]) S.seating[m.id]=clone(seatingOf(m)); return S.seating[m.id]; }
+/* 拖拉中把觸控捲動擋掉（Safari 對 SVG 的 touch-action 不一定買單） */
+let DRAG_ACTIVE=false;
+window.addEventListener("touchmove",e=>{ if(DRAG_ACTIVE) e.preventDefault(); },{passive:false});
 /* 只有產品部給了座位圖（或領隊自己排過）的餐次才有分桌 */
 function hasSeating(m){ return !!(m && (SEAT_DOC[m.id] || S.seating[m.id])); }
 function mealById(id){ for(const d of Object.keys(MEALS)) for(const m of MEALS[d]||[]) if(m.id===id) return {m,day:+d}; return null; }
@@ -2899,13 +2905,13 @@ PAGES.tables=(hdr,scr)=>{
   el.innerHTML=`
   <div class="mealswitch">${[1,2,3].flatMap(d=>(MEALS[d]||[]).filter(hasSeating).map(x=>`<button class="tab${x.id===m.id?" on":""}" data-m="${esc(x.id)}">D${d} ${esc(x.slot)}・${esc(x.place.split("・")[0].split("（")[0])}</button>`)).join("")}</div>
   ${st.note?`<div class="card" style="font-size:13px;line-height:1.6;background:#FFF3D6;border-color:#E8C98A;color:#7A5200"><b>產品部座位圖</b>　${esc(st.note)}　<span style="color:#A87800">圓桌圖 12 點方向＝第 1 位，順時針。</span></div>`:""}
-  <div class="card tblhint"><span>${ic("hand",16)}</span><span><b>長按名字</b>抬起來，拖到別的位子就互換；拖到空位是搬過去；拖到「未入座」是移出。改完自動存，只影響這家餐廳。</span>
+  <div class="card tblhint"><span>${ic("hand",16)}</span><span><b>長按名字</b>（圓桌圖上或下方格子都可以）抬起來，拖到別的位子就互換；拖到空位是搬過去；拖到「未入座」是移出。改完自動存，只影響這家餐廳。</span>
     <span class="pill ${custom?"green":"gray"}">${custom?"已自訂":"預設分桌"}</span></div>
   <div class="tables">
     ${st.tables.map((t,ti)=>{ const n=t.seats.filter(Boolean).length;
       return `<div class="card tcard tzone" data-t="${ti}">
         <div class="thead"><b class="tname" data-t="${ti}">${esc(t.name)}</b><span class="pill redln">${n} 人</span><button class="notebtn" data-tedit="${ti}">✎ 桌名／位數</button></div>
-        ${t.seats.length>2?`<div class="roundwrap">${t.shape==="long"?svgLongTable(t):svgRoundTable(t)}</div>`:""}
+        ${t.seats.length>2?`<div class="roundwrap">${t.shape==="long"?svgLongTable(t,ti):svgRoundTable(t,ti)}</div>`:""}
         <div class="tseats">${t.seats.map((pid,i)=>chip(pid,ti,i)).join("")}</div>
       </div>`; }).join("")}
     <div class="card tcard pool tzone" data-t="pool">
@@ -2942,12 +2948,13 @@ PAGES.tables=(hdr,scr)=>{
   const scrEl=$("#screen"); let press=null, drag=null, ghost=null;
   const clearPress=()=>{ if(press){ clearTimeout(press.timer); press=null; } };
   const targetAt=(x,y)=>{ if(ghost) ghost.style.display="none"; const n=document.elementFromPoint(x,y); if(ghost) ghost.style.display="";
-    return n ? (n.closest(".tseat")||n.closest(".tzone")) : null; };
+    return n ? (n.closest(".tseat,.sseat")||n.closest(".tzone")) : null; };
+  const isSeat=el=>el.classList.contains("tseat")||el.classList.contains("sseat");
   const applyDrop=(src,tgt)=>{
     const cur=ensureSeating(m), pid=src.dataset.p;
     const from = src.dataset.t==="pool" ? null : {t:+src.dataset.t,i:+src.dataset.i};
     const take=()=>{ if(from) cur.tables[from.t].seats[from.i]=null; };
-    if(tgt.classList.contains("tseat")){
+    if(isSeat(tgt)){
       if(tgt.dataset.t==="pool"){ if(!from) return false; take(); return true; }
       const to={t:+tgt.dataset.t,i:+tgt.dataset.i}; if(from && from.t===to.t && from.i===to.i) return false;
       const other=cur.tables[to.t].seats[to.i]||null;
@@ -2959,16 +2966,25 @@ PAGES.tables=(hdr,scr)=>{
     const tt=+tgt.dataset.t, seats=cur.tables[tt].seats; if(from && from.t===tt) return false;
     take(); const hole=seats.indexOf(null); if(hole>=0) seats[hole]=pid; else seats.push(pid); return true;
   };
-  el.querySelectorAll(".tseat[data-p]").forEach(c=>{
+  const mkGhost=(c,e)=>{
+    const p=seatPerson(c.dataset.p), r=c.getBoundingClientRect();
+    const g=document.createElement("div");
+    const cls=p?(p.group==="貴賓"?"vip":p.group==="雄獅主管"?"mgr":p.guest?"gst":"stf"):"";
+    g.className="tseat tghost "+cls; g.innerHTML=`<b>${esc(p?p.name:"")}</b>`;
+    g.style.width=Math.max(96,r.width)+"px"; document.body.appendChild(g);
+    drag.ox=Math.max(96,r.width)/2; drag.oy=22;
+    g.style.left=(e.clientX-drag.ox)+"px"; g.style.top=(e.clientY-drag.oy)+"px";
+    return g;
+  };
+  el.querySelectorAll(".tseat[data-p],.sseat[data-p]").forEach(c=>{
     c.addEventListener("pointerdown",e=>{
       if(e.pointerType==="mouse" && e.button!==0) return;
       clearPress();
       press={el:c,id:e.pointerId,x:e.clientX,y:e.clientY,scroll:false,
         timer:setTimeout(()=>{ if(!press||press.el!==c) return;
-          drag={el:c,id:e.pointerId,ox:e.clientX-c.getBoundingClientRect().left,oy:e.clientY-c.getBoundingClientRect().top};
+          drag={el:c,id:e.pointerId,ox:0,oy:0}; DRAG_ACTIVE=true;
           try{ c.setPointerCapture(e.pointerId); }catch(_){}
-          ghost=c.cloneNode(true); ghost.className="tseat tghost "+c.className.replace("tseat","").trim(); document.body.appendChild(ghost);
-          const r=c.getBoundingClientRect(); ghost.style.width=r.width+"px"; ghost.style.left=(e.clientX-drag.ox)+"px"; ghost.style.top=(e.clientY-drag.oy)+"px";
+          ghost=mkGhost(c,e);
           c.classList.add("lift"); if(navigator.vibrate) navigator.vibrate(10); press=null; },380)};
       try{ c.setPointerCapture(e.pointerId); }catch(_){}
     });
@@ -2990,7 +3006,7 @@ PAGES.tables=(hdr,scr)=>{
       if(drag && drag.id===e.pointerId){
         const t=targetAt(e.clientX,e.clientY);
         ghost.remove(); ghost=null; drag.el.classList.remove("lift"); el.querySelectorAll(".over").forEach(x=>x.classList.remove("over"));
-        const src=drag.el; drag=null;
+        const src=drag.el; drag=null; DRAG_ACTIVE=false;
         if(t && t!==src && applyDrop(src,t)){ save(); render(); toast("已調整座位"); }
       }
     };
