@@ -181,7 +181,7 @@ const HSR_0911 = {
           "04199621":["p03","p04"], "待確認":["p16","p31","p26","p13"] },
   board:{ p13:"台中", p23:"台中" },
   days:{ p13:[1,2] },
-  remove:["p22"],   /* 陸嘉琪 9/1 取消 */
+  remove:["p22","p15"],   /* 陸嘉琪 9/1 取消；螘金花 9/15 取消（0916 分房表） */
   add:[
     { id:"p28", name:"陳萱",   rel:"陳董女兒",     en:"Lorraine", group:"貴賓",     days:[1,2,3], idNo:"—", birth:"—", tkt:"商務・成人", pnrGo:"—", pnrBk:"—", table:1, meal:"" },
     { id:"p29", name:"李沛祐", rel:"工作人員",     en:"Tony",     group:"工作人員", days:[1,2,3], idNo:"—", birth:"—", tkt:"經濟・成人", pnrGo:"—", pnrBk:"—", table:0, meal:"" },
@@ -203,8 +203,8 @@ const DOC0917_PAX = {
   p16:["董事總經理（不帶眷）","Andy Huang","雄獅旅行社董事總經理"], p17:["總經理","Eagle Wang",""], p18:["總經理","Ying Chen",""],
   p19:["顧問","Weichun Liu",""], p20:["總經理","Sean Chiu",""], p21:["執行董事","Dianna Dai",""],
   p23:["薰衣草森林董事長（合作夥伴）","Ed Wang",""],
-  p24:["工作人員","Paris","TL"], p29:["工作人員","Tony","TL"], p25:["工作人員","Jimmy","TL"], p32:["工作人員","Tony","TL"],
-  p26:["工作人員","Jason","TL"], p30:["工作人員","Debbie","TL"], p27:["工作人員","Charis","TL"], p31:["領隊","薛永南","TL"],
+  p24:["副總經理（隨團）","Paris","TL"], p29:["經理（產品）","Tony","TL"], p25:["資深協理（鐵道）","Jimmy","TL"], p32:["工作人員","Tony","TL"],
+  p26:["經理（產品）","Jason","TL"], p30:["副總經理（產品）","Debbie","TL"], p27:["經理（嘉義）","Charis","TL"], p31:["領隊","薛永南","TL"],
 };
 function applyDoc0917(list){
   if(!list.find(p=>p.id==="p32")) list.push({ id:"p32", name:"羅元榮", rel:"工作人員", en:"Tony", group:"工作人員", days:[1,2,3], idNo:"—", birth:"—", tkt:"—", hsrGo:"—", hsrBack:"—", pnrGo:"—", pnrBk:"—", table:0, meal:"" });
@@ -248,42 +248,46 @@ let NIGHTS = [
   { key:1, date:"9/20(日)", hotel:"阿里山賓館【現代館 6–9F】", vendor:"v_alishan",
     info:"歐套二大床 1801(愛心)／1822／1901／1922・歐套一大床 1625・和洋套房 1725／1817／1915(愛心)・豪華家庭房(兩大床，主管) 1902／1903／1905／1906／1907／1908／1909／1910／1911",
     rooms:[
-    { no:"1922", type:"歐式套房（兩大床）",        who:["王文傑","凌瓏"],            floor:9 },
-    { no:"1817", type:"和洋套房（一大床）",        who:["魏寶生","趙秋芬"],          floor:8, note:"只住 9/20" },
-    { no:"1901", type:"歐式套房（兩大床）TWN",    who:["游張松","王　雍"],          floor:9 },
-    { no:"1725", type:"和洋套房（一大床）",        who:["陳聖德","張振明","陳萱"],   floor:7, note:"此房有軟墊，女兒睡軟墊" },
-    { no:"1822", type:"歐式套房（兩大床）TWN",    who:["盧希鵬","游慧茹"],          floor:8 },
-    { no:"1625", type:"歐式套房（一大床）",        who:["利明献","張郁芬"],          floor:6, note:"分房 6 不可動・唯一歐套一大" },
-    { no:"1915", type:"和洋套房（一大床・愛心房）", who:["柳婉郁"],                   floor:9, note:"愛心房：無障礙扶手" },
-    { no:"1801", type:"歐式套房（兩大床・愛心房）", who:["鄭兆剛","螘金花"],          floor:8, note:"分房 8 不可動・CK 備註愛心（無障礙扶手）" },
-    { no:"1911", type:"豪華家庭房（兩大床）",      who:["黃信川"],  floor:9 },
-    { no:"1907", type:"豪華家庭房（兩大床）",      who:["王岳聰"],  floor:9 },
-    { no:"1903", type:"豪華家庭房（兩大床）",      who:["陳曉穎"],  floor:9 },
-    { no:"1905", type:"豪華家庭房（兩大床）",      who:["劉惟珺"],  floor:9 },
-    { no:"1910", type:"豪華家庭房（兩大床）",      who:["邱浩軒"],  floor:9 },
-    { no:"1909", type:"豪華家庭房（兩大床）",      who:["王村煌"],  floor:9 },
-    { no:"1902／1906／1908", type:"豪華家庭房（兩大床）", who:[], floor:9, note:"未分配・可給工作人員" },
-    { no:"工作人員", type:"另行安排", who:["陳婉如 Paris","李沛祐","林詠凱","羅元榮","周冠廷","賴怡娟","洪采吟","薛永南"], note:"房號待確認" },
+    { no:"1922", type:"歐式套房（兩大床）DBLB",        who:["王文傑","凌瓏"],            floor:9 },
+    { no:"1817", type:"和洋套房（一大床＋軟墊）DBLB",  who:["魏寶生","趙秋芬"],          floor:8, note:"不用軟墊・只住 9/20" },
+    { no:"1901", type:"歐式套房（兩大床）TWIN",        who:["游張松","王　雍"],          floor:9 },
+    { no:"1725", type:"和洋套房（一大床＋軟墊）DBLB",  who:["陳聖德","張振明","陳萱"],   floor:7, note:"女兒睡軟墊" },
+    { no:"1822", type:"歐式套房（兩大床）TWIN",        who:["盧希鵬","游慧茹"],          floor:8 },
+    { no:"1625", type:"歐式套房（一大床）DBLB",        who:["利明献","張郁芬"],          floor:6, note:"分房 6 不可動・唯一歐套一大" },
+    { no:"1915", type:"和洋套房（一大床＋軟墊）DBLB",  who:["柳婉郁"],                   floor:9, note:"不用軟墊・愛心房（無障礙扶手）" },
+    { no:"1801", type:"歐式套房（兩大床・愛心）DBLB",  who:["鄭兆剛"],                   floor:8, note:"分房 8 不可動・CK 備註愛心（無障礙扶手）・螘金花 9/15 取消" },
+    { no:"1911", type:"豪華家庭房 SGLB",      who:["黃信川"],  floor:9 },
+    { no:"1907", type:"豪華家庭房 SGLB",      who:["王岳聰"],  floor:9 },
+    { no:"1903", type:"豪華家庭房 SGLB",      who:["陳曉穎"],  floor:9 },
+    { no:"1905", type:"豪華家庭房 SGLB",      who:["劉惟珺"],  floor:9 },
+    { no:"1910", type:"豪華家庭房 SGLB",      who:["邱浩軒"],  floor:9 },
+    { no:"1909", type:"豪華家庭房 SGLB",      who:["王村煌"],  floor:9 },
+    { no:"1902／1906／1908", type:"豪華家庭房", who:[], floor:9, note:"未分配" },
+    { no:"外宿 1", type:"SGLB", who:["陳婉如 Paris"], note:"外宿" },
+    { no:"外宿 2", type:"TWIN", who:["林詠凱"], note:"外宿" },
+    { no:"外宿 3", type:"TWIN", who:["賴怡娟","洪采吟"], note:"外宿" },
+    { no:"歷史館 4", type:"TWIN", who:["李沛祐","薛永南"], note:"歷史館" },
+    { no:"外宿 5", type:"TWIN", who:["周冠廷"], note:"外宿・與司機同房" },
   ]},
   { key:2, date:"9/21(一)", hotel:"阿里山英迪格酒店【6F】", vendor:"v_indigo",
     info:"豪華房 13 坪 0601・豪華房加沙發床 0622・精品浴缸大床 11 坪 0602／0605／0607／0609／0610／0612／0617／0619／0620・精品浴缸雙床 0606／0608",
     rooms:[
-    { no:"0601", type:"豪華房 13 坪",        who:["王文傑","凌瓏"],   floor:6 },
-    { no:"0622", type:"豪華房加沙發床",       who:["陳聖德","張振明"], floor:6 },
-    { no:"0620", type:"精品浴缸大床",         who:["陳萱"],            floor:6 },
-    { no:"0606", type:"精品浴缸雙床 TWN",     who:["游張松","王　雍"], floor:6 },
-    { no:"0608", type:"精品浴缸雙床 TWN",     who:["盧希鵬","游慧茹"], floor:6 },
-    { no:"0610", type:"精品浴缸大床",         who:["利明献","張郁芬"], floor:6 },
-    { no:"0617", type:"精品浴缸大床",         who:["鄭兆剛","螘金花"], floor:6, note:"表上只寫鄭兆剛" },
-    { no:"0609", type:"精品浴缸大床",         who:["黃信川"],  floor:6 },
-    { no:"0611", type:"精品浴缸大床",         who:["王岳聰"],  floor:6 },
-    { no:"0605", type:"精品浴缸大床",         who:["陳曉穎"],  floor:6 },
-    { no:"0602", type:"精品浴缸大床",         who:["劉惟珺"],  floor:6 },
-    { no:"0619", type:"精品浴缸大床",         who:["邱浩軒"],  floor:6 },
-    { no:"0612", type:"精品浴缸大床",         who:["戴啟珩"],  floor:6, note:"9/21 加入" },
-    { no:"0607", type:"精品浴缸大床",         who:["王村煌"],  floor:6 },
+    { no:"0601", type:"豪華房 13 坪 DBLB",     who:["王文傑","凌瓏"],   floor:6 },
+    { no:"0622", type:"豪華房加沙發床 DBLB",   who:["陳聖德","張振明"], floor:6 },
+    { no:"0620", type:"精品浴缸大床 DBLB",     who:["陳萱"],            floor:6 },
+    { no:"0606", type:"精品浴缸雙床 TWIN",     who:["游張松","王　雍"], floor:6 },
+    { no:"0608", type:"精品浴缸雙床 TWIN",     who:["盧希鵬","游慧茹"], floor:6 },
+    { no:"0610", type:"精品浴缸大床 DBLB",     who:["利明献","張郁芬"], floor:6 },
+    { no:"0617", type:"精品浴缸大床 DBLB",     who:["鄭兆剛"],          floor:6 },
+    { no:"0609", type:"精品浴缸大床 SGLB",     who:["黃信川"],  floor:6 },
+    { no:"0611", type:"精品浴缸大床 SGLB",     who:["王岳聰"],  floor:6 },
+    { no:"0605", type:"精品浴缸大床 SGLB",     who:["陳曉穎"],  floor:6 },
+    { no:"0602", type:"精品浴缸大床 SGLB",     who:["劉惟珺"],  floor:6 },
+    { no:"0619", type:"精品浴缸大床 SGLB",     who:["邱浩軒"],  floor:6 },
+    { no:"0612", type:"精品浴缸大床 SGLB",     who:["戴啟珩"],  floor:6, note:"9/21 加入" },
+    { no:"0607", type:"精品浴缸大床 SGLB",     who:["王村煌"],  floor:6 },
     { no:"0615／0616／0618／0621", type:"未分配", who:[], floor:6 },
-    { no:"工作人員", type:"另行安排", who:["陳婉如 Paris","李沛祐","林詠凱","羅元榮","周冠廷","賴怡娟","洪采吟","薛永南"], note:"房號待確認" },
+    { no:"工作人員", type:"外宿", who:["陳婉如 Paris","李沛祐","林詠凱","周冠廷","賴怡娟","洪采吟","薛永南"], note:"外宿 6 人・房號待確認" },
   ]},
 ];
 
@@ -537,12 +541,13 @@ const ROSTER_FIELDS = [
 
 /* 高鐵車次（原本在座位圖區，因可編輯資料層載入時要讀，移到這裡） */
 let HSR_TRAINS = {
-  1:[{ no:"0203", route:"台北 06:30 → 台中 07:20 → 嘉義 07:43", dir:"南下", key:"hsrGo", cars:[6,5] }],
+  1:[{ no:"0203", route:"台北 06:30 → 台中 07:20 → 嘉義 07:43", dir:"南下", key:"hsrGo", cars:[6,5],
+       unused:{ "6車 14E":"03574156 已訂・螘金花 9/15 取消" } }],
   2:[{ no:"0609", route:"台北 07:46 → 嘉義 09:13", dir:"南下", cars:[6], tag:"戴董南下加入", key:"hsr609" },
      { no:"0672", route:"嘉義 18:32 → 台中 18:58 → 台北 19:59", dir:"北上", cars:[6], tag:"魏董伉儷、柳董提前返北",
        fixed:{ "6車 3D":"p03", "6車 3E":"p04", "6車 4A":"p13" }, tbc:["6車 4A"] }],
   3:[{ no:"0664", route:"嘉義 17:08 → 台中 17:30 → 台北 18:33", dir:"北上", key:"hsrBack", cars:[6,5],
-       unused:{ "6車 8C":"04420933 已訂・柳董改搭 672" } }],
+       unused:{ "6車 8C":"04420933 已訂・柳董改搭 672", "6車 6E":"04421386 已訂・螘金花 9/15 取消" } }],
 };
 
 /* ============================================================ 可編輯資料層
@@ -560,7 +565,7 @@ function buildSeed(){
     tour:TOUR_SEED, pax:PAX_SEED, nights:NIGHTS_SEED, menu:MENU_SEED, meals,
     vendors:VENDORS_SEED, vendorTodo:VENDOR_TODO_SEED,
     budget:BUDGET_ITEMS_SEED, headcount:BUDGET_HEADCOUNT_SEED,
-    itin:ITIN_SEED, luggageRoute:LUGGAGE_ROUTE_SEED, hsrTrains:HSR_TRAINS_SEED, _seatVer:3, _menuVer:1, _budgetVer:1, _tourVer:2, _docVer:3,
+    itin:ITIN_SEED, luggageRoute:LUGGAGE_ROUTE_SEED, hsrTrains:HSR_TRAINS_SEED, _seatVer:3, _menuVer:1, _budgetVer:1, _tourVer:2, _docVer:4,
   });
 }
 /* 出廠預設另存一份，之後 TOUR / PAX… 這些名字都指向 S.data */
@@ -637,6 +642,15 @@ function bindData(){
   if((S.data._docVer||0)<3){
     for(const d of Object.keys(ITIN)) (ITIN[d]||[]).forEach(st=>(st.links||[]).forEach(l=>{ if(l[0]==="meals"&&l[1]==="餐食・分桌") l[1]="餐廳分桌"; }));
     S.data._docVer=3;
+  }
+  /* 一次性：0916 分房表（Excel）——螘金花 9/15 取消、工作人員房、床型代碼、職稱 */
+  if((S.data._docVer||0)<4){
+    applyHsr0911(PAX); applyDoc0917(PAX);
+    S.data.nights=seed.nights; NIGHTS=S.data.nights;
+    const t203=(HSR_TRAINS[1]||[]).find(x=>x.no==="0203"); if(t203) t203.unused=Object.assign({},t203.unused,{ "6車 14E":"03574156 已訂・螘金花 9/15 取消" });
+    const t664b=(HSR_TRAINS[3]||[]).find(x=>x.no==="0664"); if(t664b) t664b.unused=Object.assign({},t664b.unused,{ "6車 6E":"04421386 已訂・螘金花 9/15 取消" });
+    for(const k of Object.keys(S.seating||{})) (S.seating[k].tables||[]).forEach(t=>{ t.seats=t.seats.map(v=>v==="p15"?null:v); });
+    S.data._docVer=4;
   }
   if((S.data._tourVer||0)<2){
     const st=(ITIN[2]||[]).find(x=>x.title==="自選 · 祝山日出");
