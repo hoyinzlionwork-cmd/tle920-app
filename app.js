@@ -2790,7 +2790,7 @@ PAGES.rooms=(hdr,scr)=>{
   const floors=[...new Set(rooms.map(x=>x.f).filter(Boolean))].sort((a,b)=>a-b);
   const other=rooms.filter(x=>!x.f);
   if(!S.floor) S.floor={};
-  const view=S.roomView==="person"?"person":"floor";
+  const view=S.roomView==="floor"?"floor":"person";   /* 預設 BY 人 */
   const want=S.floor[N.key], curF=(want==="other"&&other.length)?"other":(floors.includes(want)?want:(floors[0]||"other"));
   const isSuite=t=>(t||"").includes("套")||(t||"").includes("豪華");
   const card=({r,i})=>`<div class="roomcard">${ebtn(String(i))}<div class="no">${esc(r.no)}</div>
@@ -2803,7 +2803,7 @@ PAGES.rooms=(hdr,scr)=>{
   ${N.info?`<div class="card" style="font-size:12.5px;line-height:1.7;color:var(--ink2)"><b style="color:var(--ink)">房型</b>　${esc(N.info)}</div>`:""}
   <div class="card rtablewrap">
     <div class="cardh" style="flex-wrap:wrap">分房總表 <span class="pill gray">${N.rooms.reduce((n,r)=>n+(r.who||[]).length,0)} 人・${N.rooms.filter(r=>(r.who||[]).length).length} 間</span>
-      <span class="viewtabs"><button class="tab${view==="floor"?" on":""}" data-rv="floor">BY 樓層</button><button class="tab${view==="person"?" on":""}" data-rv="person">BY 人（Excel）</button></span></div>
+      <span class="viewtabs"><button class="tab${view==="person"?" on":""}" data-rv="person">BY 人（Excel）</button><button class="tab${view==="floor"?" on":""}" data-rv="floor">BY 樓層</button></span></div>
     ${view==="floor"?`<table class="rtable"><thead><tr><th>樓層</th><th>房號</th><th>房型</th><th>入住</th><th>備註</th></tr></thead><tbody>
       ${rooms.slice().sort((a,b)=>(a.f||99)-(b.f||99)||String(a.r.no).localeCompare(String(b.r.no))).map(({r,f})=>`<tr class="${(r.who||[]).length?"":"dim"}">
         <td class="fl">${f?f+"F":"—"}</td><td class="no">${esc(r.no)}</td><td class="tp">${esc(r.type||"")}</td>
