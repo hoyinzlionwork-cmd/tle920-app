@@ -2741,6 +2741,38 @@ PAGES.luggage=(hdr,scr)=>{
 };
 
 /* ---------- 分房表 ---------- */
+/* 分房總表「BY 人」：照公司 Excel 分房表的排法——名義／序／姓名／關係／英文／分房／房號／床型／房型／備註，
+ * 同房的人房號欄合併；順序照名單（董事 → 主管 → 合作夥伴 → 工作人員） */
+function roomsByPersonTable(N){
+  const norm=x=>String(x||"").replace(/\s/g,"");
+  const bedOf=t=>{ const m=String(t||"").match(/\b(DBLB|TWIN|SGLB)\b/); return m?m[1]:""; };
+  const typeOf=t=>String(t||"").replace(/\s*\b(DBLB|TWIN|SGLB)\b\s*/,"").trim();
+  const grpName=p=>p.group==="貴賓"?(p.id==="p23"?"合作夥伴":"2731"):p.group;
+  const ORDER={"貴賓":0,"雄獅主管":1,"工作人員":3};
+  const people=[...PAX].sort((a,b)=>(a.id==="p23"?2:ORDER[a.group]??9)-(b.id==="p23"?2:ORDER[b.group]??9));
+  const roomOf=p=>N.rooms.find(r=>(r.who||[]).some(w=>norm(w)===norm(p.name)||norm(w).startsWith(norm(p.name))));
+  const done=new Set(), rows=[], counters={};
+  let seq=0;
+  people.forEach(p=>{
+    const r=roomOf(p), g=grpName(p);
+    if(r && done.has(r)) return;
+    if(r){ done.add(r);
+      const occ=people.filter(q=>roomOf(q)===r);
+      const ck=g==="合作夥伴"?"雄獅主管":g; counters[ck]=(counters[ck]||0)+1;
+      occ.forEach((q,i)=>rows.push({p:q,g,seq:++seq,r,first:i===0,span:occ.length,no:counters[ck]}));
+    } else rows.push({p,g,seq:++seq,r:null,first:true,span:1,no:""});
+  });
+  const cls=g=>g==="2731"?"g-vip":g==="雄獅主管"?"g-mgr":g==="合作夥伴"?"g-pt":"g-stf";
+  return `<table class="rtable byp"><thead><tr><th>名義</th><th>序</th><th>姓名</th><th>關係</th><th>英文</th><th>分房</th><th>房號</th><th>床型</th><th>房型</th><th>備註</th></tr></thead><tbody>
+    ${rows.map(x=>{ const bed=x.r?bedOf(x.r.type):"", note=x.r?(x.r.note||""):(x.p.days&&x.p.days.length===3?"":x.p.days.map(d=>"9/2"+(d-1)).join("–"));
+      return `<tr class="${cls(x.g)}${x.r?"":" dim"}">
+        <td class="gm">${esc(x.g)}</td><td class="sq">${x.seq}</td><td class="nm">${esc(x.p.name)}</td><td class="rl">${esc(x.p.rel||"")}</td><td class="en">${esc(x.p.en||"")}</td>
+        ${x.first?`<td class="no" rowspan="${x.span}">${x.no}</td><td class="no" rowspan="${x.span}">${x.r?esc(x.r.no):"—"}</td>
+          <td class="bed${bed==="TWIN"?" twin":""}" rowspan="${x.span}">${bed}</td><td class="tp" rowspan="${x.span}">${x.r?esc(typeOf(x.r.type)):""}</td>
+          <td class="nt" rowspan="${x.span}">${esc(note)}</td>`:""}
+      </tr>`; }).join("")}
+  </tbody></table>`;
+}
 PAGES.rooms=(hdr,scr)=>{
   hbar(hdr,"分房表",{back:true});
   const night=S.night||1;
@@ -2758,6 +2790,7 @@ PAGES.rooms=(hdr,scr)=>{
   const floors=[...new Set(rooms.map(x=>x.f).filter(Boolean))].sort((a,b)=>a-b);
   const other=rooms.filter(x=>!x.f);
   if(!S.floor) S.floor={};
+  const view=S.roomView==="person"?"person":"floor";
   const want=S.floor[N.key], curF=(want==="other"&&other.length)?"other":(floors.includes(want)?want:(floors[0]||"other"));
   const isSuite=t=>(t||"").includes("套")||(t||"").includes("豪華");
   const card=({r,i})=>`<div class="roomcard">${ebtn(String(i))}<div class="no">${esc(r.no)}</div>
@@ -2769,12 +2802,13 @@ PAGES.rooms=(hdr,scr)=>{
     ${N.vendor&&vendor(N.vendor)?`<button class="chip" data-vm="${esc(N.vendor)}">${ic("phone",13)}飯店聯絡</button>`:""}${ebtn("__night",true)}</div>
   ${N.info?`<div class="card" style="font-size:12.5px;line-height:1.7;color:var(--ink2)"><b style="color:var(--ink)">房型</b>　${esc(N.info)}</div>`:""}
   <div class="card rtablewrap">
-    <div class="cardh">分房總表 <span class="pill gray">${N.rooms.reduce((n,r)=>n+(r.who||[]).length,0)} 人・${N.rooms.filter(r=>(r.who||[]).length).length} 間</span></div>
-    <table class="rtable"><thead><tr><th>樓層</th><th>房號</th><th>房型</th><th>入住</th><th>備註</th></tr></thead><tbody>
+    <div class="cardh" style="flex-wrap:wrap">分房總表 <span class="pill gray">${N.rooms.reduce((n,r)=>n+(r.who||[]).length,0)} 人・${N.rooms.filter(r=>(r.who||[]).length).length} 間</span>
+      <span class="viewtabs"><button class="tab${view==="floor"?" on":""}" data-rv="floor">BY 樓層</button><button class="tab${view==="person"?" on":""}" data-rv="person">BY 人（Excel）</button></span></div>
+    ${view==="floor"?`<table class="rtable"><thead><tr><th>樓層</th><th>房號</th><th>房型</th><th>入住</th><th>備註</th></tr></thead><tbody>
       ${rooms.slice().sort((a,b)=>(a.f||99)-(b.f||99)||String(a.r.no).localeCompare(String(b.r.no))).map(({r,f})=>`<tr class="${(r.who||[]).length?"":"dim"}">
         <td class="fl">${f?f+"F":"—"}</td><td class="no">${esc(r.no)}</td><td class="tp">${esc(r.type||"")}</td>
         <td class="who">${(r.who||[]).map(esc).join("、")||"—"}</td><td class="nt">${esc(r.note||"")}</td></tr>`).join("")}
-    </tbody></table>
+    </tbody></table>`:roomsByPersonTable(N)}
   </div>
   <p class="vs">發放房卡時照表引導；魏董伉儷、柳董 9/21 提前返北，第二晚無房。異動請用「手寫備註」記下。</p>
   <div class="floorjump" id="floorJump">${floors.map(f=>`<button class="tab${curF===f?" on":""}" data-jf="${f}">${f}F</button>`).join("")}${other.length?`<button class="tab${curF==="other"?" on":""}" data-jf="other">其他</button>`:""}</div>
@@ -2786,6 +2820,7 @@ PAGES.rooms=(hdr,scr)=>{
       <div class="roomgrid floorrooms">${list.map(card).join("")}</div>
     </div>`; })()}`;
   el.querySelectorAll("[data-vm]").forEach(b=>b.onclick=()=>openVendorModal(b.dataset.vm));
+  el.querySelectorAll("[data-rv]").forEach(b=>b.onclick=()=>{ S.roomView=b.dataset.rv; save(); render(); });
   el.querySelectorAll(".floorwrap .zw").forEach(zoomify);
   /* 樓層分頁：切換只顯示該層 */
   el.querySelectorAll("#floorJump [data-jf]").forEach(b=>b.onclick=()=>{ const v=b.dataset.jf; S.floor[N.key]=v==="other"?"other":+v; save(); render();
