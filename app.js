@@ -166,7 +166,7 @@ const HSR_0911 = {
         p05:"6車 13C", p07:"6車 14C", p28:"6車 15C", p01:"6車 16C", p23:"6車 17C",
         p16:"6車 13D", p14:"6車 14D", p09:"6車 15D", p03:"6車 16D", p11:"6車 17D",
         p15:"6車 14E", p10:"6車 15E", p04:"6車 16E", p12:"6車 17E",
-        p24:"5車 3A", p17:"5車 4A", p29:"5車 3B", p18:"5車 4B", p30:"5車 3C", p31:"5車 4C" },
+        p24:"5車 3A", p17:"5車 4A", p29:"5車 3B", p18:"5車 4B", p30:"5車 3C", p31:"5車 13C" },
   back:{ p10:"6車 6A", p06:"6車 7A", p23:"6車 8A",
          p09:"6車 6C", p05:"6車 7C", p21:"6車 10C",
          p14:"6車 6D", p19:"6車 7D", p07:"6車 8D", p01:"6車 9D", p11:"6車 10D", p16:"6車 11D",
@@ -177,7 +177,7 @@ const HSR_0911 = {
   /* 訂位代號（表上「高鐵統計」）：同一代號的人坐同一塊；沒對到代號的標「待確認」，座位圖會用虛線框提醒 */
   pnrGo:{ "03573047":["p13","p23"], "03574156":["p08","p07","p14","p15","p19","p28","p09","p10","p02","p01"],
           "03575602":["p03","p04","p11","p12"], "4362481":["p06"], "05130881":["p05"],
-          "03575971":["p24","p29","p30","p17","p18","p31"], "04203413":["p21"], "待確認":["p16"] },
+          "03575971":["p24","p29","p30","p17","p18"], "04203413":["p21"], "已確認":["p16","p31"] },
   pnrBk:{ "04421386":["p10","p09","p14","p15","p06","p05","p19","p28","p07","p08"], "04414571":["p01","p02","p11","p12"],
           "04420933":["p23"], "05130881":["p21"], "04414767":["p30","p29","p24","p17","p18","p20","p25"],
           "04199621":["p03","p04"], "待確認":["p16","p31","p26","p13"] },
@@ -561,7 +561,7 @@ function buildSeed(){
     tour:TOUR_SEED, pax:PAX_SEED, nights:NIGHTS_SEED, menu:MENU_SEED, meals,
     vendors:VENDORS_SEED, vendorTodo:VENDOR_TODO_SEED,
     budget:BUDGET_ITEMS_SEED, headcount:BUDGET_HEADCOUNT_SEED,
-    itin:ITIN_SEED, luggageRoute:LUGGAGE_ROUTE_SEED, hsrTrains:HSR_TRAINS_SEED, _seatVer:3, _menuVer:1, _budgetVer:1, _tourVer:2, _docVer:6,
+    itin:ITIN_SEED, luggageRoute:LUGGAGE_ROUTE_SEED, hsrTrains:HSR_TRAINS_SEED, _seatVer:4, _menuVer:1, _budgetVer:1, _tourVer:2, _docVer:6,
   });
 }
 /* 出廠預設另存一份，之後 TOUR / PAX… 這些名字都指向 S.data */
@@ -597,6 +597,8 @@ function bindData(){
     const t664=(HSR_TRAINS[3]||[]).find(x=>x.no==="0664"); if(t664) t664.unused={ "6車 8C":"04420933 已訂・柳董改搭 672" };
     S.data._seatVer=3;
   }
+  /* 一次性：0917 高鐵座位表——薛永南 0203 改 5車13C、黃信川 13D 已確認 */
+  if((S.data._seatVer||0)<4){ applyHsr0911(PAX); S.data._seatVer=4; }
   /* 一次性：鳴心咖啡菜單換成店家 9/15 提供的品項，舊示意品項的訂單一併清掉 */
   if((S.data._menuVer||0)<1){
     S.data.menu=buildSeed().menu; MENU=S.data.menu;
@@ -1403,7 +1405,7 @@ function rosterList(scr){
   const dayTxt=p=>{ const d=p.days||[]; if(d.length===3) return `<span class="dimtxt">全程</span>`; if(!d.length) return `<span class="pill gray">未在團</span>`;
     return `<span class="pill amber">${d.map(x=>"9/"+(19+x)).join("、")}</span>`; };
   const seatTxt=(seat,pnr,tbc,extra)=>{ if(!seat||seat==="—") return `<span class="dimtxt">—</span>`;
-    return `<b>${esc(seat)}</b>${fld("pnr")&&pnr&&pnr!=="—"?`<i class="pnr">${esc(pnr)}</i>`:""}${tbc?` <span class="pill amber">票待確認</span>`:""}${extra||""}`; };
+    return `<b>${esc(seat)}</b>${fld("pnr")&&pnr&&pnr!=="—"&&pnr!=="已確認"?`<i class="pnr">${esc(pnr)}</i>`:""}${tbc?` <span class="pill amber">票待確認</span>`:""}${extra||""}`; };
   const cols=[];
   if(fld("grp")) cols.push(["名義"]); if(fld("seq")) cols.push(["序"]); cols.push(["姓名"]); if(fld("hon")) cols.push(["稱謂"]); if(fld("rel")) cols.push(["關係"]); if(fld("title")) cols.push(["職稱"]);
   if(fld("en")) cols.push(["英文"]); if(fld("days")) cols.push(["在團"]);
@@ -1506,7 +1508,12 @@ function rosterRoll(scr){
 PAGES.seats=(hdr,scr)=>{
   hbar(hdr,"高鐵座位圖",{back:true});
   S.seatTab="hsr";   /* 只剩高鐵；遊覽車座位圖已拿掉 */
-  dayPills(scr);
+  /* 第二天本團沒有整團的高鐵，只做 9/20 與 9/22 */
+  if(![1,3].includes(S.hsrDay)) S.hsrDay = S.day===2 ? 3 : (S.day||1);
+  const dp=document.createElement("div"); dp.className="daypills"; const td=todayDay();
+  dp.innerHTML=[1,3].map(i=>`<button class="daypill${S.hsrDay===i?" on":""}" data-d="${i}">${i===1?"去程":"回程"} · 第 ${i} 天 ${TOUR.dates[i-1]}${td===i?`<span class="today">今天</span>`:""}</button>`).join("");
+  dp.querySelectorAll(".daypill").forEach(b=>b.onclick=()=>{ S.hsrDay=+b.dataset.d; save(); render(); });
+  scr.appendChild(dp);
   const el=document.createElement("div");
   el.className="pagepad";
   {
@@ -1519,10 +1526,10 @@ PAGES.seats=(hdr,scr)=>{
     el.querySelectorAll(".zw").forEach(zoomify);
     const tc=document.createElement("div"); tc.className="card";
     tc.innerHTML=`<div style="font-weight:800;margin-bottom:8px;font-size:14px">本日車次</div>
-      ${(HSR_TRAINS[S.day]||[]).map((t,i)=>`<div class="ordrow"><span class="who">${esc(t.no)}</span><span class="what">${esc(t.route)}${t.tag?"・"+esc(t.tag):""}</span>${ebtn(String(i),true)}</div>`).join("")}`;
+      ${(HSR_TRAINS[S.hsrDay]||[]).map((t,i)=>`<div class="ordrow"><span class="who">${esc(t.no)}</span><span class="what">${esc(t.route)}${t.tag?"・"+esc(t.tag):""}</span>${ebtn(String(i),true)}</div>`).join("")}`;
     el.appendChild(tc);
     editBar(el,{reset:()=>resetSection("hsrTrains"),resetLabel:"還原預設車次"});
-    EDIT_HANDLER=i=>{ const t=(HSR_TRAINS[S.day]||[])[+i]; if(!t) return;
+    EDIT_HANDLER=i=>{ const t=(HSR_TRAINS[S.hsrDay]||[])[+i]; if(!t) return;
       editForm("編輯車次",[{k:"no",label:"車次",required:true},{k:"route",label:"路線／時間"},{k:"dir",label:"方向",type:"select",opts:["南下","北上"]},{k:"tag",label:"標籤"}],
         t,{onSave:o=>{ Object.assign(t,o); dataChanged("已儲存"); }});
     };
@@ -1910,7 +1917,7 @@ function routeChips(route){
 }
 
 function svgHsr(containerW){
-  const trains=HSR_TRAINS[S.day]||[];
+  const trains=HSR_TRAINS[S.hsrDay||S.day]||[];
   const horiz = true;                      /* 一律照高鐵官網的橫式車廂圖；畫面不夠寬就左右滑 */
   const narrow = containerW<980;
   let out="";
