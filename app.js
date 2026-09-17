@@ -231,17 +231,6 @@ function applyHsr0911(list){
 applyHsr0911(PAX);
 applyDoc0917(PAX);
 
-const TRAIN_TL = { name:"薛永南 領隊", seat:"" };
-(function assignTrain(){
-  const vip = PAX.filter(p=>p.group==="貴賓");
-  const mgr = PAX.filter(p=>p.group==="雄獅主管");
-  vip.forEach((p,i)=>{ p.trainSeat = `5車 ${i+1}號`; });
-  TRAIN_TL.seat = `5車 ${vip.length+1}號`;
-  mgr.forEach((p,i)=>{ p.trainSeat = `4車 ${i+1}號`; });
-  const paris = PAX.find(p=>p.id==="p24");
-  if(paris) paris.trainSeat = `4車 ${mgr.length+1}號`;
-  ["p25","p26","p27"].forEach(id=>{ const p=PAX.find(x=>x.id===id); if(p) p.trainSeat="—"; });
-})();
 
 /* 分房（作業手冊「分房表」）：兩晚不同飯店 */
 let NIGHTS = [
@@ -585,6 +574,7 @@ function bindData(){
   for(const k of Object.keys(seed)) if(S.data[k]===undefined) S.data[k]=seed[k];
   TOUR=S.data.tour; PAX=S.data.pax; NIGHTS=S.data.nights; MENU=S.data.menu; MEALS=S.data.meals;
   for(const d of Object.keys(MEALS)) (MEALS[d]||[]).forEach((m,i)=>{ if(!m.id) m.id="d"+d+"m"+i; });   /* 分桌用的餐次 id */
+  applyFusen0917(PAX);   /* 福森號座位一律以產品部 A／C 段座位圖為準 */
   VENDORS=S.data.vendors; VENDOR_TODO=S.data.vendorTodo; BUDGET_ITEMS=S.data.budget;
   BUDGET_HEADCOUNT=S.data.headcount; ITIN=S.data.itin; LUGGAGE_ROUTE=S.data.luggageRoute;
   HSR_TRAINS=S.data.hsrTrains;
@@ -1080,7 +1070,7 @@ const PAX_FIELDS=[
   {k:"idNo",label:"身分證號"},{k:"birth",label:"生日",ph:"1953/02/26"},{k:"tkt",label:"高鐵票種",ph:"商務・敬老"},
   {k:"hsrGo",label:"高鐵去程座位",ph:"6車 17A"},{k:"hsrBack",label:"高鐵回程座位",ph:"6車 6A"},
   {k:"pnrGo",label:"去程訂位代號"},{k:"pnrBk",label:"回程訂位代號"},
-  {k:"trainSeat",label:"福森號座位",ph:"5車 1號"},
+  {k:"trainSeat",label:"福森號座位（以產品部 A／C 段圖為準，改這裡不會動圖）",ph:"5車 1號"},
   {k:"board",label:"台中上／下車",type:"select",opts:[["","否"],["台中","台中"]]},
   {k:"meal",label:"特殊餐食",ph:"忌生食／海鮮…"},{k:"note",label:"備註",type:"textarea",rows:2},
 ];
@@ -1409,7 +1399,7 @@ function rosterList(scr){
     if(fld("birth")) tds.push(`<td class="mono">${esc(p.birth||"")}</td>`);
     if(fld("tkt")) tds.push(`<td class="tk">${esc(p.tkt||"")}</td>`);
     if(fld("hsrGo")) tds.push(`<td class="st">${go}</td>`); if(fld("hsrBack")) tds.push(`<td class="st">${back}</td>`);
-    if(fld("train")) tds.push(`<td class="st">${p.trainSeat?`<b>${esc(p.trainSeat)}</b>`:`<span class="dimtxt">—</span>`}</td>`);
+    if(fld("train")) tds.push(`<td class="st">${p.fusenA||p.fusenC?`<b>A ${esc(p.fusenA||"—")}</b><i class="pnr">C ${esc(p.fusenC||"—")}</i>`:`<span class="dimtxt">—</span>`}</td>`);
     if(fld("room1")) tds.push(`<td class="rm">${(p.days||[]).includes(1)?roomCell(N1,p):`<span class="dimtxt">—</span>`}</td>`);
     if(fld("room2")) tds.push(`<td class="rm">${(p.days||[]).includes(2)?roomCell(N2,p):`<span class="dimtxt">—</span>`}</td>`);
     if(fld("meal")) tds.push(`<td class="ml">${p.meal?`<span class="pill amber">${esc(p.meal)}</span>`:""}</td>`);
@@ -1894,162 +1884,158 @@ function svgHsr(containerW){
  * 5車 守車車廂 18座（設守車室）：上排 1–10 號、下排 11–18 號
  * 本團配位 25 席＝4車 1–8 號（8）＋5車 1–17 號（17，含領隊）
  * 座位以林鐵配位區塊對應，實際對號以現場安排為準。 */
-const FUSEN_CARS = {
-  /* 依林鐵原廠配置圖：4車 客座車廂（洗手間＋吧檯側桌）、5車 守車車廂（守車室）。
-   * 每個 bay 是兩張面對面的座椅夾一張小桌；topBays 上排、botBays 下排。 */
-  4:{ name:"客座車廂", seats:16, topBays:4, botBays:4, left:"toilet" },
-  5:{ name:"守車車廂", seats:18, topBays:4, botBays:5, left:"guard" },
+/* ============================================================ 福森號（嚴格照林鐵原廠配置圖）
+ * 車頭之後 1→5 車：觀畫(18)・客座(16)・吧檯(10)・客座(16)・守車(18)。本團用 4 車客座、5 車守車。
+ * 圖上排是「靠窗＋走道」兩人座（小號靠窗），下排是單人座；棕色是小桌。座位配置：產品部 9/17「A段」「C段」座位圖。 */
+const FUSEN_TRAIN=[["觀畫車廂",18],["客座車廂",16],["吧檯車廂",10],["客座車廂",16],["守車車廂",18]];
+/* 每節車廂的平面：x 是車廂長度的比例（0 車頭端 → 1 車尾端），依原廠圖量的 */
+const FUSEN_LAYOUT = {
+  4:{ name:"客座車廂", seats:16, left:"toilet",
+      top:[["seat",1,.26],["table",.31],["bench",[3,4],.38],["table",.43],["bench",[6,7],.48],["bench",[9,10],.56],["table",.61],["bench",[12,13],.67],["table",.73],["crew",.78],["ac",.865]],
+      bot:[["seat",2,.26],["table",.31],["seat",5,.38],["table",.43],["seat",8,.48],["seat",11,.56],["table",.61],["seat",14,.67],["table",.73],["seat",16,.78],["rack",.865]] },
+  5:{ name:"守車車廂", seats:18, left:"cab",
+      top:[["seat",1,.165],["table",.225],["seat",3,.28],["bench",[5,6],.365],["table",.415],["bench",[8,9],.47],["bench",[11,12],.55],["table",.605],["bench",[14,15],.66],["table",.72],["seat",17,.78],["ac",.865]],
+      bot:[["seat",2,.165],["table",.225],["seat",4,.28],["seat",7,.365],["table",.415],["seat",10,.47],["seat",13,.55],["table",.605],["seat",16,.66],["table",.72],["crew",.78],["rack",.865]] },
 };
-const FUSEN_TRAIN=[["觀景車廂",18],["客座車廂",16],["吧檯車廂",10],["客座車廂",16],["守車車廂",18]];   /* 車頭之後 1→5 車 */
-
-function fusenSeatIndex(){
-  const map={};
-  PAX.forEach(p=>{
-    const m=(p.trainSeat||"").match(/^([45])車\s*(\d+)號$/);
-    if(m) map[`${m[1]}-${m[2]}`]=p;
-  });
-  const t=TRAIN_TL.seat.match(/^([45])車\s*(\d+)號$/);
-  if(t) map[`${t[1]}-${t[2]}`]={id:"__tl",name:"薛永南",rel:"領隊",__tl:true};
-  return map;
+/* 產品部 9/17 座位圖：A 段（9/20 北門→十字路）、C 段（9/21 阿里山→奮起湖）；"crew"＝車服座 */
+const FUSEN_SEATS = {
+  A:{ 4:{ 2:"p30", 3:"p18", 4:"p25", 5:"p29", 6:"p23", 7:"p17", 8:"p24" },
+      5:{ 1:"p20", 2:"p14", 3:"p10", 4:"p09", 5:"p28", 6:"p19", 7:"p05", 8:"p08", 9:"p07", 10:"p06", 11:"p04", 12:"p03", 13:"p01", 14:"p12", 15:"p11", 16:"p02", 17:"p13", crew:"p16" } },
+  C:{ 4:{ 2:"p30", 3:"p18", 4:"p25", 5:"p29", 6:"p23", 7:"p17", 8:"p24" },
+      5:{ 1:"p14", 2:"p13", 3:"p20", 4:"p16", 5:"p04", 6:"p03", 7:"p19", 8:"p08", 9:"p07", 10:"p28", 11:"p02", 12:"p01", 13:"p06", 14:"p12", 15:"p11", 16:"p05", 17:"p10", crew:"p09" } },
+};
+const FUSEN_SEG = { A:{ label:"A 段", date:"9/20", route:"北門 → 鹿滿 → 樟腦寮 → 第三景觀台 → 奮起湖 → 多林 → 十字路", dir:"left" },
+                    C:{ label:"C 段", date:"9/21", route:"阿里山 → 二萬坪 → 十字路 → 奮起湖", dir:"right" } };
+const fusenSeatLabel=(car,no)=> no==="crew" ? `${car}車 車服座` : `${car}車 ${no}號`;
+/* 把 A／C 段座位寫回旅客資料（團體大表、旅客卡片用） */
+function applyFusen0917(list){
+  const byId=Object.fromEntries(list.map(p=>[p.id,p]));
+  list.forEach(p=>{ delete p.fusenA; delete p.fusenC; });
+  for(const seg of ["A","C"]) for(const car of [4,5]) for(const [no,pid] of Object.entries(FUSEN_SEATS[seg][car])){
+    const p=byId[pid]; if(p) p["fusen"+seg]=fusenSeatLabel(car,no);
+  }
+  list.forEach(p=>{ p.trainSeat = p.fusenA || p.fusenC || "—"; });
+  return list;
 }
+const TRAIN_TL = { name:"薛永南 領隊", seat:"" };
+function fusenMap(seg){ const m={}; for(const car of [4,5]) for(const [no,pid] of Object.entries(FUSEN_SEATS[seg][car])){ const p=pax(pid); if(p) m[`${car}-${no}`]=p; } return m; }
 
-/* 整列福森號：車頭＋五節，本團用的兩節標紅 */
-function svgFusenTrain(){
-  const W=900,H=96, x0=14, locoW=118, carW=136, gap=10;
+/* 整列福森號：車頭＋五節，可點選；本團用的兩節標紅 */
+function svgFusenTrain(sel){
+  const W=900,H=118, x0=8, locoW=118, carW=142, gap=10;
   let g=`<svg viewBox="0 0 ${W} ${H}" class="fusentrain">`;
-  g+=`<g transform="translate(${x0},14)"><rect x="0" y="8" width="${locoW}" height="40" rx="8" fill="#C8102E"/><rect x="6" y="0" width="52" height="16" rx="4" fill="#C8102E"/>
-      <rect x="14" y="4" width="14" height="9" rx="2" fill="#F5E4B8"/><rect x="34" y="4" width="14" height="9" rx="2" fill="#F5E4B8"/>
-      <rect x="0" y="46" width="${locoW}" height="5" fill="#333"/>${[16,34,84,102].map(cx=>`<circle cx="${cx}" cy="56" r="6" fill="#333"/>`).join("")}
-      <text x="${locoW/2}" y="78" text-anchor="middle" font-size="11" font-weight="700" fill="#8A5A20">車頭</text></g>`;
-  FUSEN_TRAIN.forEach(([nm,seats],i)=>{
-    const x=x0+locoW+gap+i*(carW+gap), mine=(i===3||i===4);
-    g+=`<g transform="translate(${x},14)">
-      <rect x="0" y="8" width="${carW}" height="40" rx="7" fill="#F5E4B8" stroke="${mine?"#D6001C":"#C9B48C"}" stroke-width="${mine?2.5:1.2}"/>
-      <rect x="0" y="8" width="${carW}" height="9" rx="7" fill="#C8102E"/>
-      ${[0,1,2,3,4,5].map(k=>`<rect x="${12+k*20}" y="22" width="12" height="12" rx="2" fill="#fff" stroke="#C9B48C"/>`).join("")}
-      <rect x="0" y="46" width="${carW}" height="4" fill="#333"/><circle cx="22" cy="55" r="5" fill="#333"/><circle cx="${carW-22}" cy="55" r="5" fill="#333"/>
-      <text x="${carW/2}" y="78" text-anchor="middle" font-size="11.5" font-weight="${mine?900:700}" fill="${mine?"#B8001A":"#6B5A3E"}">${i+1}車 ${nm}</text>
-      <text x="${carW/2}" y="92" text-anchor="middle" font-size="10" fill="#8A7A62">${seats} 座${mine?"・本團":""}</text>
+  g+=`<g><rect x="${x0}" y="24" width="${locoW}" height="50" rx="8" fill="#C8102E"/><rect x="${x0+8}" y="14" width="${locoW-40}" height="14" rx="4" fill="#A00D25"/>
+      <rect x="${x0+12}" y="32" width="18" height="14" rx="2" fill="#FFF3D6"/><rect x="${x0+38}" y="32" width="18" height="14" rx="2" fill="#FFF3D6"/>
+      ${[0,1,2,3].map(i=>`<circle cx="${x0+18+i*28}" cy="80" r="7" fill="#333"/>`).join("")}<text x="${x0+locoW/2}" y="104" text-anchor="middle" font-size="11" fill="#8E8E93">車頭</text></g>`;
+  FUSEN_TRAIN.forEach(([nm,n],i)=>{
+    const carNo=i+1, x=x0+locoW+gap+i*(carW+gap), used=carNo===4||carNo===5, on=sel===carNo;
+    g+=`<g class="fcar${used?" used":" nouse"}${on?" on":""}" data-car="${carNo}" style="cursor:pointer">
+      <rect x="${x}" y="24" width="${carW}" height="50" rx="7" fill="${used?"#F5E6C4":"#EFE7D6"}" stroke="${on?"#D6001C":(used?"#C8935A":"#D5CDBE")}" stroke-width="${on?3:1.5}"/>
+      ${[0,1,2,3,4,5].map(j=>`<rect x="${x+10+j*21}" y="33" width="14" height="14" rx="2" fill="#fff" stroke="#C8935A" stroke-width="1"/>`).join("")}
+      ${[0,1].map(j=>`<circle cx="${x+30+j*80}" cy="80" r="6" fill="#333"/>`).join("")}
+      ${used?`<rect x="${x+carW-30}" y="4" width="26" height="16" rx="4" fill="#D6001C"/><text x="${x+carW-17}" y="16" text-anchor="middle" font-size="10" font-weight="800" fill="#fff">${carNo}車</text>`:""}
+      <text x="${x+carW/2}" y="104" text-anchor="middle" font-size="11.5" font-weight="${used?800:600}" fill="${used?"#8A5A20":"#B9B9BF"}">${esc(nm)}</text>
+      <text x="${x+carW/2}" y="116" text-anchor="middle" font-size="9.5" fill="${used?"#8A5A20":"#C9C9CF"}">${n} 座位${used?"":"・本團未使用"}</text>
     </g>`;
   });
-  return g+`</svg>`;
+  return g+"</svg>";
 }
 
-function svgFusenCar(carNo, map){
-  const C=FUSEN_CARS[carNo];
-  const W=900, H=262;
-  const bodyX=10, bodyR=W-10, wallT=22, wallB=H-22;          /* 車體 */
-  const inX=bodyX+12, inR=bodyR-12;
-  const leftW = C.left==="guard" ? 96 : 92;                    /* 左側設施寬 */
-  const rightW = 104;                                          /* 右側：空調／行李架／觀景陽台 */
-  const zoneX=inX+leftW+10, zoneR=inR-rightW;
-  const SW=43, SH=52, TBL=16, BAY=SW*2+TBL+6;                  /* 一個 bay：椅＋桌＋椅 */
-  const topY=wallT+16, botY=wallB-16-SH;
-  const bayXs=(n,x0,x1)=>{ const gap=n>1?(x1-x0-n*BAY)/(n-1):0; return Array.from({length:n},(_,i)=>x0+i*(BAY+gap)); };
-
-  let g=`<svg viewBox="0 0 ${W} ${H}" style="width:100%;max-width:${W}px;height:auto;display:block">
-  <defs>
-    <pattern id="fsRack${carNo}" width="6" height="6" patternTransform="rotate(45)" patternUnits="userSpaceOnUse"><line x1="0" y1="0" x2="0" y2="6" stroke="#B89B6E" stroke-width="1.6"/></pattern>
-  </defs>`;
-  /* 車體、地板、窗戶、車門 */
-  g+=`<rect x="${bodyX}" y="${wallT-8}" width="${bodyR-bodyX}" height="${wallB-wallT+16}" rx="10" fill="#F5E4B8" stroke="#B89B6E" stroke-width="1.6"/>
-      <rect x="${inX}" y="${wallT}" width="${inR-inX}" height="${wallB-wallT}" fill="#F8ECC8"/>`;
-  const winXs=[]; for(let x=zoneX-40;x<zoneR+20;x+=70) winXs.push(x);
-  winXs.forEach(x=>{ g+=`<rect x="${x}" y="${wallT-8}" width="44" height="6" rx="1.5" fill="#3A3A3E"/><rect x="${x}" y="${wallB+2}" width="44" height="6" rx="1.5" fill="#3A3A3E"/>`; });
-  [inX+14, inR-40].forEach(x=>{ g+=`<rect x="${x}" y="${wallT-8}" width="26" height="6" fill="#111"/><rect x="${x}" y="${wallB+2}" width="26" height="6" fill="#111"/>`; });
-
-  /* 左側設施 */
-  if(C.left==="toilet"){
-    g+=`<rect x="${inX+6}" y="${wallT+8}" width="${leftW-12}" height="64" rx="5" fill="#fff" stroke="#B89B6E"/>
-        <ellipse cx="${inX+6+22}" cy="${wallT+36}" rx="9" ry="12" fill="none" stroke="#8A7A62" stroke-width="1.5"/><rect x="${inX+6+18}" y="${wallT+18}" width="8" height="8" rx="2" fill="#8A7A62"/>
-        <text x="${inX+6+(leftW-12)/2+8}" y="${wallT+40}" text-anchor="middle" font-size="11" font-weight="700" fill="#6B5A3E">洗手間</text>
-        <circle cx="${inX+leftW-18}" cy="${wallT+96}" r="10" fill="#fff" stroke="#8A7A62"/><text x="${inX+leftW-18}" y="${wallT+118}" text-anchor="middle" font-size="9" fill="#8A7A62">洗手台</text>
-        <path d="M${inX+6} ${wallB-22} h${leftW+110} v-16 h-30 v-30 h-20 v30 h-${leftW+60} z" fill="#E4CFA0" stroke="#B89B6E" stroke-width="1.2"/>
-        <text x="${inX+leftW-6}" y="${wallB-9}" text-anchor="middle" font-size="9" fill="#6B5A3E">吧檯側桌</text>`;
+/* 單節車廂平面圖：嚴格照原廠圖的位置畫（上排兩人座、下排單人座、小桌、車服座、空調、行李架、洗手間／駕駛艙） */
+function svgFusenCar(carNo, map, seg){
+  const L=FUSEN_LAYOUT[carNo], W=1000, H=300, dir=(FUSEN_SEG[seg]||{}).dir||"left";
+  const bx=18, bw=W-36, by=40, bh=220;          /* 車體 */
+  const X=f=>bx+20+f*(bw-40);
+  let g=`<svg viewBox="0 0 ${W} ${H}" class="carsvg fusencarsvg" xmlns="http://www.w3.org/2000/svg">`;
+  /* 運行方向 */
+  g+= dir==="left" ? `<path d="M120 18 L40 18" stroke="#2B6BE0" stroke-width="7" stroke-linecap="round"/><path d="M52 8 L36 18 L52 28" fill="none" stroke="#2B6BE0" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/><text x="132" y="23" font-size="13" font-weight="800" fill="#2B6BE0">運行方向</text>`
+                   : `<path d="M${W-120} 18 L${W-40} 18" stroke="#F28C1E" stroke-width="7" stroke-linecap="round"/><path d="M${W-52} 8 L${W-36} 18 L${W-52} 28" fill="none" stroke="#F28C1E" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/><text x="${W-132}" y="23" text-anchor="end" font-size="13" font-weight="800" fill="#F28C1E">運行方向</text>`;
+  /* 車體、車窗（上下各一排） */
+  g+=`<rect x="${bx}" y="${by}" width="${bw}" height="${bh}" rx="6" fill="#FBF2D5" stroke="#8E8E93" stroke-width="2"/>`;
+  for(let i=0;i<14;i++){ const wx=bx+30+i*(bw-60)/13; g+=`<rect x="${wx-22}" y="${by-5}" width="44" height="7" rx="2" fill="#333"/><rect x="${wx-22}" y="${by+bh-2}" width="44" height="7" rx="2" fill="#333"/>`; }
+  /* 左端 */
+  if(L.left==="toilet"){
+    g+=`<rect x="${bx+14}" y="${by+14}" width="34" height="26" rx="6" fill="none" stroke="#333" stroke-width="2"/><text x="${bx+31}" y="${by+32}" text-anchor="middle" font-size="12" fill="#333">D</text>
+        <path d="M${bx+14} ${by+70} L${bx+14} ${by+110} L${bx+150} ${by+130} L${bx+150} ${by+150} L${bx+14} ${by+150} Z" fill="#333"/>
+        <circle cx="${bx+128}" cy="${by+30}" r="12" fill="none" stroke="#333" stroke-width="2"/><line x1="${bx+128}" y1="${by+30}" x2="${bx+128}" y2="${by+18}" stroke="#333" stroke-width="2"/>
+        <rect x="${bx+118}" y="${by+55}" width="26" height="22" fill="#333"/>
+        <rect x="${X(.215)}" y="${by+6}" width="12" height="60" fill="#333"/><rect x="${X(.215)}" y="${by+bh-66}" width="12" height="60" fill="#333"/>`;
   }else{
-    g+=`<rect x="${inX+6}" y="${wallT+8}" width="${leftW-12}" height="${wallB-wallT-16}" rx="5" fill="#fff" stroke="#B89B6E"/>
-        <text x="${inX+leftW/2}" y="${(wallT+wallB)/2+4}" text-anchor="middle" font-size="12" font-weight="800" fill="#6B5A3E">守車室</text>
-        <rect x="${inX+leftW-16}" y="${(wallT+wallB)/2-14}" width="6" height="28" fill="#B89B6E"/>`;
+    g+=`<rect x="${bx+16}" y="${by+20}" width="78" height="${bh-40}" rx="12" fill="none" stroke="#333" stroke-width="2.5"/>
+        <text x="${bx+55}" y="${by+80}" text-anchor="middle" font-size="18" font-weight="800" fill="#333">駕</text><text x="${bx+55}" y="${by+118}" text-anchor="middle" font-size="18" font-weight="800" fill="#333">駛</text><text x="${bx+55}" y="${by+156}" text-anchor="middle" font-size="18" font-weight="800" fill="#333">艙</text>
+        <rect x="${X(.125)}" y="${by+6}" width="12" height="60" fill="#333"/><rect x="${X(.125)}" y="${by+bh-66}" width="12" height="60" fill="#333"/>`;
   }
-  /* 右側設施：空調（上）、行李架（下）、觀景陽台（最右） */
-  g+=`<rect x="${zoneR+12}" y="${wallT+10}" width="60" height="30" rx="4" fill="#fff" stroke="#B89B6E"/><text x="${zoneR+42}" y="${wallT+29}" text-anchor="middle" font-size="10.5" font-weight="700" fill="#6B5A3E">空調</text>
-      <rect x="${zoneR+12}" y="${wallB-52}" width="60" height="42" rx="4" fill="url(#fsRack${carNo})" stroke="#B89B6E"/><rect x="${zoneR+18}" y="${wallB-38}" width="48" height="15" rx="3" fill="#fff" fill-opacity=".9"/><text x="${zoneR+42}" y="${wallB-27}" text-anchor="middle" font-size="9.5" font-weight="700" fill="#6B5A3E">行李架</text>
-      <rect x="${inR-22}" y="${wallT+6}" width="14" height="${wallB-wallT-12}" rx="3" fill="#EAD9A8" stroke="#B89B6E"/>
-      <text x="${inR-15}" y="${(wallT+wallB)/2}" font-size="10" font-weight="700" fill="#6B5A3E" transform="rotate(90 ${inR-15} ${(wallT+wallB)/2})" text-anchor="middle">觀景陽台</text>`;
-
-  /* 座椅：面對面一組，桌子在中間 */
-  const seat=(x,y,no,p,faceRight)=>{
-    const tl=p&&p.__tl, vip=p&&VIP2.includes(p.id);
-    const fill = vip?"#D6001C" : tl?"#FFE1B0" : p?"#FFFFFF" : "#C8935A";
-    const edge = vip?"#B8001A" : tl?"#E8A33C" : p?"#D6001C" : "#A8743E";
-    const back = vip?"rgba(255,255,255,.4)" : tl?"#E8A33C" : p?"#D6001C" : "#8F5F2E";
-    const nameCol = vip?"#fff":"#3A3226";
-    const bx = faceRight ? x : x+SW-7;             /* 椅背在背對桌子那一側 */
-    return `<g${p?` style="cursor:pointer"`:""}>
-      <rect class="seat${p?" mine":""}" ${p&&!tl?`data-p="${p.id}"`:""} x="${x}" y="${y}" width="${SW}" height="${SH}" rx="7" style="fill:${fill};stroke:${edge};stroke-width:${p?1.6:1}"></rect>
-      <rect x="${bx}" y="${y+4}" width="7" height="${SH-8}" rx="3" fill="${back}" pointer-events="none"/>
-      <text x="${x+SW/2+(faceRight?3:-3)}" y="${y+13}" text-anchor="middle" font-size="8" font-weight="800" pointer-events="none" fill="${vip?"rgba(255,255,255,.85)":p?"#C0392B":"#F8ECC8"}">${no}</text>
-      ${p?`<text x="${x+SW/2+(faceRight?3:-3)}" y="${y+SH/2+8}" text-anchor="middle" font-size="${shortName(p.name).length>=4?9.5:11}" font-weight="800" pointer-events="none" fill="${nameCol}">${esc(shortName(p.name))}</text>`:""}
-      ${tl?`<text x="${x+SW/2+3}" y="${y+SH-6}" text-anchor="middle" font-size="7.5" font-weight="800" pointer-events="none" fill="#C77700">領隊</text>`:""}
+  /* 右端門柱 */
+  g+=`<rect x="${X(.955)}" y="${by+6}" width="12" height="60" fill="#333"/><rect x="${X(.955)}" y="${by+bh-66}" width="12" height="60" fill="#333"/>`;
+  const seatW=52, seatH=40;
+  const drawSeat=(cx,cy,no,key)=>{
+    const p=map[key], mine=!!p, vip=p&&p.id==="p01"||p&&p.id==="p02";
+    const fill=mine?(vip?"#D6001C":"#fff"):"#F4F4F6", stroke=mine?"#D6001C":"#C9C9CF", tc=mine?(vip?"#fff":"#333336"):"#B9B9BF";
+    const nm=p?p.name.replace(/\s+[A-Za-z].*$/,"").replace(/\s/g,"").slice(0,4):"";
+    return `<g class="seatg${mine?" mine":""}" ${p?`data-p="${esc(p.id)}"`:""} data-key="${key}">
+      <rect x="${cx-seatW/2}" y="${cy-seatH/2}" width="${seatW}" height="${seatH}" rx="7" fill="${fill}" stroke="${stroke}" stroke-width="${mine?2:1.5}"/>
+      <rect x="${cx-seatW/2+5}" y="${cy-seatH/2+4}" width="6" height="${seatH-8}" rx="2" fill="${mine?(vip?"#A00D25":"#F3C3C8"):"#E5E5EA"}"/>
+      ${p?`<text x="${cx+3}" y="${cy+4}" text-anchor="middle" font-size="${nm.length>3?9.5:11}" font-weight="800" fill="${tc}">${esc(nm)}</text>`
+         :`<text x="${cx+3}" y="${cy+5}" text-anchor="middle" font-size="13" font-weight="800" fill="#B9B9BF">${no==="crew"?"車服":no}</text>`}
+      <text x="${cx-seatW/2+3}" y="${cy-seatH/2-3}" font-size="8.5" fill="#8E8E93">${no==="crew"?"車服":no}</text>
     </g>`;
   };
-  let no=1;
-  const botStart = C.left==="toilet" ? zoneX+40 : zoneX;
-  [[C.topBays,topY,zoneX,zoneR],[C.botBays,botY,botStart,zoneR]].forEach(([bays,y,x0,x1])=>{
-    bayXs(bays,x0,x1).forEach(bx=>{
-      const n1=no++, n2=no++;
-      g+=seat(bx,y,n1,map[`${carNo}-${n1}`],true);
-      g+=`<rect x="${bx+SW+3}" y="${y+10}" width="${TBL}" height="${SH-20}" rx="3" fill="#B07A44" stroke="#8F5F2E"/>`;
-      g+=seat(bx+SW+3+TBL+3,y,n2,map[`${carNo}-${n2}`],false);
-    });
-  });
-  /* 走道虛線 */
-  g+=`<line x1="${zoneX}" y1="${(topY+SH+botY)/2}" x2="${zoneR}" y2="${(topY+SH+botY)/2}" stroke="#D8C9AC" stroke-width="1.2" stroke-dasharray="5 6"/>`;
-  return g+`</svg>`;
+  const drawTable=(cx,cy)=>`<rect x="${cx-16}" y="${cy-30}" width="32" height="60" rx="8" fill="#C8935A" stroke="#A8743E" stroke-width="1"/><circle cx="${cx-5}" cy="${cy+22}" r="2" fill="#7A5220"/><circle cx="${cx+5}" cy="${cy+22}" r="2" fill="#7A5220"/>`;
+  const topY=by+52, botY=by+bh-52;
+  L.top.forEach(it=>{ const [t,a,f]=it, cx=X(t==="table"||t==="crew"||t==="ac"?a:f);
+    if(t==="seat") g+=drawSeat(cx,topY,a,`${carNo}-${a}`);
+    else if(t==="bench"){ g+=drawSeat(cx,topY-2,a[0],`${carNo}-${a[0]}`)+drawSeat(cx,topY+44,a[1],`${carNo}-${a[1]}`); }
+    else if(t==="table") g+=drawTable(cx,topY+8);
+    else if(t==="crew") g+=drawSeat(cx,topY,"crew",`${carNo}-crew`);
+    else if(t==="ac") g+=`<rect x="${cx-36}" y="${topY-22}" width="72" height="44" rx="4" fill="#FBF2D5" stroke="#333" stroke-width="2"/><text x="${cx}" y="${topY+5}" text-anchor="middle" font-size="13" font-weight="700" fill="#333">空調</text>`; });
+  L.bot.forEach(it=>{ const [t,a,f]=it, cx=X(t==="table"||t==="crew"||t==="rack"?a:f);
+    if(t==="seat") g+=drawSeat(cx,botY,a,`${carNo}-${a}`);
+    else if(t==="table") g+=drawTable(cx,botY-8);
+    else if(t==="crew") g+=drawSeat(cx,botY,"crew",`${carNo}-crew`);
+    else if(t==="rack") g+=`<rect x="${cx-40}" y="${botY-22}" width="80" height="44" fill="#F5E6C4" stroke="#333" stroke-width="1.5"/>${[0,1,2,3,4,5,6,7].map(i=>`<line x1="${cx-32+i*9}" y1="${botY-18}" x2="${cx-32+i*9}" y2="${botY+18}" stroke="#A8743E" stroke-width="1.5"/>`).join("")}<text x="${cx}" y="${botY+34}" text-anchor="middle" font-size="9" fill="#8E8E93">行李架</text>`; });
+  /* 圖例 */
+  g+=`<g font-size="11" fill="#8E8E93"><rect x="${bx}" y="${H-22}" width="14" height="14" rx="3" fill="#D6001C"/><text x="${bx+19}" y="${H-11}">董事長伉儷</text>
+      <rect x="${bx+96}" y="${H-22}" width="14" height="14" rx="3" fill="#fff" stroke="#D6001C" stroke-width="2"/><text x="${bx+115}" y="${H-11}">本團</text>
+      <rect x="${bx+160}" y="${H-22}" width="14" height="14" rx="3" fill="#F4F4F6" stroke="#C9C9CF"/><text x="${bx+179}" y="${H-11}">空位</text>
+      <rect x="${bx+224}" y="${H-22}" width="14" height="14" rx="3" fill="#C8935A"/><text x="${bx+243}" y="${H-11}">小桌</text>
+      <text x="${W-bx}" y="${H-11}" text-anchor="end">上排靠窗＋走道兩人座（小號靠窗）・下排單人座・依林鐵原廠配置圖</text></g>`;
+  return g+"</svg>";
 }
 
 PAGES.fusen=(hdr,scr)=>{
   hbar(hdr,"福森號座位",{back:true});
-  const map=fusenSeatIndex();
+  if(!S.fusenSeg||!FUSEN_SEG[S.fusenSeg]) S.fusenSeg=(S.day>=2?"C":"A");
+  if(!S.fusenCar||![4,5].includes(S.fusenCar)) S.fusenCar=5;
+  const seg=S.fusenSeg, car=S.fusenCar, SG=FUSEN_SEG[seg], map=fusenMap(seg), L=FUSEN_LAYOUT[car];
+  const used=Object.keys(map).filter(k=>k.startsWith(car+"-")).length, total=Object.keys(map).length;
   const el=document.createElement("div");
   el.className="pagepad";
   el.innerHTML=`
+  <div class="tabbar fusenseg" style="padding:0;border:none;background:none;margin-bottom:10px">
+    ${Object.entries(FUSEN_SEG).map(([k,v])=>`<button class="tab${seg===k?" on":""}" data-seg="${k}">${v.label}・${v.date}</button>`).join("")}
+  </div>
   <div class="card fusenhero">
     <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap">
-      <b style="font-size:16px;color:#8A5A20">阿里山林鐵 · 福森號</b>
-      <span class="pill redln">配位 ${Object.keys(map).length} 席</span>
+      <b style="font-size:16px;color:#8A5A20">阿里山林鐵 · 福森號 ${esc(SG.label)}</b>
+      <span class="pill redln">${esc(SG.date)}</span><span class="pill gray">配位 ${total} 席</span>
     </div>
-    <div style="font-size:12.5px;color:#7A6A52;margin-top:7px;line-height:1.75">
-      <b>9/20 A段</b>　北門 → 鹿滿 → 樟腦寮 → 第三景觀台 → 奮起湖 → 多林 → 十字路<br>
-      <b>9/21 C段</b>　阿里山 → 二萬坪 → 十字路 → 奮起湖
+    <div style="font-size:12.5px;color:#7A6A52;margin-top:7px;line-height:1.75">${esc(SG.route)}</div>
+  </div>
+  <div class="card fusentrainwrap">${svgFusenTrain(car)}<div class="zoomhint">點車廂看座位圖・本團使用 4 車客座、5 車守車</div></div>
+  <div class="fusencar">
+    <div class="fchead">
+      <svg viewBox="0 0 28 32" class="fchev"><path d="M20 2 L4 16 L20 30 L26 25 L15 16 L26 7 Z" fill="#D6001C"/></svg>
+      <b>${esc(L.name)}</b><span class="fcsub">（${L.seats} 座）</span><span class="pill red">${car} 車</span>
+      <span class="pill ${used?"redln":"gray"}">本團 ${used} 席</span>
+      <span class="fcsub" style="margin-left:auto">${seg==="A"?"運行方向 ←":"運行方向 →"}</span>
     </div>
+    <div class="zw">${svgFusenCar(car,map,seg)}</div>
+    <div class="zoomhint">兩指縮放、拖曳；點座位看貴賓資料</div>
   </div>
-  <div class="fusenlegend">
-    <span><i style="background:#D6001C;border-color:#B8001A"></i>董事長伉儷</span>
-    <span><i style="background:#fff;border-color:#D6001C"></i>本團貴賓</span>
-    <span><i style="background:#FFF3E0;border-color:#E8A33C"></i>領隊</span>
-    <span><i style="background:#C8935A;border-color:#A8743E"></i>未使用</span>
-    <span style="color:var(--ink3)">點座位查看貴賓</span>
-  </div>
-  <div class="card fusentrainwrap">${svgFusenTrain()}</div>
-  <div id="fusenCars"></div>
-  <p class="vs">車廂配置依林鐵原廠圖繪製（車頭後 1→5 車：觀景・客座・吧檯・客座・守車）。本團配位 4 車 1–8 號、5 車 1–17 號，實際對號以現場安排為準。</p>`;
-  const box=el.querySelector("#fusenCars");
-  [4,5].forEach(c=>{
-    const C=FUSEN_CARS[c], used=Object.keys(map).filter(k=>k.startsWith(c+"-")).length;
-    const d=document.createElement("div");
-    d.className="fusencar";
-    d.innerHTML=`<div class="fchead">
-        <svg viewBox="0 0 28 32" class="fchev"><path d="M20 2 L4 16 L20 30 L26 25 L15 16 L26 7 Z" fill="#D6001C"/></svg>
-        <b>${esc(C.name)}</b>
-        <span class="fcsub">（${C.seats} 座）· ${c} 車</span>
-        <span class="pill ${used?"redln":"gray"}">本團 ${used} 席</span>
-      </div><div class="zw">${svgFusenCar(c,map)}</div>`;
-    box.appendChild(d);
-  });
-  el.querySelectorAll(".seat.mine").forEach(s=>s.addEventListener("click",()=>{
-    const p=pax(s.dataset.p); if(p) openPaxModal(p);
-  }));
+  <p class="vs">A 段與 C 段的 4 車相同；5 車兩段不同，請看各段。未配位的工作人員（薛永南、周冠廷、洪采吟、羅元榮）坐 4 車空位（1、9–16 號）。</p>`;
+  el.querySelectorAll("[data-seg]").forEach(b=>b.onclick=()=>{ S.fusenSeg=b.dataset.seg; save(); render(); });
+  el.querySelectorAll(".fcar").forEach(c=>c.addEventListener("click",()=>{ const n=+c.dataset.car; if(n===4||n===5){ S.fusenCar=n; save(); render(); } else toast(`${n} 車本團未使用`); }));
+  el.querySelectorAll(".seatg.mine").forEach(s=>s.addEventListener("click",()=>{ const p=pax(s.dataset.p); if(p) openPaxModal(p); }));
   el.querySelectorAll(".zw").forEach(zoomify);
   scr.appendChild(el);
 };
