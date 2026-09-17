@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="64e9d4f 2026-09-17T03:52Z">
+<meta name="build" content="ab093d4 2026-09-17T04:36Z">
 <title>導領e化平台 · 920董事會</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, minimum-scale=1, maximum-scale=5">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -585,18 +585,17 @@ h3.sect{font-size:13px;color:var(--ink2);font-weight:800;margin:16px 2px 9px;let
 .placeholder-page .tt{font-size:15px;font-weight:800;color:var(--ink2)}
 .placeholder-page .dd{font-size:12.5px;margin-top:6px}
 
-/* ===== 編輯模式：平常全部藏起來，標題列 ✎ 打開才出現 ===== */
+/* ===== 編輯：長按卡片開表單；頁尾工具列放「＋新增」 ===== */
 .editonly{display:none!important}
-.emode .editonly{display:block!important}
-.emode .editbar.editonly{display:flex!important}
-.editbar{align-items:center;gap:8px;flex-wrap:wrap;background:#FFF3E0;border:1px dashed #E8B96A;
-  border-radius:12px;padding:9px 12px;margin-bottom:12px}
-.editbar .ebl{font-size:12px;font-weight:800;color:#8A6400;flex:1;display:inline-flex;align-items:center;gap:5px;min-width:80px}
+.editbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:#F7F7F8;border:1px dashed var(--line);
+  border-radius:12px;padding:9px 12px;margin:14px 0 4px}
+.editbar .ebl{font-size:12px;font-weight:700;color:var(--ink2);flex:1;display:inline-flex;align-items:center;gap:5px;min-width:80px}
 .editbar .btn{padding:7px 13px;font-size:12.5px}
-.ebtn{display:none;position:absolute;top:8px;right:8px;width:30px;height:30px;border-radius:50%;
+.ebtn{display:none!important;position:absolute;top:8px;right:8px;width:30px;height:30px;border-radius:50%;
   border:1.5px solid var(--red);background:#fff;color:var(--red);align-items:center;justify-content:center;
   cursor:pointer;z-index:2;flex-shrink:0;padding:0}
-.emode .ebtn{display:inline-flex}
+.lp{-webkit-touch-callout:none;transition:transform .15s,box-shadow .15s}
+.lp-hold{transform:scale(.985);box-shadow:0 0 0 3px rgba(230,0,18,.18)!important;transition-delay:.18s}
 .ebtn.inl{position:static}
 .ebtn:active{background:var(--red-bg)}
 .card,.reccard,.rollcard,.vcard,.roomcard,.bgitem{position:relative}

@@ -926,7 +926,7 @@ function goPage(p){
 }
 function render(){
   bindData();
-  document.body.classList.toggle("emode", !!S.editMode);
+  S.editMode=false;   /* 編輯改成長按，沒有編輯模式了 */
   document.body.classList.toggle("wide-page", S.tab==="lead"&&((S.page==="seats"&&S.seatTab==="hsr")||S.page==="budget"||S.page==="rooms"));
   EDIT_HANDLER=null;
   if(!NAVS.some(n=>n[0]===S.tab)) S.tab="lead";
@@ -941,6 +941,7 @@ function render(){
   else if(S.tab==="lead"){ renderLead(hdr,scr); }
   else if(S.tab==="home"){ renderHome(hdr,scr); }
   else{ renderStub(hdr,scr); }
+  tagLongPress(scr); tagLongPress(hdr);
   updateSaveBar();
   scr.scrollTop=0;
 }
@@ -949,15 +950,10 @@ function hbar(hdr,title,{back=false,dark=false}={}){
     <div class="hleft">${back?`<button class="backbtn">${ic("back",16)}</button>`:""}</div>
     <div class="htitle">${esc(title)}</div>
     <div class="hright">
-      <button class="iconbtn editToggle${S.editMode?" on":""}" title="編輯模式">${ic("pen",19)}</button>
       <button class="iconbtn" style="color:var(--red)">${ic("live",19)}</button></div>
   </div>`;
   const bk=hdr.querySelector(".backbtn");
   if(bk) bk.onclick=()=>goPage(null);
-  hdr.querySelector(".editToggle").onclick=()=>{
-    S.editMode=!S.editMode; save(); render();
-    toast(S.editMode?"編輯模式：點卡片上的 ✎ 修改，＋ 新增":"已離開編輯模式");
-  };
 }
 
 /* ============================================================ 通用編輯表單
@@ -1006,17 +1002,48 @@ function editForm(title, fields, obj, {onSave, onDelete, extra=[]}={}){
   const first=$("#mbox").querySelector("input,textarea"); if(first) setTimeout(()=>first.focus(),80);
 }
 
-/* 編輯模式工具列：＋新增、還原預設。只在編輯模式顯示（CSS 控制） */
+/* 頁尾工具列：＋新增（還原預設只在有給的頁面）。修改一律「長按卡片」 */
 function editBar(parent, {add, addLabel="新增", reset, resetLabel="還原此頁預設"}={}){
   const bar=document.createElement("div");
-  bar.className="editbar editonly";
-  bar.innerHTML=`<span class="ebl">${ic("pen",13)} 編輯模式</span>
-    ${add?`<button class="btn pri" data-a="add">＋ ${esc(addLabel)}</button>`:""}
-    ${reset?`<button class="btn sec" data-a="reset">${esc(resetLabel)}</button>`:""}`;
+  bar.className="editbar";
+  bar.innerHTML=`<span class="ebl">${ic("hand",13)} 長按卡片可修改</span>
+    ${add?`<button class="btn sec" data-a="add">＋ ${esc(addLabel)}</button>`:""}
+    ${reset?`<button class="btn ghost" data-a="reset">${esc(resetLabel)}</button>`:""}`;
   const a=bar.querySelector('[data-a="add"]');   if(a) a.onclick=add;
   const r=bar.querySelector('[data-a="reset"]'); if(r) r.onclick=()=>confirmBox(`${resetLabel}？這一頁改過的內容會被覆蓋。`,()=>{ reset(); dataChanged("已還原預設"); });
-  parent.prepend(bar);
+  parent.appendChild(bar);
 }
+/* 長按＝編輯：render 後把每個 ✎ 錨點所在的卡片標成 data-lp，長按 0.5 秒開表單 */
+let LP_MODAL=null;   /* 彈窗（店家資訊）內的長按處理 */
+function tagLongPress(root){
+  root.querySelectorAll(".ebtn").forEach(b=>{
+    const host=b.closest(".reccard,.rollcard,.vcard,.roomcard,.bgitem,.ordrow,td.det,.bh1,.tinfo,.stop,.card")||b.parentElement;
+    if(host){ host.dataset.lp=b.dataset.e; host.classList.add("lp"); }
+  });
+}
+(function installLongPress(){
+  let press=null;
+  const cancel=()=>{ if(!press) return; clearTimeout(press.timer); press.el.classList.remove("lp-hold"); press=null; };
+  document.addEventListener("pointerdown",e=>{
+    if(e.pointerType==="mouse"&&e.button!==0) return;
+    const host=e.target.closest("[data-lp]"); if(!host) return;
+    if(e.target.closest("input,textarea,select,button,a,.tseat,.zw,.bgpaper.on,canvas,.pen,.chip,.ckbox,.arrived,.vck,.lugck,.stepper")) return;
+    cancel();
+    press={el:host,id:e.pointerId,x:e.clientX,y:e.clientY,timer:setTimeout(()=>{
+      const key=host.dataset.lp, inModal=!!host.closest("#mbox");
+      host.classList.remove("lp-hold"); press=null;
+      if(navigator.vibrate) navigator.vibrate(12);
+      const swallow=ev=>{ ev.stopPropagation(); ev.preventDefault(); };
+      document.addEventListener("click",swallow,{capture:true,once:true}); setTimeout(()=>document.removeEventListener("click",swallow,{capture:true}),600);
+      if(inModal){ if(LP_MODAL) LP_MODAL(key,host); }
+      else if(EDIT_HANDLER) EDIT_HANDLER(key,host);
+    },500)};
+    host.classList.add("lp-hold");
+  },true);
+  document.addEventListener("pointermove",e=>{ if(press&&press.id===e.pointerId&&Math.hypot(e.clientX-press.x,e.clientY-press.y)>8) cancel(); },true);
+  document.addEventListener("pointerup",cancel,true); document.addEventListener("pointercancel",cancel,true);
+  document.addEventListener("contextmenu",e=>{ if(e.target.closest("[data-lp]")) e.preventDefault(); });
+})();
 let EDIT_HANDLER=null;   /* 每頁 render 時設定；#screen 上的委派會呼叫它 */
 const ebtn = (key,inline)=>`<button class="ebtn${inline?" inl":""}" data-e="${esc(key)}" title="編輯">${ic("pen",13)}</button>`;
 /* 上下移動：行程節點這種有順序的清單用 */
@@ -1423,10 +1450,10 @@ PAGES.seats=(hdr,scr)=>{
     const w=el.clientWidth-28;   /* pagepad 兩側各 14 */
     el.querySelector("#seatArea").innerHTML=svgHsr(w);
     el.querySelectorAll(".zw").forEach(zoomify);
-    const tc=document.createElement("div"); tc.className="card editonly";
+    const tc=document.createElement("div"); tc.className="card";
     tc.innerHTML=`<div style="font-weight:800;margin-bottom:8px;font-size:14px">本日車次</div>
       ${(HSR_TRAINS[S.day]||[]).map((t,i)=>`<div class="ordrow"><span class="who">${esc(t.no)}</span><span class="what">${esc(t.route)}${t.tag?"・"+esc(t.tag):""}</span>${ebtn(String(i),true)}</div>`).join("")}`;
-    el.prepend(tc);
+    el.appendChild(tc);
     editBar(el,{reset:()=>resetSection("hsrTrains"),resetLabel:"還原預設車次"});
     EDIT_HANDLER=i=>{ const t=(HSR_TRAINS[S.day]||[])[+i]; if(!t) return;
       editForm("編輯車次",[{k:"no",label:"車次",required:true},{k:"route",label:"路線／時間"},{k:"dir",label:"方向",type:"select",opts:["南下","北上"]},{k:"tag",label:"標籤"}],
@@ -2088,10 +2115,10 @@ PAGES.coffee=(hdr,scr)=>{
   });
   el.querySelector("#clearOrd").onclick=()=>confirmBox("清空全部咖啡訂單？",()=>{ S.orders={}; save(); render(); toast("訂單已清空"); });
   const mcard=document.createElement("div");
-  mcard.className="card editonly";
+  mcard.className="card";
   mcard.innerHTML=`<div style="font-weight:800;margin-bottom:8px;font-size:14px">菜單品項</div>
     ${MENU.map((m,i)=>`<div class="ordrow"><span class="who">${esc(m.em||"")} ${esc(m.name)}</span><span class="what"><span class="pill gray">${esc(m.temp||"熱")}</span> ${+m.price?`$${+m.price}`:"價格未定"}${m.note?` · ${esc(m.note)}`:""}</span>${ebtn(String(i),true)}</div>`).join("")}`;
-  el.insertBefore(mcard, el.querySelector(".card"));
+  el.appendChild(mcard);
   editBar(el,{add:()=>editMenuItem(null),addLabel:"新增品項",reset:()=>resetSection("menu"),resetLabel:"還原預設菜單"});
   EDIT_HANDLER=i=>editMenuItem(+i);
   scr.appendChild(el);
@@ -2273,7 +2300,7 @@ function openVendorModal(ids){
   const mb=$("#mbox");
   mb.querySelectorAll("[data-ck]").forEach(b=>b.onclick=()=>{ toggleVconf(b.dataset.ck); openVendorModal(ids); });
   mb.querySelectorAll("[data-cp]").forEach(b=>b.onclick=()=>copyText(b.dataset.cp));
-  mb.querySelectorAll(".ebtn").forEach(b=>b.onclick=e=>{ e.stopPropagation(); closeModal(); editVendor(vendor(b.dataset.e)); });
+  tagLongPress(mb); LP_MODAL=id=>{ closeModal(); editVendor(vendor(id)); };
 }
 
 PAGES.vendors=(hdr,scr)=>{
@@ -2743,7 +2770,7 @@ PAGES.rooms=(hdr,scr)=>{
   ${other.length?`<h3 class="sect">其他</h3><div class="roomgrid">${other.map(card).join("")}</div>`:""}`;
   el.querySelectorAll("[data-vm]").forEach(b=>b.onclick=()=>openVendorModal(b.dataset.vm));
   el.querySelectorAll(".floorwrap .zw").forEach(zoomify);
-  editBar(el,{add:()=>editRoom(N,null),addLabel:"新增房間",reset:()=>resetSection("nights"),resetLabel:"還原預設分房"});
+  editBar(el,{add:()=>editRoom(N,null),addLabel:"新增房間"});
   EDIT_HANDLER=k=>{
     if(k==="__night") editForm("飯店資料",[{k:"date",label:"日期",ph:"9/20(日)"},{k:"hotel",label:"飯店",required:true},{k:"info",label:"房型說明",type:"textarea",rows:2},
       {k:"vendor",label:"對應店家（飯店聯絡鍵）",type:"select",opts:[["","（無）"]].concat(VENDORS.map(v=>[v.id,v.name]))}],N,{onSave:o=>{ Object.assign(N,o); dataChanged("已儲存"); }});
@@ -3371,7 +3398,7 @@ $("#modal").addEventListener("click",e=>{ if(e.target.id==="modal") closeModal()
   /* 第一次開啟把 seed 拷進 S.data；之後每次 render 都會重新綁定 */
   bindData();
   autoDay();   /* 帶團當天打開就是當天，不用再點日期 */
-  /* ✎ 用事件委派（capture），卡片本身的 onclick 不會搶到 */
+  /* （保留）舊的 ✎ 按鈕委派；現在按鈕隱藏，實際靠長按 */
   $("#screen").addEventListener("click",e=>{
     const b=e.target.closest(".ebtn"); if(!b||!EDIT_HANDLER) return;
     e.preventDefault(); e.stopPropagation(); EDIT_HANDLER(b.dataset.e,b);
