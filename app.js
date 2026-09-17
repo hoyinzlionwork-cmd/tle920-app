@@ -180,7 +180,7 @@ const HSR_0911 = {
           "03575971":["p24","p29","p30","p17","p18"], "04203413":["p21"], "已確認":["p16","p31"] },
   pnrBk:{ "04421386":["p10","p09","p14","p15","p06","p05","p19","p28","p07","p08"], "04414571":["p01","p02","p11","p12"],
           "04420933":["p23"], "05130881":["p21"], "04414767":["p30","p29","p24","p17","p18","p20","p25"],
-          "04199621":["p03","p04"], "待確認":["p16","p31","p26","p13"] },
+          "04199621":["p03","p04"], "已確認":["p16","p31","p26"], "待確認":["p13"] },
   board:{ p13:"台中", p23:"台中" },
   days:{ p13:[1,2] },
   remove:["p22","p15"],   /* 陸嘉琪 9/1 取消；螘金花 9/15 取消（0916 分房表） */
@@ -561,7 +561,7 @@ function buildSeed(){
     tour:TOUR_SEED, pax:PAX_SEED, nights:NIGHTS_SEED, menu:MENU_SEED, meals,
     vendors:VENDORS_SEED, vendorTodo:VENDOR_TODO_SEED,
     budget:BUDGET_ITEMS_SEED, headcount:BUDGET_HEADCOUNT_SEED,
-    itin:ITIN_SEED, luggageRoute:LUGGAGE_ROUTE_SEED, hsrTrains:HSR_TRAINS_SEED, _seatVer:4, _menuVer:1, _budgetVer:1, _tourVer:2, _docVer:6,
+    itin:ITIN_SEED, luggageRoute:LUGGAGE_ROUTE_SEED, hsrTrains:HSR_TRAINS_SEED, _seatVer:5, _menuVer:1, _budgetVer:1, _tourVer:2, _docVer:6,
   });
 }
 /* 出廠預設另存一份，之後 TOUR / PAX… 這些名字都指向 S.data */
@@ -599,6 +599,8 @@ function bindData(){
   }
   /* 一次性：0917 高鐵座位表——薛永南 0203 改 5車13C、黃信川 13D 已確認 */
   if((S.data._seatVer||0)<4){ applyHsr0911(PAX); S.data._seatVer=4; }
+  /* 一次性：9/22 0664 全部座位已確認（黃信川 11D、薛永南 5車11D、周冠廷 5車11E） */
+  if((S.data._seatVer||0)<5){ applyHsr0911(PAX); S.data._seatVer=5; }
   /* 一次性：鳴心咖啡菜單換成店家 9/15 提供的品項，舊示意品項的訂單一併清掉 */
   if((S.data._menuVer||0)<1){
     S.data.menu=buildSeed().menu; MENU=S.data.menu;
