@@ -189,6 +189,28 @@ const HSR_0911 = {
     { id:"p31", name:"薛永南", rel:"領隊",         en:"",         group:"工作人員", days:[1,2,3], idNo:"—", birth:"—", tkt:"經濟・成人", pnrGo:"—", pnrBk:"—", table:0, meal:"" },
   ],
 };
+/* 9/17 名單（____0920-0922 名單 PDF）：關係、英文名、職稱；新增工作人員羅元榮。座位、訂位代號不動。 */
+const DOC0917_PAX = {
+  p01:["董事長","Jason Wang","雄獅旅行社董事長"], p02:["董事長夫人","Vicky Lin","雄獅旅行社董事長夫人"],
+  p03:["董事長（新光人壽）","Mark Wei","新光人壽保險 董事長"], p04:["魏董夫人","Agnes Chao","新光人壽 董事長夫人"],
+  p05:["董事","Neo Yu","雄獅旅行社董事"], p06:["游董太太","Vicky Wang","雄獅旅行社董事夫人"],
+  p07:["董事","Eric Chen","雄獅董事・台灣商業銀行教父・前台北富邦銀董座"], p08:["陳董太太","Cindy Chang","雄獅旅行社董事夫人"],
+  p28:["陳董女兒","Lorraine Chen",""],
+  p09:["獨立董事","Peng Lu","雄獅獨董・台灣大哥大獨董・台科大教授"], p10:["盧董太太","Grace Yu","雄獅獨立董事夫人"],
+  p11:["獨立董事","Morris Li","雄獅獨董・中信商銀董事長"], p12:["利董太太","Fanny Chang","雄獅董事夫人"],
+  p13:["獨立董事","WY","雄獅獨董・台大農經博士"], p14:["旅天下獨立董事","CK Cheng","亞揪遊科技董事長・旅天下獨董"],
+  p15:["董事夫人","Cindy Yi","亞揪遊科技董事長夫人"],
+  p16:["董事總經理（不帶眷）","Andy Huang","雄獅旅行社董事總經理"], p17:["總經理","Eagle Wang",""], p18:["總經理","Ying Chen",""],
+  p19:["顧問","Weichun Liu",""], p20:["總經理","Sean Chiu",""], p21:["執行董事","Dianna Dai",""],
+  p23:["薰衣草森林董事長（合作夥伴）","Ed Wang",""],
+  p24:["工作人員","Paris","TL"], p29:["工作人員","Tony","TL"], p25:["工作人員","Jimmy","TL"], p32:["工作人員","Tony","TL"],
+  p26:["工作人員","Jason","TL"], p30:["工作人員","Debbie","TL"], p27:["工作人員","Charis","TL"], p31:["領隊","薛永南","TL"],
+};
+function applyDoc0917(list){
+  if(!list.find(p=>p.id==="p32")) list.push({ id:"p32", name:"羅元榮", rel:"工作人員", en:"Tony", group:"工作人員", days:[1,2,3], idNo:"—", birth:"—", tkt:"—", hsrGo:"—", hsrBack:"—", pnrGo:"—", pnrBk:"—", table:0, meal:"" });
+  list.forEach(p=>{ const d=DOC0917_PAX[p.id]; if(!d) return; p.rel=d[0]; p.en=d[1]; if(d[2]) p.title=d[2]; else delete p.title; });
+  return list;
+}
 function applyHsr0911(list){
   const byId=Object.fromEntries(list.map(p=>[p.id,p]));
   HSR_0911.add.forEach(np=>{ if(!byId[np.id]){ const c=JSON.parse(JSON.stringify(np)); list.push(c); byId[np.id]=c; } });
@@ -207,6 +229,7 @@ function applyHsr0911(list){
   return list;
 }
 applyHsr0911(PAX);
+applyDoc0917(PAX);
 
 const TRAIN_TL = { name:"薛永南 領隊", seat:"" };
 (function assignTrain(){
@@ -222,38 +245,45 @@ const TRAIN_TL = { name:"薛永南 領隊", seat:"" };
 
 /* 分房（作業手冊「分房表」）：兩晚不同飯店 */
 let NIGHTS = [
-  { key:1, date:"9/20(日)", hotel:"阿里山賓館【現代館】", vendor:"v_alishan", rooms:[
-    { no:"董1", type:"歐式套房（兩大床）",        who:["王文傑","凌瓏"] },
-    { no:"董2", type:"和洋式套房（一大床＋日式軟墊）", who:["魏寶生","趙秋芬"], note:"9/20–9/21" },
-    { no:"董3", type:"歐式套房（兩大床）",        who:["游張松","王　雍"] },
-    { no:"董4", type:"和洋式套房（一大床＋日式軟墊）", who:["陳聖德","張振明","陳萱"], note:"女兒睡軟墊" },
-    { no:"董5", type:"歐式套房（兩大床）",        who:["盧希鵬","游慧茹"] },
-    { no:"董6", type:"歐式套房（一大床）",        who:["利明献","張郁芬"] },
-    { no:"董7", type:"和洋式套房（一大床＋日式軟墊）", who:["柳婉郁"] },
-    { no:"董8", type:"歐式套房（兩大床/愛心）",   who:["鄭兆剛","螘金花"] },
-    { no:"主1", type:"豪華家庭房",  who:["黃信川"] },
-    { no:"主2", type:"豪華家庭房",  who:["王岳聰"] },
-    { no:"主3", type:"豪華家庭房",  who:["陳曉穎"] },
-    { no:"主4", type:"豪華家庭房",  who:["邱浩軒"] },
-    { no:"主6", type:"豪華家庭房",  who:["王村煌"] },
-    { no:"外宿", type:"工作人員",   who:["陳婉如 Paris","林詠凱","周冠廷","洪采吟"], note:"外宿" },
+  { key:1, date:"9/20(日)", hotel:"阿里山賓館【現代館 6–9F】", vendor:"v_alishan",
+    info:"歐套二大床 1801(愛心)／1822／1901／1922・歐套一大床 1625・和洋套房 1725／1817／1915(愛心)・豪華家庭房(兩大床，主管) 1902／1903／1905／1906／1907／1908／1909／1910／1911",
+    rooms:[
+    { no:"1922", type:"歐式套房（兩大床）",        who:["王文傑","凌瓏"],            floor:9 },
+    { no:"1817", type:"和洋套房（一大床）",        who:["魏寶生","趙秋芬"],          floor:8, note:"只住 9/20" },
+    { no:"1901", type:"歐式套房（兩大床）TWN",    who:["游張松","王　雍"],          floor:9 },
+    { no:"1725", type:"和洋套房（一大床）",        who:["陳聖德","張振明","陳萱"],   floor:7, note:"此房有軟墊，女兒睡軟墊" },
+    { no:"1822", type:"歐式套房（兩大床）TWN",    who:["盧希鵬","游慧茹"],          floor:8 },
+    { no:"1625", type:"歐式套房（一大床）",        who:["利明献","張郁芬"],          floor:6, note:"分房 6 不可動・唯一歐套一大" },
+    { no:"1915", type:"和洋套房（一大床・愛心房）", who:["柳婉郁"],                   floor:9, note:"愛心房：無障礙扶手" },
+    { no:"1801", type:"歐式套房（兩大床・愛心房）", who:["鄭兆剛","螘金花"],          floor:8, note:"分房 8 不可動・CK 備註愛心（無障礙扶手）" },
+    { no:"1911", type:"豪華家庭房（兩大床）",      who:["黃信川"],  floor:9 },
+    { no:"1907", type:"豪華家庭房（兩大床）",      who:["王岳聰"],  floor:9 },
+    { no:"1903", type:"豪華家庭房（兩大床）",      who:["陳曉穎"],  floor:9 },
+    { no:"1905", type:"豪華家庭房（兩大床）",      who:["劉惟珺"],  floor:9 },
+    { no:"1910", type:"豪華家庭房（兩大床）",      who:["邱浩軒"],  floor:9 },
+    { no:"1909", type:"豪華家庭房（兩大床）",      who:["王村煌"],  floor:9 },
+    { no:"1902／1906／1908", type:"豪華家庭房（兩大床）", who:[], floor:9, note:"未分配・可給工作人員" },
+    { no:"工作人員", type:"另行安排", who:["陳婉如 Paris","李沛祐","林詠凱","羅元榮","周冠廷","賴怡娟","洪采吟","薛永南"], note:"房號待確認" },
   ]},
-  { key:2, date:"9/21(一)", hotel:"阿里山英迪格酒店", vendor:"v_indigo", rooms:[
-    { no:"董1", type:"映豪華房",          who:["王文傑","凌瓏"], note:"位置需確認" },
-    { no:"董3", type:"精品客房（雙床）",  who:["游張松","王　雍"] },
-    { no:"董4", type:"精品客房（大床）",  who:["陳聖德","張振明","陳萱"], note:"女兒加床" },
-    { no:"董5", type:"精品客房（雙床）",  who:["盧希鵬","游慧茹"] },
-    { no:"董6", type:"精品客房（大床）",  who:["利明献","張郁芬"] },
-    { no:"董7", type:"精品客房（大床）",  who:["柳婉郁"] },
-    { no:"董8", type:"精品客房（大床）",  who:["鄭兆剛","螘金花"] },
-    { no:"主1", type:"精品客房（大床）",  who:["黃信川"] },
-    { no:"主2", type:"精品客房（大床）",  who:["王岳聰"] },
-    { no:"主3", type:"精品客房（大床）",  who:["陳曉穎"] },
-    { no:"主4", type:"精品客房（大床）",  who:["劉惟珺"], note:"9/21 入住" },
-    { no:"主5", type:"精品客房（大床）",  who:["邱浩軒"] },
-    { no:"主6", type:"精品客房（大床）",  who:["戴啟珩"], note:"9/21 加入" },
-    { no:"主8", type:"精品客房（大床）",  who:["王村煌"] },
-    { no:"外宿", type:"工作人員",         who:["陳婉如 Paris","林詠凱","周冠廷","洪采吟"], note:"外宿" },
+  { key:2, date:"9/21(一)", hotel:"阿里山英迪格酒店【6F】", vendor:"v_indigo",
+    info:"豪華房 13 坪 0601・豪華房加沙發床 0622・精品浴缸大床 11 坪 0602／0605／0607／0609／0610／0612／0617／0619／0620・精品浴缸雙床 0606／0608",
+    rooms:[
+    { no:"0601", type:"豪華房 13 坪",        who:["王文傑","凌瓏"],   floor:6 },
+    { no:"0622", type:"豪華房加沙發床",       who:["陳聖德","張振明"], floor:6 },
+    { no:"0620", type:"精品浴缸大床",         who:["陳萱"],            floor:6 },
+    { no:"0606", type:"精品浴缸雙床 TWN",     who:["游張松","王　雍"], floor:6 },
+    { no:"0608", type:"精品浴缸雙床 TWN",     who:["盧希鵬","游慧茹"], floor:6 },
+    { no:"0610", type:"精品浴缸大床",         who:["利明献","張郁芬"], floor:6 },
+    { no:"0617", type:"精品浴缸大床",         who:["鄭兆剛","螘金花"], floor:6, note:"表上只寫鄭兆剛" },
+    { no:"0609", type:"精品浴缸大床",         who:["黃信川"],  floor:6 },
+    { no:"0611", type:"精品浴缸大床",         who:["王岳聰"],  floor:6 },
+    { no:"0605", type:"精品浴缸大床",         who:["陳曉穎"],  floor:6 },
+    { no:"0602", type:"精品浴缸大床",         who:["劉惟珺"],  floor:6 },
+    { no:"0619", type:"精品浴缸大床",         who:["邱浩軒"],  floor:6 },
+    { no:"0612", type:"精品浴缸大床",         who:["戴啟珩"],  floor:6, note:"9/21 加入" },
+    { no:"0607", type:"精品浴缸大床",         who:["王村煌"],  floor:6 },
+    { no:"0615／0616／0618／0621", type:"未分配", who:[], floor:6 },
+    { no:"工作人員", type:"另行安排", who:["陳婉如 Paris","李沛祐","林詠凱","羅元榮","周冠廷","賴怡娟","洪采吟","薛永南"], note:"房號待確認" },
   ]},
 ];
 
@@ -281,9 +311,9 @@ let MEALS = {
      ["小點","奮起湖老街","甜甜圈＋愛玉・裝袋拿著吃","OK",["v_donut","v_aiyu"]],
      ["午餐","山芙蓉 無菜單料理","8 菜 1 湯：肉類×2、豆腐×1、蛋料理×1、湯品×1，其餘由主廚依當日食材搭配 2–3 道","OK",["v_fkuo"]],
      ["茶席","小山霂茗（林園製茶）","老闆親自接待・每桌 7 人分 3–4 桌、每桌一位茶師","OK",["v_xiaoshan","v_linyuan"]],
-     ["晚餐","阿里山英迪格・HUFU氛饗亭（宴會廳C）","HUFU 套餐（菜單調整中）","OK",["v_indigo"]]],
+     ["晚餐","阿里山英迪格・HUFU氛饗亭（宴會廳C）","套餐式・座位圖 20 人（A 桌 10／B 桌 9），見「分桌」","OK",["v_indigo"]]],
   3:[["早餐","阿里山英迪格・粟餐廳（1F）","07:00–10:30","OK",["v_indigo"]],
-     ["午餐","優遊吧斯 鄒族文化部落","合菜（需分菜）・800/人｜是否品茗待確認（與小山霂茗類似，菜色須避免重複）","OK",["v_yuyupas"]],
+     ["午餐","優遊吧斯 鄒族文化部落","合菜（需分菜）・800/人｜大桌 19 人＋小桌 16 人，門在大桌 6 點方向｜是否品茗待確認（與小山霂茗類似，菜色須避免重複）","OK",["v_yuyupas"]],
      ["點心","高鐵站發放","piepiya 麵包＋飲品・裝袋（數量以房為單位？口味待確認）","待確認",["v_piepiya"]]],
 };
 
@@ -530,7 +560,7 @@ function buildSeed(){
     tour:TOUR_SEED, pax:PAX_SEED, nights:NIGHTS_SEED, menu:MENU_SEED, meals,
     vendors:VENDORS_SEED, vendorTodo:VENDOR_TODO_SEED,
     budget:BUDGET_ITEMS_SEED, headcount:BUDGET_HEADCOUNT_SEED,
-    itin:ITIN_SEED, luggageRoute:LUGGAGE_ROUTE_SEED, hsrTrains:HSR_TRAINS_SEED, _seatVer:3, _menuVer:1, _budgetVer:1, _tourVer:2,
+    itin:ITIN_SEED, luggageRoute:LUGGAGE_ROUTE_SEED, hsrTrains:HSR_TRAINS_SEED, _seatVer:3, _menuVer:1, _budgetVer:1, _tourVer:2, _docVer:1,
   });
 }
 /* 出廠預設另存一份，之後 TOUR / PAX… 這些名字都指向 S.data */
@@ -588,6 +618,13 @@ function bindData(){
     if(TOUR.code==="26TS920A3A") TOUR.code=seed.tour.code;
     for(const k of ["ctrl","deadline","seats"]) if(TOUR[k]===undefined) TOUR[k]=seed.tour[k];
     S.data._tourVer=1;
+  }
+  /* 一次性：9/17 產品部文件——名單職稱／英文名／羅元榮、兩晚實際房號、HUFU 與優遊吧斯餐食說明 */
+  if((S.data._docVer||0)<1){
+    applyDoc0917(PAX);
+    S.data.nights=seed.nights; NIGHTS=S.data.nights;
+    for(const d of [2,3]) (MEALS[d]||[]).forEach((m,i)=>{ const sm=(seed.meals[d]||[])[i]; if(sm && m.place===sm.place && /HUFU 套餐（菜單調整中）|合菜（需分菜）・800\/人｜是否品茗/.test(m.menu)) m.menu=sm.menu; });
+    S.data._docVer=1;
   }
   if((S.data._tourVer||0)<2){
     const st=(ITIN[2]||[]).find(x=>x.title==="自選 · 祝山日出");
@@ -981,7 +1018,7 @@ function moveItem(arr,i,dir){ const j=i+dir; if(j<0||j>=arr.length) return false
 const GROUP_OPTS=["貴賓","雄獅主管","工作人員"];
 const PAX_FIELDS=[
   {k:"name",label:"姓名",required:true},{k:"rel",label:"稱謂／職稱",ph:"董事、董事長夫人…"},
-  {k:"en",label:"英文名"},{k:"group",label:"分組",type:"select",opts:GROUP_OPTS},
+  {k:"en",label:"英文名"},{k:"title",label:"職稱（名單）"},{k:"group",label:"分組",type:"select",opts:GROUP_OPTS},
   {k:"days",label:"在團日",type:"days"},{k:"table",label:"分桌",type:"select",opts:[[0,"不分桌"],[1,"第 1 桌"],[2,"第 2 桌"]]},
   {k:"idNo",label:"身分證號"},{k:"birth",label:"生日",ph:"1953/02/26"},{k:"tkt",label:"高鐵票種",ph:"商務・敬老"},
   {k:"hsrGo",label:"高鐵去程座位",ph:"6車 17A"},{k:"hsrBack",label:"高鐵回程座位",ph:"6車 6A"},
@@ -1281,6 +1318,7 @@ function rosterList(scr){
     if(S.fields.orderNo) rows.push(["訂單編號",p.orderNo]);
     rows.push(["中文姓名",`<b>${esc(p.name)}</b>　<span class="pill gray">${esc(p.rel)}</span>`]);
     if(S.fields.en&&p.en)   rows.push(["英文名",p.en]);
+    if(p.title) rows.push(["職稱",esc(p.title)]);
     if(S.fields.idNo) rows.push(["身分證號",p.idNo]);
     if(S.fields.birth)rows.push(["生日",p.birth]);
     if(S.fields.tkt)  rows.push(["高鐵票種",p.tkt]);
@@ -2666,7 +2704,8 @@ PAGES.rooms=(hdr,scr)=>{
   el.className="pagepad";
   el.innerHTML=`<div class="vs" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><b style="flex:1">${esc(N.date)}｜${esc(N.hotel)}</b>
     ${N.vendor&&vendor(N.vendor)?`<button class="chip" data-vm="${esc(N.vendor)}">${ic("phone",13)}飯店聯絡</button>`:""}${ebtn("__night",true)}</div>
-  <p class="vs">發放房卡時照表引導；異動請用「手寫備註」記下。</p>
+  ${N.info?`<div class="card" style="font-size:12.5px;line-height:1.7;color:var(--ink2)"><b style="color:var(--ink)">房型</b>　${esc(N.info)}</div>`:""}
+  <p class="vs">發放房卡時照表引導；魏董伉儷、柳董 9/21 提前返北，第二晚無房。異動請用「手寫備註」記下。</p>
   <div class="roomgrid">${N.rooms.map((r,i)=>`
     <div class="roomcard">${ebtn(String(i))}<div class="no">${esc(r.no)}</div>
       <div class="tp"><span class="pill ${(r.type||"").includes("套")||(r.type||"").includes("豪華")?"redln":"gray"}">${esc(r.type)}</span>
@@ -2675,7 +2714,7 @@ PAGES.rooms=(hdr,scr)=>{
   el.querySelectorAll("[data-vm]").forEach(b=>b.onclick=()=>openVendorModal(b.dataset.vm));
   editBar(el,{add:()=>editRoom(N,null),addLabel:"新增房間",reset:()=>resetSection("nights"),resetLabel:"還原預設分房"});
   EDIT_HANDLER=k=>{
-    if(k==="__night") editForm("飯店資料",[{k:"date",label:"日期",ph:"9/20(日)"},{k:"hotel",label:"飯店",required:true},
+    if(k==="__night") editForm("飯店資料",[{k:"date",label:"日期",ph:"9/20(日)"},{k:"hotel",label:"飯店",required:true},{k:"info",label:"房型說明",type:"textarea",rows:2},
       {k:"vendor",label:"對應店家（飯店聯絡鍵）",type:"select",opts:[["","（無）"]].concat(VENDORS.map(v=>[v.id,v.name]))}],N,{onSave:o=>{ Object.assign(N,o); dataChanged("已儲存"); }});
     else editRoom(N,+k);
   };
@@ -2691,12 +2730,47 @@ function editRoom(N,i){
 /* ============================================================ 分桌（每家餐廳各自一份）
  * S.seating[mealId] = { tables:[ { name, seats:[pid|null,...] } ] }；沒有自訂就用 PAX 的 table 欄位當預設。
  * 位子可異動：長按名字 → 抬起 → 拖到別的位子（互換）、空位（搬過去）、桌子（加入）、未入座區（移出）。 */
+/* 9/17 官方座位圖（產品部 PDF）：順時針、從 12 點方向開始；用姓名對到 PAX */
+const SEAT_DOC = {
+  d2m5:{ note:"套餐式・座位圖 20 人", tables:[
+    { name:"A 桌（10 人）", who:["王文傑","利明献","張郁芬","游慧茹","盧希鵬","邱浩軒","劉惟珺","張振明","陳萱","陳聖德"] },
+    { name:"B 桌（9 人）",  who:["凌瓏","王　雍","游張松","黃信川","王村煌","戴啟珩","陳曉穎","王岳聰","鄭兆剛"] } ] },
+  d3m1:{ note:"大桌 19 人＋小桌 16 人・門在 6 點方向（正門／外場），側門與廁所在左", tables:[
+    { name:"大桌（19 人）", who:["王文傑","利明献","張郁芬","邱浩軒","黃信川","陳曉穎","王岳聰","王村煌","戴啟珩","凌瓏","陳聖德","陳萱","張振明","劉惟珺","鄭兆剛","游張松","王　雍","游慧茹","盧希鵬"], door:"6 點方向：正門" },
+    { name:"小桌（16 人）", who:[], cap:8 } ] },
+};
 function defaultSeating(m){
   const day=+String(m.id||"").match(/^d(\d)/)?.[1] || S.day;
   const here=PAX.filter(p=>p.days.includes(day));
+  const doc=SEAT_DOC[m.id];
+  if(doc){
+    const byName=n=>{ const p=PAX.find(x=>x.name.replace(/\s/g,"")===n.replace(/\s/g,"")); return p?p.id:null; };
+    return { note:doc.note, tables:doc.tables.map(t=>{ const ids=t.who.map(byName).filter(Boolean);
+      return { name:t.name, door:t.door||"", seats:ids.concat(Array(Math.max(0,(t.cap||ids.length)-ids.length)).fill(null)) }; }) };
+  }
   const t1=here.filter(p=>p.table===1).map(p=>p.id), t2=here.filter(p=>p.table===2).map(p=>p.id);
   const pad=a=>a.concat(Array(Math.max(2, (Math.ceil((a.length+2)/2)*2)-a.length)).fill(null));
   return { tables:[ {name:"第 1 桌（貴賓桌）",seats:pad(t1)}, {name:"第 2 桌（主管桌）",seats:pad(t2)} ] };
+}
+/* 圓桌圖：seats[0] 在 12 點方向，順時針；跟官方座位圖同一種畫法 */
+function svgRoundTable(t){
+  const n=t.seats.length, W=420, cx=210, cy=210, R=n>14?152:140, r=Math.max(14,Math.min(24,Math.floor((2*Math.PI*R/Math.max(n,1))/2)-3));
+  const fs=r>=20?11.5:10;
+  let out=`<svg class="roundtbl" viewBox="0 0 ${W} ${W}" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="${cx}" cy="${cy}" r="${R-r-14}" fill="#FFF3D6" stroke="#E8C98A" stroke-width="2"/>
+    <text x="${cx}" y="${cy-6}" text-anchor="middle" font-size="15" font-weight="800" fill="#7A5200">${esc(t.name.split("（")[0])}</text>
+    <text x="${cx}" y="${cy+14}" text-anchor="middle" font-size="12" fill="#A87800">${t.seats.filter(Boolean).length} 人</text>`;
+  t.seats.forEach((pid,i)=>{
+    const a=-Math.PI/2 + i*2*Math.PI/n, x=cx+R*Math.cos(a), y=cy+R*Math.sin(a), p=pid&&pax(pid);
+    if(!p){ out+=`<circle cx="${x}" cy="${y}" r="${r}" fill="#fff" stroke="#C9C9CF" stroke-width="1.5" stroke-dasharray="4 3"/>`; return; }
+    const g=p.group==="貴賓"?["#FFF7F7","#F3C3C8"]:p.group==="雄獅主管"?["#F5F8FF","#C9D8F5"]:["#FAFAFB","#D5D5DA"];
+    const nm=p.name.replace(/\s/g,"").slice(0,4), two=nm.length>2;
+    out+=`<circle cx="${x}" cy="${y}" r="${r}" fill="${g[0]}" stroke="${g[1]}" stroke-width="1.8"/>`;
+    if(two&&r<22) out+=`<text x="${x}" y="${y-2}" text-anchor="middle" font-size="${fs}" font-weight="800" fill="#333336">${esc(nm.slice(0,2))}</text><text x="${x}" y="${y+fs}" text-anchor="middle" font-size="${fs}" font-weight="800" fill="#333336">${esc(nm.slice(2))}</text>`;
+    else out+=`<text x="${x}" y="${y+4}" text-anchor="middle" font-size="${fs}" font-weight="800" fill="#333336">${esc(nm)}</text>`;
+  });
+  if(t.door) out+=`<rect x="${cx-70}" y="${W-22}" width="140" height="18" rx="4" fill="#E5E5EA"/><text x="${cx}" y="${W-9}" text-anchor="middle" font-size="11" fill="#333336">門 · ${esc(t.door)}</text>`;
+  return out+"</svg>";
 }
 function seatingOf(m){
   const st=S.seating[m.id];
@@ -2725,12 +2799,14 @@ PAGES.tables=(hdr,scr)=>{
   el.className="pagepad";
   el.innerHTML=`
   <div class="mealswitch">${(MEALS[day]||[]).map(x=>`<button class="tab${x.id===m.id?" on":""}" data-m="${esc(x.id)}">${esc(x.slot)}・${esc(x.place.split("・")[0])}</button>`).join("")}</div>
+  ${st.note?`<div class="card" style="font-size:13px;line-height:1.6;background:#FFF3D6;border-color:#E8C98A;color:#7A5200"><b>產品部座位圖</b>　${esc(st.note)}　<span style="color:#A87800">圓桌圖 12 點方向＝第 1 位，順時針。</span></div>`:""}
   <div class="card tblhint"><span>${ic("hand",16)}</span><span><b>長按名字</b>抬起來，拖到別的位子就互換；拖到空位是搬過去；拖到「未入座」是移出。改完自動存，只影響這家餐廳。</span>
     <span class="pill ${custom?"green":"gray"}">${custom?"已自訂":"預設分桌"}</span></div>
   <div class="tables">
     ${st.tables.map((t,ti)=>{ const n=t.seats.filter(Boolean).length;
       return `<div class="card tcard tzone" data-t="${ti}">
         <div class="thead"><b class="tname" data-t="${ti}">${esc(t.name)}</b><span class="pill redln">${n} 人</span><button class="notebtn" data-tedit="${ti}">✎ 桌名／位數</button></div>
+        ${t.seats.length>2?`<div class="roundwrap">${svgRoundTable(t)}</div>`:""}
         <div class="tseats">${t.seats.map((pid,i)=>chip(pid,ti,i)).join("")}</div>
       </div>`; }).join("")}
     <div class="card tcard pool tzone" data-t="pool">
