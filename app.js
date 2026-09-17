@@ -461,7 +461,7 @@ let ITIN = {
     { t:"16:30", title:"阿里山賓館 Check-in", desc:"16:30–16:45 辦理入住【現代館】。行李服務每件 $50／單趟。",
       links:[["rooms","分房表"],["luggage","行李點收"]] },
     { t:"18:00", title:"晚餐 · 3F 中餐廳外場地（加舞台）", desc:"A 桌 11／B 桌 10，主要出入口在舞台右側。2,280/人。合菜分菜，魏董伉儷無海鮮套餐。開席時間待確認。",
-      staff:["巴黎（陳婉如）與岳聰總坐外面"], links:[["meals","餐食・分桌"]] },
+      staff:["巴黎（陳婉如）與岳聰總坐外面"], links:[["meals","餐廳分桌"]] },
   ],
   2: [
     { t:"04:20", title:"自選 · 祝山日出", desc:"晨喚後搭遊園車前往祝山（加成遊園車包車兩台、每台最多19人）。預計日出 05:40，06:20 返程回飯店。點心：祝山站小舖現場點（領隊現場購買，50/人）。",
@@ -480,7 +480,7 @@ let ITIN = {
     { t:"11:30", title:"奮起湖老街", desc:"11:30–12:30 自由漫遊。小點：甜甜圈＋愛玉（裝袋、拿著吃）。",
       staff:["采吟：處理小點心裝袋","冠廷：前往山芙蓉擺桌牌"], links:[] },
     { t:"13:00", title:"午餐 · 山芙蓉 無菜單料理", desc:"8 菜 1 湯：肉類×2、豆腐×1、蛋料理×1、湯品×1，其餘由主廚依當日食材搭配 2–3 道特色料理。",
-      staff:["冠廷：前往小山霂茗擺桌牌"], links:[["meals","餐食・分桌"]] },
+      staff:["冠廷：前往小山霂茗擺桌牌"], links:[["meals","餐廳分桌"]] },
     { t:"14:30", title:"小山霂茗 · 導覽＋茶席體驗", desc:"14:30–16:00。老闆親自接待，每桌 7 人分 3–4 桌、每桌安排一位茶師。",
       staff:["冠廷：前往阿里山英迪格確認行李入房"], links:[["roster","點名報到"]] },
     { t:"16:00", title:"魏董伉儷 離團返北", desc:"茶席後專車送嘉義高鐵站，672車次 嘉義18:32→台北19:59。",
@@ -488,7 +488,7 @@ let ITIN = {
     { t:"16:20", title:"阿里山英迪格酒店 Check-in", desc:"16:20–16:30 辦理入住，全體人員住館內。",
       links:[["rooms","分房表"],["luggage","行李點收"]] },
     { t:"18:30", title:"晚餐 · HUFU氛饗亭（宴會廳C）", desc:"HUFU 套餐（菜單調整中）。",
-      staff:["冠廷：前往餐廳擺桌牌"], links:[["meals","餐食・分桌"]] },
+      staff:["冠廷：前往餐廳擺桌牌"], links:[["meals","餐廳分桌"]] },
   ],
   3: [
     { t:"07:00", title:"早餐 · 粟餐廳（1F）", desc:"07:00–10:30。", links:[] },
@@ -496,7 +496,7 @@ let ITIN = {
     { t:"10:30", title:"行李上行李車", desc:"行李車路線：英迪格 → 台北車站（台中、桃園點無法停靠）。",
       staff:["冠廷：村煌董、柳教授行李上大巴（台中下車）"], links:[["luggage","行李點收"]] },
     { t:"11:00", title:"優遊吧斯 鄒族文化部落", desc:"11:00–14:30 用餐＋品茗＋表演（800/人）。是否品茗待確認（與小山霂茗類似）。伴手禮：優遊吧斯周邊商品，客製包裝。",
-      links:[["meals","餐食・分桌"]] },
+      links:[["meals","餐廳分桌"]] },
     { t:"14:30", title:"梅園樓觀景飯店（公司場域）", desc:"14:30–15:00 貴賓茶敘。行程與岳聰總確認中。", links:[["vendors:v_meiyuan","梅園樓 資訊"]] },
     { t:"16:30", title:"嘉義高鐵站", desc:"發放回程點心：piepiya 麵包＋飲品（裝袋，數量／口味待確認）。",
       staff:["采欣＋Eunice：台北車站接送行李車"],
@@ -520,7 +520,7 @@ const FUNCS = [
   ["seats",  "seat",   "高鐵座位圖"],
   ["fusen",  "train",  "福森號座位"],
   ["rooms",  "bed",    "分房表"],
-  ["meals",  "meal",   "餐食・分桌"],
+  ["meals",  "meal",   "餐廳分桌"],
   ["vendors","phone",  "店家聯絡"],
   ["coffee", "cup",    "咖啡點餐"],
   ["luggage","lug",    "行李點收"],
@@ -560,7 +560,7 @@ function buildSeed(){
     tour:TOUR_SEED, pax:PAX_SEED, nights:NIGHTS_SEED, menu:MENU_SEED, meals,
     vendors:VENDORS_SEED, vendorTodo:VENDOR_TODO_SEED,
     budget:BUDGET_ITEMS_SEED, headcount:BUDGET_HEADCOUNT_SEED,
-    itin:ITIN_SEED, luggageRoute:LUGGAGE_ROUTE_SEED, hsrTrains:HSR_TRAINS_SEED, _seatVer:3, _menuVer:1, _budgetVer:1, _tourVer:2, _docVer:2,
+    itin:ITIN_SEED, luggageRoute:LUGGAGE_ROUTE_SEED, hsrTrains:HSR_TRAINS_SEED, _seatVer:3, _menuVer:1, _budgetVer:1, _tourVer:2, _docVer:3,
   });
 }
 /* 出廠預設另存一份，之後 TOUR / PAX… 這些名字都指向 S.data */
@@ -633,6 +633,10 @@ function bindData(){
     if(st&&ss){ st.title=ss.title; st.desc=ss.desc; st.staff=ss.staff; }
     const va=VENDORS.find(v=>v.id==="v_alishan"), sva=seed.vendors.find(v=>v.id==="v_alishan"); if(va&&sva&&/神木廳/.test(va.note||"")){ va.sub=sva.sub; va.note=sva.note; }
     S.data._docVer=2;
+  }
+  if((S.data._docVer||0)<3){
+    for(const d of Object.keys(ITIN)) (ITIN[d]||[]).forEach(st=>(st.links||[]).forEach(l=>{ if(l[0]==="meals"&&l[1]==="餐食・分桌") l[1]="餐廳分桌"; }));
+    S.data._docVer=3;
   }
   if((S.data._tourVer||0)<2){
     const st=(ITIN[2]||[]).find(x=>x.title==="自選 · 祝山日出");
@@ -2172,13 +2176,29 @@ function openOrderModal(p){
 
 /* ---------- 餐食總覽 ---------- */
 PAGES.meals=(hdr,scr)=>{
-  hbar(hdr,"餐食・分桌",{back:true});
-  dayPills(scr);
+  hbar(hdr,"餐廳分桌",{back:true});
   const el=document.createElement("div");
   el.className="pagepad";
   const specials=GUESTS().filter(p=>p.meal);
-
+  /* 只放產品部有給座位圖的 4 家餐廳；早餐發放、福森號九宮格、點心這類不在這裡（行程表有） */
+  const list=[1,2,3].flatMap(d=>(MEALS[d]||[]).map((m,i)=>({m,i,d})).filter(x=>hasSeating(x.m)));
   el.innerHTML=`
+  ${list.map(({m,i,d})=>{
+    const {slot,place,menu,st,vids}=m;
+    const st_=seatingOf(m), seated=st_.tables.reduce((n,t)=>n+t.seats.filter(Boolean).length,0), custom=!!S.seating[m.id];
+    const vs=(vids||[]).map(vendor).filter(Boolean);
+    const calls=vs.map(v=>(v.tel||[]).length?`<a class="chip" href="${telHref(v.tel[0])}">${ic("phone",13)}${esc(v.name)}</a>`:"").join("");
+    const info=vs.length?`<button class="chip" data-vm="${esc(vs.map(v=>v.id).join(","))}">${ic("pin",13)}店家資訊</button>`:"";
+    return `<div class="card mealcard">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <span class="pill red">D${d} ${esc(TOUR.dates[d-1]||"")}</span><span class="pill redln">${esc(slot)}</span><b style="font-size:15px;flex:1">${esc(place)}</b>
+        ${ebtn(d+":"+i,true)}<span class="pill ${st==="OK"?"green":"amber"}">${esc(st)}</span>
+      </div>
+      <div style="font-size:13px;color:var(--ink2);margin-top:6px;line-height:1.65">${esc(menu)}</div>
+      <div class="links"><button class="chip tblopen" data-tb="${esc(m.id)}">${ic("meal",13)}分桌 · ${st_.tables.length} 桌 ${seated} 人${custom?"（已調整）":""}</button>${calls}${info}</div>
+    </div>`;
+  }).join("")}
+
   <h3 class="sect">特殊餐食（每餐皆需向餐廳確認）</h3>
   <div class="card" style="border-color:#F5DFA0;background:#FFF8E6">
     ${specials.map(p=>`<div style="font-size:13px;padding:3px 0;display:flex;gap:8px;align-items:baseline">
@@ -2188,34 +2208,14 @@ PAGES.meals=(hdr,scr)=>{
       <b>座位提醒</b>　D1 晚宴：巴黎（陳婉如）與岳聰總坐外面。
     </div>
   </div>
-
-  <h3 class="sect">第 ${S.day} 天餐食 · ${TOUR.dates[S.day-1]}<span class="efhint">有產品部座位圖的餐次才有「分桌」</span></h3>
-  ${(MEALS[S.day]||[]).map((m,i)=>{
-    const {slot,place,menu,st,vids}=m;
-    const st_=seatingOf(m), seated=st_.tables.reduce((n,t)=>n+t.seats.filter(Boolean).length,0), custom=!!S.seating[m.id];
-    const vs=(vids||[]).map(vendor).filter(Boolean);
-    const calls=vs.map(v=>(v.tel||[]).length
-      ? `<a class="chip" href="${telHref(v.tel[0])}">${ic("phone",13)}${esc(v.name)}</a>`
-      : "").join("");
-    const info=vs.length?`<button class="chip" data-vm="${esc(vs.map(v=>v.id).join(","))}">${ic("pin",13)}店家資訊</button>`:"";
-    return `<div class="card">
-      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-        <span class="pill redln">${esc(slot)}</span><b style="font-size:14.5px;flex:1">${esc(place)}</b>
-        ${ebtn(String(i),true)}<span class="pill ${st==="OK"?"green":"amber"}">${esc(st)}</span>
-      </div>
-      <div style="font-size:13px;color:var(--ink2);margin-top:6px;line-height:1.65">${esc(menu)}</div>
-      <div class="links">${hasSeating(m)?`<button class="chip tblopen" data-tb="${esc(m.id)}">${ic("meal",13)}分桌 · ${st_.tables.length} 桌 ${seated} 人${custom?"（已調整）":""}</button>`:""}${calls}${info}</div>
-    </div>`;
-  }).join("")}
-  <p class="vs">山芙蓉與優遊吧斯皆為原住民風味，菜單已協調避免重複。電話為網路查得資訊，撥號前請先確認窗口。</p>`;
+  <p class="vs">山芙蓉與優遊吧斯皆為原住民風味，菜單已協調避免重複。電話為網路查得資訊，撥號前請先確認窗口。其他餐點（早餐發放、福森號九宮格、點心）看行程表。</p>`;
   el.querySelectorAll("[data-vm]").forEach(b=>b.onclick=()=>openVendorModal(b.dataset.vm));
   el.querySelectorAll(".tblopen").forEach(b=>b.onclick=()=>goPage("tables:"+b.dataset.tb));
-  editBar(el,{add:()=>editMeal(null),addLabel:"新增餐次",reset:()=>{ MEALS[S.day]=buildSeed().meals[S.day]||[]; },resetLabel:"還原本日餐食"});
-  EDIT_HANDLER=i=>editMeal(+i);
+  EDIT_HANDLER=k=>{ const [d,i]=String(k).split(":"); editMeal(+i,+d); };
   scr.appendChild(el);
 };
-function editMeal(i){
-  const list=MEALS[S.day]||(MEALS[S.day]=[]);
+function editMeal(i,day){
+  const list=MEALS[day||S.day]||(MEALS[day||S.day]=[]);
   const m=i==null?null:list[i];
   editForm(m?"編輯餐次":"新增餐次", MEAL_FIELDS(), m||{slot:"午餐",st:"待確認",vids:[]}, {
     onSave:o=>{ if(m) Object.assign(m,o); else { o.id=newId("m"); list.push(o); } dataChanged("已儲存"); },
