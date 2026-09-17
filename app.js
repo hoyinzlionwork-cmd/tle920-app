@@ -33,6 +33,8 @@ const P = {
   lug:'<path d="M6 20a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2"/><path d="M8 18V6a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v12"/><path d="M10 20h4"/><circle cx="16" cy="20" r="2"/><circle cx="8" cy="20" r="2"/>',
   table:'<circle cx="12" cy="12" r="4"/><circle cx="12" cy="4" r="1.6"/><circle cx="12" cy="20" r="1.6"/><circle cx="4" cy="12" r="1.6"/><circle cx="20" cy="12" r="1.6"/><circle cx="6.3" cy="6.3" r="1.6"/><circle cx="17.7" cy="17.7" r="1.6"/><circle cx="17.7" cy="6.3" r="1.6"/><circle cx="6.3" cy="17.7" r="1.6"/>',
   hand:'<path d="M18 11V6a2 2 0 0 0-4 0v1"/><path d="M14 10V4a2 2 0 0 0-4 0v2"/><path d="M10 10.5V6a2 2 0 0 0-4 0v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/>',
+  clock:'<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>',
+  link:'<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>',
   meal:'<path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3zm0 0v7"/>',
   refresh:'<path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/>',
   coin:'<rect width="20" height="12" x="2" y="6" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 12h.01M18 12h.01"/>',
@@ -1160,7 +1162,7 @@ function renderHome(hdr,scr){
   wrap.querySelectorAll(".htab").forEach(b=>b.onclick=()=>{ S.homeTab=b.dataset.h; save(); render(); });
   const body=wrap.querySelector("#homebody");
   if(S.homeTab==="list"){
-    body.innerHTML=`<span class="mchip">9月 <span style="color:#E60012">2026</span></span>
+    body.innerHTML=`<span class="mchip">9月 <span style="color:#C8102E">2026</span></span>
       <div class="tourrow"><div class="d"><div class="w">週日</div><div class="n">20</div></div>
         <div class="m"><div class="c">${TOUR.code}</div><div class="t">${esc(TOUR.name)}</div></div>
         <span class="chev" style="color:var(--ink3)">${ic("chev",15)}</span></div>`;
@@ -1506,7 +1508,7 @@ PAGES.seats=(hdr,scr)=>{
     };
   }else{
     el.innerHTML=`<div class="card"><div class="seatwrap" id="seatArea"></div>
-      <div class="legend"><span><span class="sw" style="background:#FDECEE;border-color:#E60012"></span>本團座位</span>
+      <div class="legend"><span><span class="sw" style="background:#FDECEE;border-color:#C8102E"></span>本團座位</span>
       <span><span class="sw"></span>其他座位</span><span>點座位查看貴賓</span></div>
       <p class="vs" style="margin:8px 0 0">座位對應為示意，實際以林鐵配位／現場安排為準。</p></div>`;
     el.querySelector("#seatArea").innerHTML = `<div class="zw">${S.seatTab==="train"?svgTrain():svgBus()}</div>`;
@@ -1568,8 +1570,8 @@ function svgCar(carNo, seatMap, t, horiz){
 
   /* 顏色：客人一眼找到自己這一群 */
   const paint=p=> !p ? {f:"#FFFFFF",s:"#DCDCE2",lb:"#C4C4CA",t:""}
-    : VIP2.includes(p.id)   ? {f:"#E60012",s:"#B8000F",lb:"rgba(255,255,255,.8)",t:"#FFFFFF"}
-    : p.group==="貴賓"      ? {f:"#FDECEE",s:"#E60012",lb:"#C00010",t:"#7A000B"}
+    : VIP2.includes(p.id)   ? {f:"#C8102E",s:"#B8000F",lb:"rgba(255,255,255,.8)",t:"#FFFFFF"}
+    : p.group==="貴賓"      ? {f:"#FDECEE",s:"#C8102E",lb:"#9F0B22",t:"#7A000B"}
     : p.group==="雄獅主管"  ? {f:"#E9F0FD",s:"#2563EB",lb:"#2563EB",t:"#1E3A8A"}
     :                         {f:"#F0F0F2",s:"#9A9AA0",lb:"#8E8E93",t:"#48484D"};
 
@@ -1675,7 +1677,7 @@ function svgCar(carNo, seatMap, t, horiz){
   }));
   endLabels.forEach(l=>{ g+=`<text x="${l.x}" y="${l.y}" text-anchor="${l.anchor}" font-size="10" font-weight="700" fill="#A6A6AC">${esc(l.text)}</text>`; });
   if(horiz){
-    g+=`<text x="${bodyRect.x+bodyRect.w/2}" y="${H-6}" text-anchor="middle" font-size="10" font-weight="800" fill="#E60012">${south?"◀ ":""}行進方向 · 往${esc(dest)}${south?"":" ▶"}</text>`;
+    g+=`<text x="${bodyRect.x+bodyRect.w/2}" y="${H-6}" text-anchor="middle" font-size="10" font-weight="800" fill="#C8102E">${south?"◀ ":""}行進方向 · 往${esc(dest)}${south?"":" ▶"}</text>`;
   }
   return g+`</svg>`;
 }
@@ -1693,8 +1695,8 @@ function svgCarThsrc(carNo, seatMap, t){
   const seatAt=(r,c)=>seatMap[`${carNo}車 ${r}${c}`];
   const isTbc=(p,key)=> (t.tbc||[]).includes(key) || !!(t.key && p[t.key+"Tbc"]);
   const unusedOf=key=> (t.unused||{})[key];
-  const paint=p=> VIP2.includes(p.id) ? {f:"#E60012",s:"#B8000F",lb:"rgba(255,255,255,.75)",t:"#FFFFFF"}
-    : p.group==="貴賓"     ? {f:"#FDECEE",s:"#E60012",lb:"#C00010",t:"#7A000B"}
+  const paint=p=> VIP2.includes(p.id) ? {f:"#C8102E",s:"#B8000F",lb:"rgba(255,255,255,.75)",t:"#FFFFFF"}
+    : p.group==="貴賓"     ? {f:"#FDECEE",s:"#C8102E",lb:"#9F0B22",t:"#7A000B"}
     : p.group==="雄獅主管" ? {f:"#E9F0FD",s:"#2563EB",lb:"#2563EB",t:"#1E3A8A"}
     :                        {f:"#F0F0F2",s:"#9A9AA0",lb:"#8E8E93",t:"#48484D"};
   const total=rows.length*C.cols.length-(C.rowFrom===1?C.noRow1.length:0);
@@ -1718,10 +1720,10 @@ function svgCarThsrc(carNo, seatMap, t){
   /* ── 小圖示 ── */
   const icoLug=(x,y,w,h)=>`<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="4" fill="#F1F1F3" stroke="#D5D5DA"/>
     <rect x="${x+w/2-8}" y="${y+h/2-7}" width="16" height="14" rx="2" fill="#6B6B70"/><rect x="${x+w/2-4}" y="${y+h/2-10}" width="8" height="3" rx="1" fill="#6B6B70"/>`;
-  const icoFire=(x,y)=>`<rect x="${x-4}" y="${y-2}" width="8" height="18" rx="3" fill="#D6001C"/><rect x="${x-2}" y="${y-6}" width="4" height="5" fill="#333"/><path d="M${x+4} ${y+1} q5 0 5 5" stroke="#333" fill="none" stroke-width="1.5"/>`;
+  const icoFire=(x,y)=>`<rect x="${x-4}" y="${y-2}" width="8" height="18" rx="3" fill="#C8102E"/><rect x="${x-2}" y="${y-6}" width="4" height="5" fill="#333"/><path d="M${x+4} ${y+1} q5 0 5 5" stroke="#333" fill="none" stroke-width="1.5"/>`;
   const icoTrash=(x,y)=>`<path d="M${x-6} ${y-3} h12 l-1.5 16 h-9 z" fill="#8E8E93"/><rect x="${x-7}" y="${y-6}" width="14" height="3" rx="1" fill="#8E8E93"/>`;
-  const icoAED=(x,y)=>`<path d="M${x} ${y+12} C${x-12} ${y+2} ${x-8} ${y-8} ${x} ${y-2} C${x+8} ${y-8} ${x+12} ${y+2} ${x} ${y+12}z" fill="none" stroke="#D6001C" stroke-width="2"/>
-    <path d="M${x+1} ${y-1} l-4 6 h4 l-1 5 l4 -6 h-4z" fill="#D6001C"/><text x="${x}" y="${y-10}" text-anchor="middle" font-size="7" font-weight="800" fill="#333">AED</text>`;
+  const icoAED=(x,y)=>`<path d="M${x} ${y+12} C${x-12} ${y+2} ${x-8} ${y-8} ${x} ${y-2} C${x+8} ${y-8} ${x+12} ${y+2} ${x} ${y+12}z" fill="none" stroke="#C8102E" stroke-width="2"/>
+    <path d="M${x+1} ${y-1} l-4 6 h4 l-1 5 l4 -6 h-4z" fill="#C8102E"/><text x="${x}" y="${y-10}" text-anchor="middle" font-size="7" font-weight="800" fill="#333">AED</text>`;
   const icoCond=(x,y)=>`<circle cx="${x}" cy="${y-4}" r="4" fill="#333"/><path d="M${x-7} ${y+10} q7 -10 14 0z" fill="#333"/><rect x="${x-5}" y="${y-9}" width="10" height="2" fill="#333"/>`;
   const tri=(x,y,up)=>`<path d="M${x-4} ${up?y+5:y-5} L${x+4} ${up?y+5:y-5} L${x} ${up?y-2:y+2}z" fill="#F08A24"/>`;
 
@@ -1740,7 +1742,7 @@ function svgCarThsrc(carNo, seatMap, t){
     g+=txt.split("").map((ch,i)=>`<text x="${x}" y="${cy-56+i*16}" text-anchor="middle" font-size="12" fill="#6B6B70">${ch}</text>`).join("");
     g+=`<path d="M${x-14} ${cy+22} L${x} ${cy+8} L${x+14} ${cy+22}" fill="none" stroke="#B9B9BF" stroke-width="1.5" transform="rotate(${dir==="南"?-90:90} ${x} ${cy+15})"/>`;
     g+=`<text x="${x}" y="${cy+58}" text-anchor="middle" font-size="26" font-weight="800" fill="#4E4E52">${dir}</text>`;
-    if(arrow) g+=`<text x="${x}" y="${cy+84}" text-anchor="middle" font-size="10.5" font-weight="800" fill="#E60012">${arrow}</text>`;
+    if(arrow) g+=`<text x="${x}" y="${cy+84}" text-anchor="middle" font-size="10.5" font-weight="800" fill="#C8102E">${arrow}</text>`;
   };
   endLbl(PADX/2, `往${C.prev.replace("車","號車")}`, "南", south?`◀ 往${esc(dest)}`:"");
   endLbl(W-PADX/2, `往${C.next.replace("車","號車")}`, "北", south?"":`往${esc(dest)} ▶`);
@@ -1885,8 +1887,8 @@ function svgHsr(containerW){
     </div>`;
   });
   out+=`<div class="hsrlegend">
-    <span><i style="background:#E60012;border-color:#B8000F"></i>董事長伉儷</span>
-    <span><i style="background:#FDECEE;border-color:#E60012"></i>貴賓</span>
+    <span><i style="background:#C8102E;border-color:#B8000F"></i>董事長伉儷</span>
+    <span><i style="background:#FDECEE;border-color:#C8102E"></i>貴賓</span>
     <span><i style="background:#E9F0FD;border-color:#2563EB"></i>雄獅主管</span>
     <span><i style="background:#F0F0F2;border-color:#9A9AA0"></i>工作人員</span>
     <span><i style="background:#fff;border-color:#DCDCE2"></i>空位</span>
@@ -1942,16 +1944,16 @@ function fusenMap(seg){ const m={}; for(const car of [4,5]) for(const [no,pid] o
 function svgFusenTrain(sel){
   const W=900,H=118, x0=8, locoW=118, carW=142, gap=10;
   let g=`<svg viewBox="0 0 ${W} ${H}" class="fusentrain">`;
-  g+=`<g><rect x="${x0}" y="24" width="${locoW}" height="50" rx="8" fill="#C8102E"/><rect x="${x0+8}" y="14" width="${locoW-40}" height="14" rx="4" fill="#A00D25"/>
+  g+=`<g><rect x="${x0}" y="24" width="${locoW}" height="50" rx="8" fill="#C8102E"/><rect x="${x0+8}" y="14" width="${locoW-40}" height="14" rx="4" fill="#8A0A1F"/>
       <rect x="${x0+12}" y="32" width="18" height="14" rx="2" fill="#FFF3D6"/><rect x="${x0+38}" y="32" width="18" height="14" rx="2" fill="#FFF3D6"/>
       ${[0,1,2,3].map(i=>`<circle cx="${x0+18+i*28}" cy="80" r="7" fill="#333"/>`).join("")}<text x="${x0+locoW/2}" y="104" text-anchor="middle" font-size="11" fill="#8E8E93">車頭</text></g>`;
   FUSEN_TRAIN.forEach(([nm,n],i)=>{
     const carNo=i+1, x=x0+locoW+gap+i*(carW+gap), used=carNo===4||carNo===5, on=sel===carNo;
     g+=`<g class="fcar${used?" used":" nouse"}${on?" on":""}" data-car="${carNo}" style="cursor:pointer">
-      <rect x="${x}" y="24" width="${carW}" height="50" rx="7" fill="${used?"#F5E6C4":"#EFE7D6"}" stroke="${on?"#D6001C":(used?"#C8935A":"#D5CDBE")}" stroke-width="${on?3:1.5}"/>
+      <rect x="${x}" y="24" width="${carW}" height="50" rx="7" fill="${used?"#F5E6C4":"#EFE7D6"}" stroke="${on?"#C8102E":(used?"#C8935A":"#D5CDBE")}" stroke-width="${on?3:1.5}"/>
       ${[0,1,2,3,4,5].map(j=>`<rect x="${x+10+j*21}" y="33" width="14" height="14" rx="2" fill="#fff" stroke="#C8935A" stroke-width="1"/>`).join("")}
       ${[0,1].map(j=>`<circle cx="${x+30+j*80}" cy="80" r="6" fill="#333"/>`).join("")}
-      ${used?`<rect x="${x+carW-30}" y="4" width="26" height="16" rx="4" fill="#D6001C"/><text x="${x+carW-17}" y="16" text-anchor="middle" font-size="10" font-weight="800" fill="#fff">${carNo}車</text>`:""}
+      ${used?`<rect x="${x+carW-30}" y="4" width="26" height="16" rx="4" fill="#C8102E"/><text x="${x+carW-17}" y="16" text-anchor="middle" font-size="10" font-weight="800" fill="#fff">${carNo}車</text>`:""}
       <text x="${x+carW/2}" y="104" text-anchor="middle" font-size="11.5" font-weight="${used?800:600}" fill="${used?"#8A5A20":"#B9B9BF"}">${esc(nm)}</text>
       <text x="${x+carW/2}" y="116" text-anchor="middle" font-size="9.5" fill="${used?"#8A5A20":"#C9C9CF"}">${n} 座位${used?"":"・本團未使用"}</text>
     </g>`;
@@ -1988,11 +1990,11 @@ function svgFusenCar(carNo, map, seg){
   const seatW=52, seatH=40;
   const drawSeat=(cx,cy,no,key)=>{
     const p=map[key], mine=!!p, vip=p&&p.id==="p01"||p&&p.id==="p02";
-    const fill=mine?(vip?"#D6001C":"#fff"):"#F4F4F6", stroke=mine?"#D6001C":"#C9C9CF", tc=mine?(vip?"#fff":"#333336"):"#B9B9BF";
+    const fill=mine?(vip?"#C8102E":"#fff"):"#F4F4F6", stroke=mine?"#C8102E":"#C9C9CF", tc=mine?(vip?"#fff":"#333336"):"#B9B9BF";
     const nm=p?p.name.replace(/\s+[A-Za-z].*$/,"").replace(/\s/g,"").slice(0,4):"";
     return `<g class="seatg${mine?" mine":""}" ${p?`data-p="${esc(p.id)}"`:""} data-key="${key}">
       <rect x="${cx-seatW/2}" y="${cy-seatH/2}" width="${seatW}" height="${seatH}" rx="7" fill="${fill}" stroke="${stroke}" stroke-width="${mine?2:1.5}"/>
-      <rect x="${cx-seatW/2+5}" y="${cy-seatH/2+4}" width="6" height="${seatH-8}" rx="2" fill="${mine?(vip?"#A00D25":"#F3C3C8"):"#E5E5EA"}"/>
+      <rect x="${cx-seatW/2+5}" y="${cy-seatH/2+4}" width="6" height="${seatH-8}" rx="2" fill="${mine?(vip?"#8A0A1F":"#F3C3C8"):"#E5E5EA"}"/>
       ${p?`<text x="${cx+3}" y="${cy+4}" text-anchor="middle" font-size="${nm.length>3?9.5:11}" font-weight="800" fill="${tc}">${esc(nm)}</text>`
          :`<text x="${cx+3}" y="${cy+5}" text-anchor="middle" font-size="13" font-weight="800" fill="#B9B9BF">${no==="crew"?"車服":no}</text>`}
       <text x="${cx-seatW/2+3}" y="${cy-seatH/2-3}" font-size="8.5" fill="#8E8E93">${no==="crew"?"車服":no}</text>
@@ -2012,8 +2014,8 @@ function svgFusenCar(carNo, map, seg){
     else if(t==="crew") g+=drawSeat(cx,botY,"crew",`${carNo}-crew`);
     else if(t==="rack") g+=`<rect x="${cx-40}" y="${botY-22}" width="80" height="44" fill="#F5E6C4" stroke="#333" stroke-width="1.5"/>${[0,1,2,3,4,5,6,7].map(i=>`<line x1="${cx-32+i*9}" y1="${botY-18}" x2="${cx-32+i*9}" y2="${botY+18}" stroke="#A8743E" stroke-width="1.5"/>`).join("")}<text x="${cx}" y="${botY+34}" text-anchor="middle" font-size="9" fill="#8E8E93">行李架</text>`; });
   /* 圖例 */
-  g+=`<g font-size="11" fill="#8E8E93"><rect x="${bx}" y="${H-22}" width="14" height="14" rx="3" fill="#D6001C"/><text x="${bx+19}" y="${H-11}">董事長伉儷</text>
-      <rect x="${bx+96}" y="${H-22}" width="14" height="14" rx="3" fill="#fff" stroke="#D6001C" stroke-width="2"/><text x="${bx+115}" y="${H-11}">本團</text>
+  g+=`<g font-size="11" fill="#8E8E93"><rect x="${bx}" y="${H-22}" width="14" height="14" rx="3" fill="#C8102E"/><text x="${bx+19}" y="${H-11}">董事長伉儷</text>
+      <rect x="${bx+96}" y="${H-22}" width="14" height="14" rx="3" fill="#fff" stroke="#C8102E" stroke-width="2"/><text x="${bx+115}" y="${H-11}">本團</text>
       <rect x="${bx+160}" y="${H-22}" width="14" height="14" rx="3" fill="#F4F4F6" stroke="#C9C9CF"/><text x="${bx+179}" y="${H-11}">空位</text>
       <rect x="${bx+224}" y="${H-22}" width="14" height="14" rx="3" fill="#C8935A"/><text x="${bx+243}" y="${H-11}">小桌</text>
       <text x="${W-bx}" y="${H-11}" text-anchor="end">上排靠窗＋走道兩人座（小號靠窗）・下排單人座・依林鐵原廠配置圖</text></g>`;
@@ -2042,7 +2044,7 @@ PAGES.fusen=(hdr,scr)=>{
   <div class="card fusentrainwrap">${svgFusenTrain(car)}<div class="zoomhint">點車廂看座位圖・本團使用 4 車客座、5 車守車</div></div>
   <div class="fusencar">
     <div class="fchead">
-      <svg viewBox="0 0 28 32" class="fchev"><path d="M20 2 L4 16 L20 30 L26 25 L15 16 L26 7 Z" fill="#D6001C"/></svg>
+      <svg viewBox="0 0 28 32" class="fchev"><path d="M20 2 L4 16 L20 30 L26 25 L15 16 L26 7 Z" fill="#C8102E"/></svg>
       <b>${esc(L.name)}</b><span class="fcsub">（${L.seats} 座）</span><span class="pill red">${car} 車</span>
       <span class="pill ${used?"redln":"gray"}">本團 ${used} 席</span>
       <span class="fcsub" style="margin-left:auto">${seg==="A"?"運行方向 ←":"運行方向 →"}</span>
@@ -2116,7 +2118,7 @@ function openPaxModal(p){
         <span class="pill gray">🚄 去程 ${esc(p.hsrGo)}</span>
         <span class="pill gray">🚄 回程 ${esc(p.hsrBack)}</span>
         <span class="pill gray">🚂 福森號 ${esc(p.trainSeat)}</span>
-        ${p.table?`<span class="pill gray">🪑 第 ${p.table} 桌</span>`:""}
+        ${p.table?`<span class="pill gray">${ic("table",12)} 第 ${p.table} 桌</span>`:""}
       </div></div>
     ${p.meal?`<div class="field"><label>特殊餐食</label><span class="pill amber">${esc(p.meal)}</span></div>`:""}
     ${p.note?`<div class="field"><label>備註</label><span style="font-size:13px">${esc(p.note)}</span></div>`:""}
@@ -2151,7 +2153,7 @@ PAGES.coffee=(hdr,scr)=>{
         <span class="oin1"><span class="nm">${esc(m.name)}</span><span class="pill ${m.temp==="冰"?"cold":"hot"}">${esc(m.temp||"熱")}</span></span>
         <b class="cnt">${b.n}<small>杯</small></b></div>
       <div class="oid">${Object.entries(b.opts).map(([k,n])=>`<span>${esc(k)} <b>${n}</b></span>`).join("")}</div>
-      ${b.notes.length?`<div class="oin">${b.notes.map(t=>`✍️ ${esc(t)}`).join("<br>")}</div>`:""}</div>`; }).join("")
+      ${b.notes.length?`<div class="oin">${b.notes.map(t=>`${ic("pen",12)} ${esc(t)}`).join("<br>")}</div>`:""}</div>`; }).join("")
     ||`<span style="color:#8E8E93;font-size:13px">尚無訂單</span>`;
   const total=orders.reduce((s,[,o])=>{ const m=mItem(o.item); return s+(m?+m.price||0:0); },0);
   const el=document.createElement("div");
@@ -2170,7 +2172,7 @@ PAGES.coffee=(hdr,scr)=>{
     r.className="ordrow";
     r.innerHTML=`<span class="who">${esc(p.name)}</span>
       ${o&&mImg(o.item)?`<img class="oith sm" src="${mImg(o.item)}" alt="">`:""}
-      <span class="what">${o?`<b>${esc(ordText(o))}</b>${o.note?`<div class="onote">✍️ ${esc(o.note)}</div>`:""}`:"尚未點餐"}</span>
+      <span class="what">${o?`<b>${esc(ordText(o))}</b>${o.note?`<div class="onote">${ic("pen",12)} ${esc(o.note)}</div>`:""}`:"尚未點餐"}</span>
       <button class="btn ${o?"sec":"pri"}" style="padding:6px 13px;font-size:12.5px">${o?"修改":"點餐"}</button>`;
     r.querySelector("button").onclick=()=>openOrderModal(p);
     rows.appendChild(r);
@@ -2325,13 +2327,13 @@ function vendorCard(v){
     ${v.addr?`<div class="vrow"><span class="vk">${ic("pin",14)}</span><span class="vv">${esc(v.addr)}</span>
       <a class="vmini" href="${mapHref(v.addr)}" target="_blank" rel="noopener">地圖</a>
       <button class="vmini" data-cp="${esc(v.addr)}">複製</button></div>`:""}
-    ${v.hours?`<div class="vrow"><span class="vk">🕘</span><span class="vv">${esc(v.hours)}</span></div>`:""}
+    ${v.hours?`<div class="vrow"><span class="vk">${ic("clock",14)}</span><span class="vv">${esc(v.hours)}</span></div>`:""}
     ${v.email?`<div class="vrow"><span class="vk">${ic("mail",14)}</span>
       <a class="vv vlink" href="mailto:${esc(v.email)}">${esc(v.email)}</a>
       <button class="vmini" data-cp="${esc(v.email)}">複製</button></div>`:""}
     ${v.line?`<div class="vrow"><span class="vk">LINE</span><span class="vv">${esc(v.line)}</span>
       <button class="vmini" data-cp="${esc(v.line)}">複製</button></div>`:""}
-    ${v.url?`<div class="vrow"><span class="vk">🔗</span>
+    ${v.url?`<div class="vrow"><span class="vk">${ic("link",14)}</span>
       <a class="vv vlink" href="${esc(v.url)}" target="_blank" rel="noopener">${esc(v.url.replace(/^https?:\/\//,""))}</a></div>`:""}
     ${v.note?`<div class="vnote">${esc(v.note)}</div>`:""}
     ${v.warn?`<div class="vwarn">${ic("warn",14)}<span>${esc(v.warn)}</span></div>`:""}
@@ -2514,7 +2516,7 @@ PAGES.budget=(hdr,scr)=>{
     <button class="btn sec" id="bgInkToggle">${ic("pen",15)} 手寫模式</button>
     <div class="tools">
       <div class="pen on" data-c="#1C1C1E" style="background:#1C1C1E"></div>
-      <div class="pen" data-c="#E60012" style="background:#E60012"></div>
+      <div class="pen" data-c="#C8102E" style="background:#C8102E"></div>
       <div class="pen" data-c="#2563EB" style="background:#2563EB"></div>
       <div class="pen" data-c="#1E9E4A" style="background:#1E9E4A"></div>
       <button class="btn sec" id="bgInkEraser">橡皮擦</button>
@@ -2633,7 +2635,7 @@ PAGES.ink=(hdr,scr)=>{
   idbAll("files").then(files=>{
     const box=el.querySelector("#inkList"); box.innerHTML="";
     const items=files.filter(f=>f.cat==="ink").sort((a,b)=>b.ts-a.ts);
-    if(!items.length){ box.innerHTML=`<div class="docrow placeholder"><div class="fic2 other">✍️</div><div class="meta"><div class="fn">還沒有手寫備註</div><div class="fs">按上面的按鈕開始寫</div></div></div>`; return; }
+    if(!items.length){ box.innerHTML=`<div class="docrow placeholder"><div class="fic2 other">${ic("pen",18)}</div><div class="meta"><div class="fn">還沒有手寫備註</div><div class="fs">按上面的按鈕開始寫</div></div></div>`; return; }
     items.forEach(f=>{
       const url=URL.createObjectURL(f.blob);
       const r=document.createElement("div"); r.className="inkcard";
@@ -2654,7 +2656,7 @@ function openInk(rec){
     <div class="inkwrap"><canvas id="inkCv"></canvas></div>
     <div class="pens">
       <div class="pen on" data-c="#1C1C1E" style="background:#1C1C1E"></div>
-      <div class="pen" data-c="#E60012" style="background:#E60012"></div>
+      <div class="pen" data-c="#C8102E" style="background:#C8102E"></div>
       <div class="pen" data-c="#2563EB" style="background:#2563EB"></div>
       <div class="pen" data-c="#1E9E4A" style="background:#1E9E4A"></div>
       <button class="btn sec" id="inkEraser">橡皮擦</button>
@@ -2712,7 +2714,7 @@ PAGES.luggage=(hdr,scr)=>{
   const el=document.createElement("div");
   el.className="pagepad";
   el.innerHTML=`<div class="card" style="border-color:#CFE3FB;background:#F0F6FF">
-    <div style="font-weight:800;font-size:13px;margin-bottom:5px">🚛 第 ${S.day} 天 行李車路線</div>
+    <div style="font-weight:800;font-size:13px;margin-bottom:5px;display:flex;align-items:center;gap:6px">${ic("lug",15)} 第 ${S.day} 天 行李車路線</div>
     <div style="font-size:12.5px;line-height:1.7;display:flex;gap:8px;align-items:flex-start"><span style="flex:1">${esc(LUGGAGE_ROUTE[S.day]||"")}</span>${ebtn("route",true)}</div>
   </div>
   <p class="vs">逐件拍照綁定貴賓、記錄件數；裝車或錄放行李時勾選核對。行李服務每件 $50／單趟。</p>
@@ -3434,7 +3436,7 @@ PAGES.settings=(hdr,scr)=>{
       <button class="btn pri" id="stg">資料保全・備份還原</button>
       <button class="btn sec" id="rstData">還原全部預設資料</button>
       <button class="btn sec" id="exp">匯出操作紀錄</button>
-      <button class="btn sec" id="rst" style="color:#E60012">重置示範資料</button>
+      <button class="btn sec" id="rst" style="color:#C8102E">重置示範資料</button>
     </div></div>`;
   el.querySelector("#stg").onclick=()=>goPage("storage");
   el.querySelector("#rstData").onclick=()=>confirmBox("把名單、行程、餐食、店家、分房、菜單、預算全部換回出廠預設？\n點名、訂單、行李、簽名紀錄會保留。",async()=>{
