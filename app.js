@@ -1431,11 +1431,12 @@ PAGES.itin=(hdr,scr)=>{
       <div class="head"><span class="time">${esc(st.t)}</span><span class="title">${esc(st.title)}</span></div>
       ${st.desc?`<div class="desc">${esc(st.desc)}</div>`:""}
       ${st.staff&&st.staff.length?`<div class="staffbox"><div class="sh">工作事項</div>${st.staff.map(x=>`<div class="si">${esc(x)}</div>`).join("")}</div>`:""}
-      ${cf?`<div class="confbox"><div class="confh"><span>${ic("clip",15)} 訂購證明</span><i>${esc(cf.by||"")}</i><em>點圖放大給店家看</em></div>
-        ${cf.img&&typeof CONF_IMG!=="undefined"&&CONF_IMG[cf.img]?`<div class="confimg"><img src="${CONF_IMG[cf.img]}" alt="訂購證明"></div>`:`<div class="confb open">${(cf.lines||[]).map(x=>`<div>${esc(x)}</div>`).join("")}</div>`}</div>`:""}
-      ${links?`<div class="links">${links}</div>`:""}</div>`;
-    d.querySelectorAll(".chip").forEach(ch=>ch.onclick=()=>goPage(ch.dataset.v));
-    const ci=d.querySelector(".confimg img"); if(ci) ci.onclick=()=>openLightbox([{ title:`訂購證明 · ${st.title}`, render:()=>{ const im=new Image(); im.src=ci.src; return im; } }],0);
+      ${links||cf?`<div class="links">${cf?`<button class="chip conf">${ic("clip",14)} 訂購證明</button>`:""}${links}</div>`:""}</div>`;
+    d.querySelectorAll(".chip[data-v]").forEach(ch=>ch.onclick=()=>goPage(ch.dataset.v));
+    const cb=d.querySelector(".chip.conf"); if(cb) cb.onclick=()=>{
+      const src=cf.img&&typeof CONF_IMG!=="undefined"?CONF_IMG[cf.img]:"";
+      if(src) openLightbox([{ title:`訂購證明 · ${st.title}`, render:()=>{ const im=new Image(); im.src=src; return im; } }],0);
+      else openModal(`訂購證明 · ${st.title}`,`<p class="vs" style="margin:0 0 8px">${esc(cf.by||"")}</p><div class="confb open" style="border:none;padding:0">${(cf.lines||[]).map(x=>`<div>${esc(x)}</div>`).join("")}</div>`,[["關閉","sec",closeModal]]); };
     tl.appendChild(d);
   });
   editBar(el,{add:()=>editStop(null),addLabel:"新增節點"});
