@@ -22,7 +22,7 @@ jobs:
             got=$(grep -o '<meta name="build" content="[^"]*"' /tmp/index.html | head -1)
             echo "try $i -> HTTP $code $got"
             if [ "$code" = "200" ] && [ -n "$got" ]; then
-              for f in app.js menu-img.js floor-img.js sw.js manifest.json icon.png icon-180.png; do
+              for f in app.js menu-img.js floor-img.js conf-img.js sw.js manifest.json icon.png icon-180.png; do
                 c=$(curl -s -o /dev/null -w "%{http_code}" "$URL$f"); echo "  $f -> $c"
               done
               echo "SITE_OK $URL $got"; exit 0

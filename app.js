@@ -537,7 +537,7 @@ let ITIN = {
 /* 訂購證明：店家在 LINE 群回覆的 FNL／預約確認，照原文放在對應的行程節點下（by＝哪個群、誰回的）。
  * 以節點標題對應；存檔裡的節點在 bindData 用 applyStopConf 補上。 */
 const STOP_CONF = {
-  "領取早餐（阜杭豆漿）": { by:"阜杭豆漿 LINE 群・小雪(MoMo)", lines:[
+  "領取早餐（阜杭豆漿）": { img:"fuhang", by:"阜杭豆漿 LINE 群・小雪(MoMo)", lines:[
     "團號：26TS920A3A T　團名：雄獅董事會嘉義福森AC3日",
     "取餐日期：09/20 (日)　時間：早上 05:30 取餐",
     "取餐人：薛永南 09********",
@@ -546,19 +546,19 @@ const STOP_CONF = {
     "◆ 費用領隊當日付清",
     "◆ 發票：抬頭 雄獅旅行社股份有限公司／統編 04655091",
     "訂餐人：OP 陳璟茹 02-8793-2902" ] },
-  "水山巨木步道（導覽）": { by:"阿里山加成電動車 LINE 群・Kaiyi", lines:[
+  "水山巨木步道（導覽）": { img:"jiacheng", by:"阿里山加成電動車 LINE 群・Kaiyi", lines:[
     "團號：26TS920A3A T　團名：雄獅董事",
     "日期：09/20 日　人數：22＋5 工作人員＋1 領",
     "領隊：薛永南 09********",
     "價格：來回 $120／人",
     "項目：14:00 候車亭→沼平車站接駁（2 台包車）",
     "　　　15:30 沼平車站→阿里山賓館（2 台包車）" ] },
-  "自選 · 祝山日出": { by:"阿里山加成電動車 LINE 群・Kaiyi", lines:[
+  "自選 · 祝山日出": { img:"jiacheng", by:"阿里山加成電動車 LINE 群・Kaiyi", lines:[
     "原訂日出包車　日期：09/21 一",
     "時間：請與領隊約正確時間",
     "項目：日出包車費用 4,500×2 台＝9,000 元",
     "人數：22＋1 領　領隊：薛永南 09********" ] },
-  "奮起湖老街": { by:"老街第一家甜甜圈 LINE・淑玲", lines:[
+  "奮起湖老街": { img:"donut", by:"老街第一家甜甜圈 LINE・淑玲", lines:[
     "團名：雄獅董事會　日期：9/21 一　時間：11:00",
     "外送地點：奮起湖車站月台",
     "聯絡人：周冠廷 09********",
@@ -566,7 +566,7 @@ const STOP_CONF = {
     "★ 費用現場結清",
     "發票：抬頭 雄獅旅行社股份有限公司／統編 04655091",
     "OP 陳璟茹 02-8793-2902" ] },
-  "午餐 · 山芙蓉 無菜單料理": { by:"山芙蓉茶業 LINE 群・佩琪", lines:[
+  "午餐 · 山芙蓉 無菜單料理": { img:"shanfurong", by:"山芙蓉茶業 LINE 群・佩琪", lines:[
     "團號：26TS920A3A T　團名：雄獅董事",
     "日期：09/21 一　時間：13:00–14:00",
     "人數：23＋6 工作人員＋2 司領（招待）",
@@ -577,7 +577,7 @@ const STOP_CONF = {
     "A 桌新增一位用餐；周先生已另外提供過",
     "★ 費用領隊現場結清",
     "發票：抬頭 雄獅旅行社股份有限公司／統編 04655091" ] },
-  "小山霂茗 · 導覽＋茶席體驗": { by:"林園製茶 雄獅工作群・陳璟茹 Ruby", lines:[
+  "小山霂茗 · 導覽＋茶席體驗": { img:"linyuan", by:"林園製茶 雄獅工作群・陳璟茹 Ruby", lines:[
     "團號：26TS920A3A T　團名：雄獅董事",
     "日期：09/21 一　時間：14:30–16:00",
     "人數：22＋6 工作人員＋2 司領",
@@ -585,7 +585,7 @@ const STOP_CONF = {
     "項目：茶席體驗＋導覽 $500／人（需求老闆講解）",
     "★ 費用領隊現場結清",
     "發票：抬頭 雄獅旅行社股份有限公司／統編 04655091" ] },
-  "工作人員入住 梅園樓觀景飯店（司領寄舖）": { by:"梅園樓觀景飯店 LINE", lines:[
+  "工作人員入住 梅園樓觀景飯店（司領寄舖）": { img:"meiyuan", by:"梅園樓觀景飯店 LINE", lines:[
     "團名：雄獅董事　團號：26TS920A3A T",
     "日期：09/21 一　領隊：薛永南 09********",
     "項目：1.（司領寄舖）兩小床（含早）$3,780×1 間——8/10 已匯款完成",
@@ -593,7 +593,7 @@ const STOP_CONF = {
     "　　　3.（司領寄舖）兩小床（含早）$3,780×3 間——9/11 新增",
     "★ 費用已匯款完成",
     "發票：抬頭 雄獅旅行社股份有限公司／統編 04655091" ] },
-  "優遊吧斯 鄒族文化部落": { by:"雄獅×優遊吧斯團體對接工作檔・優遊吧斯業務部", lines:[
+  "優遊吧斯 鄒族文化部落": { img:"yuyu", by:"雄獅×優遊吧斯團體對接工作檔・優遊吧斯業務部", lines:[
     "團號：26TS920A3A T　團名：雄獅董事",
     "日期：09/22 二　時間：11:00–14:30",
     "客人：19 人　司領：工作人員 6＋司領 2（請協助招待）",
@@ -1414,7 +1414,6 @@ function dayPills(scr){
 }
 
 /* ---------- 行程表 ---------- */
-const CONF_OPEN=new Set();   /* 這次開啟期間展開過的訂購證明 */
 PAGES.itin=(hdr,scr)=>{
   hbar(hdr,"行程表",{back:true});
   dayPills(scr);
@@ -1431,11 +1430,11 @@ PAGES.itin=(hdr,scr)=>{
       <div class="head"><span class="time">${esc(st.t)}</span><span class="title">${esc(st.title)}</span></div>
       ${st.desc?`<div class="desc">${esc(st.desc)}</div>`:""}
       ${st.staff&&st.staff.length?`<div class="staffbox"><div class="sh">工作事項</div>${st.staff.map(x=>`<div class="si">${esc(x)}</div>`).join("")}</div>`:""}
-      ${st.conf?`<div class="confbox"><button class="confh" type="button"><span>${ic("clip",15)} 訂購證明</span><i>${esc(st.conf.by||"")}</i><em>展開</em></button><div class="confb">${(st.conf.lines||[]).map(x=>`<div>${esc(x)}</div>`).join("")}</div></div>`:""}
+      ${st.conf?`<div class="confbox"><div class="confh"><span>${ic("clip",15)} 訂購證明</span><i>${esc(st.conf.by||"")}</i><em>點圖放大給店家看</em></div>
+        ${st.conf.img&&typeof CONF_IMG!=="undefined"&&CONF_IMG[st.conf.img]?`<div class="confimg"><img src="${CONF_IMG[st.conf.img]}" alt="訂購證明"></div>`:`<div class="confb open">${(st.conf.lines||[]).map(x=>`<div>${esc(x)}</div>`).join("")}</div>`}</div>`:""}
       ${links?`<div class="links">${links}</div>`:""}</div>`;
     d.querySelectorAll(".chip").forEach(ch=>ch.onclick=()=>goPage(ch.dataset.v));
-    const cb=d.querySelector(".confbox"); if(cb){ const key="conf:"+S.day+":"+i; if(CONF_OPEN.has(key)) cb.classList.add("open");
-      cb.querySelector(".confh").onclick=()=>{ cb.classList.toggle("open"); if(cb.classList.contains("open")) CONF_OPEN.add(key); else CONF_OPEN.delete(key); cb.querySelector("em").textContent=cb.classList.contains("open")?"收合":"展開"; }; }
+    const ci=d.querySelector(".confimg img"); if(ci) ci.onclick=()=>openLightbox([{ title:`訂購證明 · ${st.title}`, render:()=>{ const im=new Image(); im.src=ci.src; return im; } }],0);
     tl.appendChild(d);
   });
   editBar(el,{add:()=>editStop(null),addLabel:"新增節點"});
@@ -2570,26 +2569,28 @@ function budgetCards(){
   return cards;
 }
 /* 已付訂金：領隊在表上改過就用改過的，否則用 Budget 表帶的（公司行前已付） */
-function cardDep(c){ const v=(S.budgetDeposit||{})[c.key]; return v!=null&&v!=="" ? +v : c.dep; }
+function cardDep(c){ return +c.dep||0; }   /* 已付訂金＝公司行前付的，表上鎖住 */
 function budgetTotals(){
-  let cash=0, cashFinal=0, recorded=0, cashCards=0, depTotal=0, transfer=0, card=0;
+  let cash=0, cashFinal=0, recorded=0, cashCards=0, depTotal=0, transfer=0, card=0, variance=0;
   budgetCards().forEach(c=>{
     if(c.pay==="現金"){ const dep=cardDep(c), rem=c.budget-dep; depTotal+=dep; cash+=rem; if(rem>0) cashCards++;
-      const f=S.budgetFinal[c.key]; if(f!=null){ cashFinal+=f; if(rem>0) recorded++; } else cashFinal+=rem; }
+      const f=S.budgetFinal[c.key]; if(f!=null&&rem>0){ cashFinal+=f; recorded++; variance+=f-rem; } }
     else if(c.pay==="信用卡") card++;
     else transfer+=c.budget;
   });
-  return { cash, cashFinal, recorded, cashCards, depTotal, transfer, card, variance:cashFinal-cash };
+  return { cash, cashFinal, recorded, cashCards, depTotal, transfer, card, variance };
 }
 function refreshBudgetSummary(){
   const t=budgetTotals();
   const box=document.getElementById("bgSummary");
   if(!box) return;
+  const set=(id,v)=>{ const e=document.getElementById(id); if(e) e.textContent=v; };
+  set("bgCash",fmtNT(t.cash)); set("bgDep",fmtNT(t.depTotal)); set("bgCash2",Math.round(t.cash).toLocaleString("en-US")); set("bgFinal2",Math.round(t.cashFinal).toLocaleString("en-US"));
   box.querySelector("#bgFinal").textContent=fmtNT(t.cashFinal);
   const vEl=box.querySelector("#bgVariance");
   vEl.textContent=(t.variance>0?"＋":t.variance<0?"－":"")+fmtNT(Math.abs(t.variance));
   vEl.className="v "+(t.variance>0?"over":t.variance<0?"under":"even");
-  box.querySelector("#bgRecorded").textContent=`${t.recorded} / ${t.cashCards} 張已決算`;
+  box.querySelector("#bgRecorded").textContent=`${t.recorded} / ${t.cashCards} 張已填實付`;
 }
 const payPill=p=>`<span class="pill ${p==="現金"?"red":p==="信用卡"?"gray":"blue"}">${esc(p)}</span>`;
 PAGES.budget=(hdr,scr)=>{
@@ -2597,33 +2598,34 @@ PAGES.budget=(hdr,scr)=>{
   const el=document.createElement("div");
   el.className="pagepad";
   const t=budgetTotals();
-  if(!S.budgetDeposit) S.budgetDeposit={};
   if(!S.budgetNote) S.budgetNote={};
   const cards=budgetCards();
   const dateOf=d=>{ const m=String(TOUR.dateTxt||"").match(/(\d{4})\/(\d{1,2})\/(\d{1,2})/); if(!m) return `第 ${d} 天`;
     const dt=new Date(+m[1],+m[2]-1,+m[3]+d-1); return `${dt.getFullYear()}${String(dt.getMonth()+1).padStart(2,"0")}${String(dt.getDate()).padStart(2,"0")}`; };
   const nt=n=>Math.round(n).toLocaleString("en-US");
-  /* 表格：照公司 Budget 表的欄位（不含 FOC／稅率／稅金） */
+  const tx=(b,f,cls,ph)=>`<input class="bgtx ${cls||""}" data-id="${esc(b.id)}" data-f="${f}" value="${esc(b[f]??"")}" placeholder="${ph||""}">`;
+  const num=(b,f,cls)=>`<input class="bgcell ${cls||""}" data-id="${esc(b.id)}" data-f="${f}" inputmode="decimal" value="${+b[f]||""}" placeholder="0">`;
+  /* 表格：照公司 Budget 表的欄位；每一格直接改，小計／TOTAL／剩餘／領隊現金即時重算。已付訂金是公司行前付的，鎖住不能改 */
   let rows="";
   [1,2,3].forEach(d=>{
     const cs=cards.filter(c=>c.day===d); if(!cs.length) return;
     const dayRows=cs.reduce((n,c)=>n+c.lines.length,0);
     let first=true;
     cs.forEach(c=>{
-      const n=c.lines.length, cash=c.pay==="現金", dep=cardDep(c), rem=c.budget-dep, fin=S.budgetFinal[c.key], paid=cash&&dep>0&&rem<=0;
-      const hasAmt=c.lines.some(b=>+b.qty);
+      const n=c.lines.length, cash=c.pay==="現金", dep=cardDep(c), rem=c.budget-dep, fin=S.budgetFinal[c.key], paid=cash&&dep>0&&rem<=0, b0=c.lines[0];
       c.lines.forEach((b,i)=>{
-        rows+=`<tr class="${cash?"":"nocash"}${i===0?" cardtop":""}">`;
+        rows+=`<tr class="${cash?"":"nocash"}${i===0?" cardtop":""}" data-key="${esc(c.key)}">`;
         if(first){ rows+=`<td class="date" rowspan="${dayRows}">${dateOf(d)}</td>`; first=false; }
-        if(i===0) rows+=`<td class="comp" rowspan="${n}"><b>${esc(c.cat)}</b><span>${esc([c.slot,c.t].filter(Boolean).join(" "))}</span><span class="vend">${esc(c.vendor)}</span></td>`;
-        rows+=`<td class="det">${ebtn(b.id,true)}${esc(b.name)}${b.note?`<div class="dnote">${esc(b.note)}</div>`:""}</td>
-          <td class="num">${+b.qty||""}</td><td>${esc(b.unit||"")}</td>
-          <td class="num">${+b.qty?nt(+b.price||0):""}</td><td class="num">${+b.qty?nt((+b.price||0)*(+b.qty||0)):""}</td>`;
+        if(i===0) rows+=`<td class="comp" rowspan="${n}"><select class="bgsel" data-key="${esc(c.key)}" data-f="cat">${BUDGET_CATS.map(x=>`<option${x===c.cat?" selected":""}>${x}</option>`).join("")}</select>
+            <span class="row2">${tx(b0,"slot","w-slot","餐次")}${tx(b0,"t","w-time","時間")}</span>${tx(b0,"vendor","w-vend","店家／對象")}</td>`;
+        rows+=`<td class="det"><span class="detrow">${tx(b,"name","","訂購明細")}<button class="bgdel" data-id="${esc(b.id)}" title="刪除這一列">✕</button></span>${tx(b,"note","w-note","備註（小字）")}${i===n-1?`<button class="bgaddline" data-key="${esc(c.key)}">＋ 加一列</button>`:""}</td>
+          <td class="num edit">${num(b,"qty","w-qty")}</td><td class="edit">${tx(b,"unit","w-unit","單位")}</td>
+          <td class="num edit">${num(b,"price","w-price")}</td><td class="num" id="sub_${esc(b.id)}">${+b.qty?nt((+b.price||0)*(+b.qty||0)):""}</td>`;
         if(i===0){
-          rows+=`<td class="tot" rowspan="${n}"><span class="paylbl">${esc(c.pay)}</span><b>${hasAmt?"NTD "+nt(c.budget):"NTD 0"}</b></td>
-            <td class="num edit" rowspan="${n}">${cash?`<input class="bgcell" data-k="${esc(c.key)}" data-f="dep" inputmode="numeric" value="${dep||""}" placeholder="0">`:"—"}</td>
+          rows+=`<td class="tot" rowspan="${n}"><span class="paylbl">${esc(c.pay)}</span><b id="tot_${esc(c.key)}">NTD ${nt(c.budget)}</b></td>
+            <td class="num dep" rowspan="${n}">${cash?(dep?nt(dep):"0"):"—"}</td>
             <td class="num" rowspan="${n}" id="rem_${esc(c.key)}">${cash?nt(rem):"—"}</td>
-            <td class="num edit" rowspan="${n}">${paid?`<span class="pill green">公司已付</span>`:cash?`<input class="bgcell fin" data-k="${esc(c.key)}" data-f="fin" inputmode="numeric" value="${fin!=null?fin:""}" placeholder="${nt(rem)}">`:`<span class="pill gray">${c.pay==="信用卡"?"公司刷卡":"公司轉帳"}</span>`}</td>
+            <td class="num edit" rowspan="${n}">${paid?`<span class="pill green">公司已付</span>`:cash?`<input class="bgcell fin" data-key="${esc(c.key)}" data-f="fin" inputmode="numeric" value="${fin!=null?fin:""}" placeholder="填實付">`:`<span class="pill gray">${c.pay==="信用卡"?"公司刷卡":"公司轉帳"}</span>`}</td>
             <td class="edit notecell" rowspan="${n}"><textarea class="bgnote2" data-k="${esc(c.key)}" rows="2" placeholder="備註">${esc(S.budgetNote[c.key]||"")}</textarea></td>`;
         }
         rows+=`</tr>`;
@@ -2640,56 +2642,80 @@ PAGES.budget=(hdr,scr)=>{
   </div>
   <div class="card budgetsum" id="bgSummary">
     <div class="bgstats">
-      <div class="st hot"><span class="k">領隊現金 TOTAL</span><b>${fmtNT(t.cash)}</b></div>
-      <div class="st"><span class="k">實付合計</span><b id="bgFinal">${fmtNT(t.cashFinal)}</b></div>
-      <div class="st"><span class="k">差額</span><b id="bgVariance" class="v ${t.variance>0?"over":t.variance<0?"under":"even"}">${(t.variance>0?"＋":t.variance<0?"－":"")+fmtNT(Math.abs(t.variance))}</b></div>
+      <div class="st hot"><span class="k">領隊現金 TOTAL</span><b id="bgCash">${fmtNT(t.cash)}</b></div>
+      <div class="st"><span class="k">實付合計（已填的）</span><b id="bgFinal">${fmtNT(t.cashFinal)}</b></div>
+      <div class="st"><span class="k">差額（已填的）</span><b id="bgVariance" class="v ${t.variance>0?"over":t.variance<0?"under":"even"}">${(t.variance>0?"＋":t.variance<0?"－":"")+fmtNT(Math.abs(t.variance))}</b></div>
     </div>
     <div class="bgfoot">
-      <span>飯店、梅園樓、禮盒等 <b>已付訂金 ${fmtNT(t.depTotal)}</b> 公司行前已付，不在領隊現金內；領隊現金＝各單「剩餘金額」加總</span>
+      <span>飯店、梅園樓、禮盒等 <b>已付訂金 <span id="bgDep">${fmtNT(t.depTotal)}</span></b> 公司行前已付，鎖住不能改；領隊現金＝各單「剩餘金額」加總，格子改了會自動重算</span>
       <span class="pill gray" id="bgRecorded">${t.recorded} / ${t.cashCards} 張已填實付</span>
     </div>
   </div>
   <div class="card bgtablewrap">
     <div class="bgpaper" id="bgPaper">
     <table class="bgtable">
-      <thead><tr><th>日期</th><th>元件</th><th>訂購明細</th><th>數量</th><th>單位</th><th>項次單價</th><th>小計</th><th>TOTAL</th><th>已付訂金</th><th>剩餘金額</th><th>實付金額</th><th>備註</th></tr></thead>
+      <thead><tr><th>日期</th><th>元件</th><th>訂購明細</th><th>數量</th><th>單位</th><th>項次單價</th><th>小計</th><th>TOTAL</th><th>已付訂金 🔒</th><th>剩餘金額</th><th>實付金額</th><th>備註</th></tr></thead>
       <tbody>${rows}</tbody>
       <tfoot><tr><td colspan="7" class="rep"><b>領隊報告：</b><textarea class="bgreport" id="bgReport" rows="3" placeholder="超支原因、店家未收款、發票缺漏…">${esc(S.budgetReport||"")}</textarea></td>
-        <td colspan="5" class="grand"><span>TOTAL：</span><b>現金 ${nt(t.cash)} NTD</b><span class="sub">實付 ${nt(t.cashFinal)} NTD</span></td></tr>
-      <tr class="sign"><td colspan="4">主管：______________</td><td colspan="4">審帳：______________</td><td colspan="4">領隊：______________</td></tr></tfoot>
+        <td colspan="5" class="grand"><span>TOTAL：</span><b>現金 <span id="bgCash2">${nt(t.cash)}</span> NTD</b><span class="sub">實付（已填）<span id="bgFinal2">${nt(t.cashFinal)}</span> NTD</span></td></tr></tfoot>
     </table>
     </div>
   </div>
 `;
   scr.appendChild(el);
 
-  el.querySelectorAll(".bgcell").forEach(inp=>{
-    inp.addEventListener("input",()=>{
-      const k=inp.dataset.k, raw=inp.value.replace(/[^\d]/g,""), v=raw===""?null:parseInt(raw,10);
-      if(inp.dataset.f==="dep"){ if(v==null) delete S.budgetDeposit[k]; else S.budgetDeposit[k]=v;
-        const c=cards.find(x=>x.key===k); const rem=el.querySelector(`#rem_${CSS.escape(k)}`); if(rem&&c) rem.textContent=nt(c.budget-cardDep(c)); refreshBudgetSummary(); }
-      else { if(v==null) delete S.budgetFinal[k]; else S.budgetFinal[k]=v; refreshBudgetSummary(); }
-      save();
-    });
-  });
+  const item=id=>BUDGET_ITEMS.find(b=>b.id===id);
+  const cardOf=key=>budgetCards().find(c=>c.key===key);
+  const refreshCard=key=>{ const c=cardOf(key); if(!c) return;
+    c.lines.forEach(b=>{ const sc=el.querySelector(`#sub_${CSS.escape(b.id)}`); if(sc) sc.textContent=+b.qty?nt((+b.price||0)*(+b.qty||0)):""; });
+    const tot=el.querySelector(`#tot_${CSS.escape(key)}`); if(tot) tot.textContent="NTD "+nt(c.budget);
+    const rem=el.querySelector(`#rem_${CSS.escape(key)}`); if(rem&&c.pay==="現金") rem.textContent=nt(c.budget-cardDep(c));
+    refreshBudgetSummary(); };
+  /* 數字格：數量、單價、實付 */
+  el.querySelectorAll(".bgcell").forEach(inp=>inp.addEventListener("input",()=>{
+    const raw=inp.value.replace(/[^\d.]/g,""), v=raw===""?null:parseFloat(raw);
+    if(inp.dataset.f==="fin"){ const k=inp.dataset.key; if(v==null) delete S.budgetFinal[k]; else S.budgetFinal[k]=Math.round(v); refreshBudgetSummary(); }
+    else { const b=item(inp.dataset.id); if(!b) return; b[inp.dataset.f]=v==null?0:v; b.budget=(+b.price||0)*(+b.qty||0); refreshCard(inp.closest("tr").dataset.key); }
+    save();
+  }));
+  /* 文字格：明細、備註、單位、店家、時間、餐次（店家／時間／餐次是整張單共用） */
+  el.querySelectorAll(".bgtx").forEach(inp=>inp.addEventListener("input",()=>{
+    const b=item(inp.dataset.id); if(!b) return; const f=inp.dataset.f, v=inp.value;
+    if(f==="vendor"||f==="t"||f==="slot"){ const c=cardOf(inp.closest("tr").dataset.key); (c?c.lines:[b]).forEach(x=>x[f]=v.trim()); }
+    else b[f]=f==="note"?v.trim():v;
+    save();
+  }));
+  el.querySelectorAll(".bgtx[data-f=t]").forEach(inp=>inp.addEventListener("change",()=>render()));   /* 時間改了要重排 */
+  el.querySelectorAll(".bgsel").forEach(sel=>sel.onchange=()=>{ const c=cardOf(sel.dataset.key); if(c) c.lines.forEach(x=>x.cat=sel.value); save(); });
+  el.querySelectorAll(".bgdel").forEach(bt=>bt.onclick=()=>{ const b=item(bt.dataset.id); if(!b) return;
+    confirmBox(`刪掉「${b.name||"這一列"}」？`,()=>{ const key=b.grp||b.id; S.data.budget=BUDGET_ITEMS.filter(x=>x!==b); BUDGET_ITEMS=S.data.budget;
+      if(!BUDGET_ITEMS.some(x=>(x.grp||x.id)===key)){ delete S.budgetFinal[key]; delete S.budgetNote[key]; } dataChanged("已刪除"); }); });
+  el.querySelectorAll(".bgaddline").forEach(bt=>bt.onclick=()=>{ const c=cardOf(bt.dataset.key); if(!c) return;
+    c.lines.forEach(x=>{ if(!x.grp) x.grp=c.key; });
+    BUDGET_ITEMS.push({ id:newId("k"), day:c.day, t:c.t, cat:c.cat, slot:c.slot, vendor:c.vendor, name:"", price:0, qty:1, unit:c.lines[0].unit||"", pay:c.pay, grp:c.key });
+    save(); render(); setTimeout(()=>{ const last=[...document.querySelectorAll(`tr[data-key="${CSS.escape(c.key)}"] .bgtx[data-f=name]`)].pop(); if(last){ last.scrollIntoView({block:"center"}); last.focus(); } },50); });
   el.querySelectorAll(".bgnote2").forEach(ta=>ta.addEventListener("input",()=>{ const v=ta.value.trim(); if(v) S.budgetNote[ta.dataset.k]=v; else delete S.budgetNote[ta.dataset.k]; save(); }));
   el.querySelector("#bgReport").onchange=e=>{ S.budgetReport=e.target.value; save(); toast("領隊報告已存"); };
   editBar(el,{add:()=>editBudget(null),addLabel:"新增項目"});
+  el.querySelector(".editbar .ebl").textContent="表上的格子直接改；每張單最後一列有「＋ 加一列」";
   EDIT_HANDLER=k=>{
     if(k==="__head") editForm("Budget 表抬頭",[{k:"code",label:"團號"},{k:"taxTitle",label:"發票抬頭"},{k:"taxId",label:"統一編號"},{k:"budgetPrinted",label:"印表日期"},{k:"headcount",label:"分攤人數",type:"number",required:true}],
       Object.assign({},TOUR,{headcount:BUDGET_HEADCOUNT}),
       {onSave:o=>{ S.data.headcount=Math.max(1,Math.round(+o.headcount||1)); delete o.headcount; Object.assign(TOUR,o); dataChanged("已儲存"); }});
-    else editBudget(BUDGET_ITEMS.find(b=>b.id===k));
   };
 };
-/* Budget 表當紙用：透明畫布蓋在整張表上，筆寫、手指捲、兩指縮放；筆跡以表格比例座標存在 S.budgetInk，跟著存檔與備份 */
-/* Budget 手寫模式已拿掉（S.budgetInk 舊資料保留不動） */
+/* 新增一張單：只問必要的欄位；其他都在表上直接改 */
 function editBudget(b){
-  editForm(b?"編輯預算項目":"新增預算項目", BUDGET_FIELDS(), b||{day:S.day,cat:"餐廳",price:0,qty:24,unit:"人",pay:"現金"}, {
-    onSave:o=>{ o.day=+o.day||1; if(b) Object.assign(b,o); else { o.id=newId("k"); BUDGET_ITEMS.push(o); } dataChanged("已儲存"); },
-    onDelete:b?()=>{ S.data.budget=BUDGET_ITEMS.filter(x=>x!==b); delete S.budgetFinal[b.grp||b.id]; dataChanged("已刪除"); }:null,
+  editForm("新增預算項目", [
+    {k:"day",label:"第幾天",type:"select",opts:[[1,"第 1 天"],[2,"第 2 天"],[3,"第 3 天"]]},{k:"t",label:"時間",ph:"13:20"},
+    {k:"cat",label:"元件",type:"select",opts:BUDGET_CATS},{k:"vendor",label:"店家／對象",required:true},
+    {k:"name",label:"訂購明細",required:true},{k:"qty",label:"數量",type:"number"},{k:"unit",label:"單位",ph:"人／台／間／桌"},{k:"price",label:"單價",type:"number"},
+  ], b||{day:S.day,cat:"餐廳",price:0,qty:21,unit:"人"}, {
+    onSave:o=>{ o.day=+o.day||1; o.pay="現金"; o.id=newId("k"); o.budget=(+o.price||0)*(+o.qty||0); BUDGET_ITEMS.push(o); dataChanged("已新增"); },
   });
 }
+
+/* Budget 手寫模式已拿掉（S.budgetInk 舊資料保留不動） */
 
 /* ---------- 手寫備註：Apple Pencil 直接寫，存成圖片在 IndexedDB（files 表，cat:"ink"） ---------- */
 PAGES.ink=(hdr,scr)=>{
