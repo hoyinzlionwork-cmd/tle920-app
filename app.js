@@ -271,23 +271,23 @@ let NIGHTS = [
     { no:"外宿 5", type:"TWIN", who:["周冠廷"], note:"外宿・與司機同房" },
   ]},
   { key:2, date:"9/21(一)", hotel:"阿里山英迪格酒店【6F】", vendor:"v_indigo",
-    info:"豪華房 13 坪 0601・豪華房加沙發床 0622・精品浴缸大床 11 坪 0602／0605／0607／0609／0610／0612／0617／0619／0620・精品浴缸雙床 0606／0608",
+    info:"豪華房 13 坪 601・豪華房加沙發床 622・精品浴缸大床 11 坪 602／605／607／609／610／612／617／619／620・精品浴缸雙床 606／608",
     rooms:[
-    { no:"0601", type:"豪華房 13 坪 DBLB",     who:["王文傑","凌瓏"],   floor:6 },
-    { no:"0622", type:"豪華房加沙發床 DBLB",   who:["陳聖德","張振明"], floor:6 },
-    { no:"0620", type:"精品浴缸大床 DBLB",     who:["陳萱"],            floor:6 },
-    { no:"0606", type:"精品浴缸雙床 TWIN",     who:["游張松","王　雍"], floor:6 },
-    { no:"0608", type:"精品浴缸雙床 TWIN",     who:["盧希鵬","游慧茹"], floor:6 },
-    { no:"0610", type:"精品浴缸大床 DBLB",     who:["利明献","張郁芬"], floor:6 },
-    { no:"0617", type:"精品浴缸大床 DBLB",     who:["鄭兆剛"],          floor:6 },
-    { no:"0609", type:"精品浴缸大床 SGLB",     who:["黃信川"],  floor:6 },
-    { no:"0611", type:"精品浴缸大床 SGLB",     who:["王岳聰"],  floor:6 },
-    { no:"0605", type:"精品浴缸大床 SGLB",     who:["陳曉穎"],  floor:6 },
-    { no:"0602", type:"精品浴缸大床 SGLB",     who:["劉惟珺"],  floor:6 },
-    { no:"0619", type:"精品浴缸大床 SGLB",     who:["邱浩軒"],  floor:6 },
-    { no:"0612", type:"精品浴缸大床 SGLB",     who:["戴啟珩"],  floor:6, note:"9/21 加入" },
-    { no:"0607", type:"精品浴缸大床 SGLB",     who:["王村煌"],  floor:6 },
-    { no:"0615／0616／0618／0621", type:"未分配", who:[], floor:6 },
+    { no:"601", type:"豪華房 13 坪 DBLB",     who:["王文傑","凌瓏"],   floor:6 },
+    { no:"622", type:"豪華房加沙發床 DBLB",   who:["陳聖德","張振明"], floor:6 },
+    { no:"620", type:"精品浴缸大床 DBLB",     who:["陳萱"],            floor:6 },
+    { no:"606", type:"精品浴缸雙床 TWIN",     who:["游張松","王　雍"], floor:6 },
+    { no:"608", type:"精品浴缸雙床 TWIN",     who:["盧希鵬","游慧茹"], floor:6 },
+    { no:"610", type:"精品浴缸大床 DBLB",     who:["利明献","張郁芬"], floor:6 },
+    { no:"617", type:"精品浴缸大床 DBLB",     who:["鄭兆剛"],          floor:6 },
+    { no:"609", type:"精品浴缸大床 SGLB",     who:["黃信川"],  floor:6 },
+    { no:"611", type:"精品浴缸大床 SGLB",     who:["王岳聰"],  floor:6 },
+    { no:"605", type:"精品浴缸大床 SGLB",     who:["陳曉穎"],  floor:6 },
+    { no:"602", type:"精品浴缸大床 SGLB",     who:["劉惟珺"],  floor:6 },
+    { no:"619", type:"精品浴缸大床 SGLB",     who:["邱浩軒"],  floor:6 },
+    { no:"612", type:"精品浴缸大床 SGLB",     who:["戴啟珩"],  floor:6, note:"9/21 加入" },
+    { no:"607", type:"精品浴缸大床 SGLB",     who:["王村煌"],  floor:6 },
+    { no:"615／616／618／621", type:"未分配", who:[], floor:6 },
     { no:"工作人員", type:"外宿", who:["陳婉如 Paris","李沛祐","林詠凱","周冠廷","賴怡娟","洪采吟","薛永南"], note:"外宿 6 人・房號待確認" },
   ]},
 ];
@@ -570,7 +570,7 @@ function buildSeed(){
     tour:TOUR_SEED, pax:PAX_SEED, nights:NIGHTS_SEED, menu:MENU_SEED, meals,
     vendors:VENDORS_SEED, vendorTodo:VENDOR_TODO_SEED,
     budget:BUDGET_ITEMS_SEED, headcount:BUDGET_HEADCOUNT_SEED,
-    itin:ITIN_SEED, luggageRoute:LUGGAGE_ROUTE_SEED, hsrTrains:HSR_TRAINS_SEED, _seatVer:5, _menuVer:1, _budgetVer:1, _tourVer:2, _docVer:7,
+    itin:ITIN_SEED, luggageRoute:LUGGAGE_ROUTE_SEED, hsrTrains:HSR_TRAINS_SEED, _seatVer:5, _menuVer:1, _budgetVer:1, _tourVer:2, _docVer:8,
   });
 }
 /* 出廠預設另存一份，之後 TOUR / PAX… 這些名字都指向 S.data */
@@ -679,6 +679,12 @@ function bindData(){
   }
   /* 一次性：名單順序改成照 Google 名單第一頁 */
   if((S.data._docVer||0)<7){ sortPaxBySheet(PAX); S.data._docVer=7; }
+  /* 一次性：英迪格房號改回三位數（0601 → 601） */
+  if((S.data._docVer||0)<8){
+    const N2=NIGHTS.find(n=>n.key===2);
+    if(N2){ N2.rooms.forEach(r=>{ r.no=String(r.no||"").replace(/\b0(6\d\d)\b/g,"$1"); }); if(N2.info) N2.info=N2.info.replace(/\b0(6\d\d)\b/g,"$1"); }
+    S.data._docVer=8;
+  }
   if((S.data._tourVer||0)<2){
     const st=(ITIN[2]||[]).find(x=>x.title==="自選 · 祝山日出");
     if(st){ st.links=(st.links||[]).filter(l=>l[0]!=="roster"); if(!st.links.some(l=>l[0]==="optin:sunrise")) st.links.unshift(["optin:sunrise","日出名單"]); }
@@ -2775,7 +2781,7 @@ PAGES.rooms=(hdr,scr)=>{
   const PLANS={1:{6:"d1_6f",7:"d1_7f",8:"d1_8f",9:"d1_9f"},2:{6:"d2_6f"}};
   const planOf=f=>(typeof FLOOR_IMG!=="undefined")&&PLANS[N.key]&&PLANS[N.key][f]&&FLOOR_IMG[PLANS[N.key][f]]||"";
   /* 樓層：seed 有 floor；使用者自己加的房用房號第 2 碼推（1922→9F、0601→6F） */
-  const floorOf=r=>r.floor||(/^\d{4}/.test(String(r.no||""))?+String(r.no)[1]:0);
+  const floorOf=r=>{ if(r.floor) return r.floor; const no=String(r.no||""); return /^\d{3,4}$/.test(no)?+no[no.length-3]:0; };
   const rooms=N.rooms.map((r,i)=>({r,i,f:floorOf(r)}));
   const floors=[...new Set(rooms.map(x=>x.f).filter(Boolean))].sort((a,b)=>a-b);
   const other=rooms.filter(x=>!x.f);
