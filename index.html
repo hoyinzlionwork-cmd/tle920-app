@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="cc60bf7 2026-09-18T03:39Z">
+<meta name="build" content="bc573c0 2026-09-18T04:01Z">
 <title>導領e化平台 · 920董事會</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, minimum-scale=1, maximum-scale=5">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -572,6 +572,10 @@ body.lb-open{overflow:hidden}
 .ordsum .oin{font-size:13px;font-weight:500;color:var(--ink3);margin-top:8px;line-height:1.5;border-top:1px dashed var(--line);padding-top:6px}
 .ordrow{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line);font-size:14.5px}
 .ordrow:last-child{border-bottom:none}
+.ordgrp{display:flex;align-items:center;gap:10px;margin:14px 0 4px;padding:8px 12px;border-radius:10px;background:var(--red-bg);color:var(--red-dk)}
+.ordgrp:first-child{margin-top:0}
+.ordgrp b{font-size:16px;font-weight:900}
+.ordgrp span:not(.pill){font-size:12.5px;color:#9F0B22;opacity:.8;flex:1}
 .ordrow .who{font-weight:800;min-width:82px}
 .ordrow .what{color:var(--ink2);flex:1}
 .ordrow .what b{color:var(--ink);font-weight:700}
@@ -955,7 +959,7 @@ h3.sect{font-size:14px;color:var(--ink2);font-weight:800;margin:16px 2px 9px;let
 @media (min-width:1000px){
   .rolllist,.vlist,.optlist,#lugList,#ordRows{grid-template-columns:1fr 1fr}
   .rolllist.compact{grid-template-columns:repeat(3,1fr)}
-  .optlist>.sect,#lugList>.card{grid-column:1/-1}
+  .optlist>.sect,#lugList>.card,#ordRows>.ordgrp{grid-column:1/-1}
   .sect{margin-top:4px}
 }
 

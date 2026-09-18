@@ -2360,7 +2360,17 @@ PAGES.coffee=(hdr,scr)=>{
   <button class="btn sec" id="clearOrd">清空全部訂單</button>
   ${typeof MENU_IMG_CREDIT!=="undefined"?`<p class="imgcredit">品項照片為示意（Flickr CC BY 2.0：${Object.values(MENU_IMG_CREDIT).map(c=>esc(c.by)).join("、")}），非鳴心咖啡實拍。</p>`:""}`;
   const rows=el.querySelector("#ordRows");
-  PAX.filter(p=>p.days.includes(S.day===2?2:1)&&p.group!=="工作人員").forEach(p=>{
+  /* 依福森號 A 段的車廂分成 A 車（5 車守車）、B 車（4 車客座）；領隊在車上點餐時一節一節收 */
+  const carOf=p=>{ const st=fusenSeatsOf("A"); for(const c of [5,4]) if(Object.values(st[c]||{}).includes(p.id)) return c; return 0; };
+  const people=PAX.filter(p=>p.days.includes(S.day===2?2:1)&&p.group!=="工作人員");
+  const groups=[[5,"A 車","福森號 5 車・守車車廂"],[4,"B 車","福森號 4 車・客座車廂"],[0,"未配位","不在福森號座位圖上"]];
+  groups.forEach(([car,lb,sub])=>{
+    const list=people.filter(p=>carOf(p)===car); if(!list.length) return;
+    const done=list.filter(p=>S.orders[p.id]).length;
+    const h=document.createElement("div"); h.className="ordgrp";
+    h.innerHTML=`<b>${esc(lb)}</b><span>${esc(sub)}</span><span class="pill ${done===list.length?"green":"gray"}">${done} / ${list.length} 已點</span>`;
+    rows.appendChild(h);
+    list.forEach(p=>{
     const o=S.orders[p.id];
     const r=document.createElement("div");
     r.className="ordrow";
@@ -2370,6 +2380,7 @@ PAGES.coffee=(hdr,scr)=>{
       <button class="btn ${o?"sec":"pri"}" style="padding:6px 13px;font-size:12.5px">${o?"修改":"點餐"}</button>`;
     r.querySelector("button").onclick=()=>openOrderModal(p);
     rows.appendChild(r);
+    });
   });
   el.querySelector("#clearOrd").onclick=()=>confirmBox("清空全部咖啡訂單？",()=>{ S.orders={}; save(); render(); toast("訂單已清空"); });
   const mcard=document.createElement("div");
