@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="9e8cc39 2026-09-18T04:25Z">
+<meta name="build" content="a750def 2026-09-18T04:28Z">
 <title>導領e化平台 · 920董事會</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, minimum-scale=1, maximum-scale=5">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -396,6 +396,17 @@ svg.ic{width:1em;height:1em;stroke:currentColor;fill:none;stroke-width:2;stroke-
 .tl{position:relative;padding-left:24px}
 .tl::before{content:"";position:absolute;left:7px;top:10px;bottom:10px;width:2px;background:#F3C3C8}
 .stop{position:relative;margin-bottom:12px}
+.stop .head{display:flex;align-items:center;gap:8px}
+.stop .head .title{flex:1}
+.stdone{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:800;color:var(--ink3);cursor:pointer;padding:6px 10px 6px 8px;border:1.5px solid var(--line);border-radius:999px;white-space:nowrap;min-height:38px}
+.stdone input{position:absolute;opacity:0;width:0;height:0}
+.stdone .ckbox{width:22px;height:22px;border-radius:6px;font-size:13px}
+.stdone.on{color:#1E9E4A;border-color:#BFE3C8;background:#F1FAF3}
+.stdone.on .ckbox{background:#1E9E4A;border-color:#1E9E4A;color:#fff}
+.stop.done .card{background:#F4F4F6;border-color:#E6E6EA}
+.stop.done .card>*:not(.head){opacity:.45}
+.stop.done .head .time,.stop.done .head .title{color:var(--ink3);text-decoration:line-through;text-decoration-color:#C9C9CF}
+.stop.done .card::before,.stop.done::before{opacity:.5}
 .stop::before{content:"";position:absolute;left:-22px;top:17px;width:10px;height:10px;border-radius:50%;
   background:#fff;border:3px solid var(--red)}
 .stop .card{margin-bottom:0}

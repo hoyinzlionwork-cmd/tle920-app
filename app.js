@@ -847,7 +847,7 @@ function DEFAULTS(){
   return { tab:"lead", page:null, day:1, seatTab:"hsr", homeTab:"list",
     rosterMode:"roll",
     fields:{}, fieldsVer:2,   /* 欄位預設見 ROSTER_FIELDS */
-    roll:{1:{},2:{},3:{}}, notes:{}, orders:{}, lug:{}, sigs:[], budgetFinal:{}, budgetDeposit:{}, budgetNote:{}, budgetDone:{}, vconf:{}, optin:{}, seating:{},
+    roll:{1:{},2:{},3:{}}, notes:{}, orders:{}, lug:{}, sigs:[], budgetFinal:{}, budgetDeposit:{}, budgetNote:{}, budgetDone:{}, itinDone:{}, vconf:{}, optin:{}, seating:{},
     dl:{status:"idle",ts:null}, rev:0, savedAt:0 };
 }
 
@@ -1442,17 +1442,26 @@ PAGES.itin=(hdr,scr)=>{
   el.innerHTML=`<p class="vs">點行程節點下方捷徑，直接開啟該環節要用的功能——走到哪、點到哪。</p><div class="tl"></div>`;
   const tl=el.querySelector(".tl");
   const stops=ITIN[S.day]||(ITIN[S.day]=[]);
+  if(!S.itinDone) S.itinDone={};
+  const doneKey=st=>`${S.day}:${st.t}:${st.title}`;
   stops.forEach((st,i)=>{
     const d=document.createElement("div");
-    d.className="stop";
+    const done=!!S.itinDone[doneKey(st)];
+    d.className="stop"+(done?" done":"");
     const links=(st.links||[]).map(([v,lb])=>`<button class="chip" data-v="${v}">${lb}</button>`).join("");
     const cf=STOP_CONF[st.title]||st.conf||null;
     d.innerHTML=`<div class="card">${ebtn(String(i))}
-      <div class="head"><span class="time">${esc(st.t)}</span><span class="title">${esc(st.title)}</span></div>
+      <div class="head"><span class="time">${esc(st.t)}</span><span class="title">${esc(st.title)}</span>
+        <label class="stdone${done?" on":""}"><input type="checkbox"${done?" checked":""}><span class="ckbox">${done?"✓":""}</span>${done?"已完成":"完成"}</label></div>
       ${st.desc?`<div class="desc">${esc(st.desc)}</div>`:""}
       ${st.staff&&st.staff.length?`<div class="staffbox"><div class="sh">工作事項</div>${st.staff.map(x=>`<div class="si">${esc(x)}</div>`).join("")}</div>`:""}
       ${links||cf?`<div class="links">${cf?`<button class="chip conf">${ic("clip",14)} 訂購證明</button>`:""}${links}</div>`:""}</div>`;
     d.querySelectorAll(".chip[data-v]").forEach(ch=>ch.onclick=()=>goPage(ch.dataset.v));
+    /* 完成：這一節反灰；就地切換不重畫，畫面不會跳 */
+    const ck=d.querySelector(".stdone input"); ck.onchange=()=>{ const on=ck.checked, k=doneKey(st);
+      if(on) S.itinDone[k]=Date.now(); else delete S.itinDone[k];
+      d.classList.toggle("done",on); const lb=d.querySelector(".stdone"); lb.classList.toggle("on",on); lb.querySelector(".ckbox").textContent=on?"✓":""; lb.lastChild.textContent=on?"已完成":"完成";
+      if(navigator.vibrate) navigator.vibrate(8); save(); };
     const cb=d.querySelector(".chip.conf"); if(cb) cb.onclick=()=>{
       const src=cf.img&&typeof CONF_IMG!=="undefined"?CONF_IMG[cf.img]:"";
       if(src) openLightbox([{ title:`訂購證明 · ${st.title}`, render:()=>{ const im=new Image(); im.src=src; return im; } }],0);
@@ -1462,6 +1471,9 @@ PAGES.itin=(hdr,scr)=>{
   editBar(el,{add:()=>editStop(null),addLabel:"新增節點"});
   EDIT_HANDLER=i=>editStop(+i);
   scr.appendChild(el);
+  /* 打開行程表：已完成的都反灰，畫面直接靠到第一個還沒完成的節點 */
+  const firstOpen=el.querySelector(".stop:not(.done)"), anyDone=!!el.querySelector(".stop.done");
+  if(firstOpen&&anyDone) requestAnimationFrame(()=>requestAnimationFrame(()=>{ const top=firstOpen.getBoundingClientRect().top-scr.getBoundingClientRect().top+scr.scrollTop-8; scr.scrollTop=Math.max(0,top); }));
 };
 /* 節點存檔後依時間排序，所以不需要上下移；時間統一補成 hh:mm 才排得對 */
 function editStop(i){
