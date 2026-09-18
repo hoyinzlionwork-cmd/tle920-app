@@ -1673,6 +1673,27 @@ PAGES.seats=(hdr,scr)=>{
     };
   }
   el.querySelectorAll(".cartabs .tab").forEach(b=>b.onclick=()=>{ S.hsrCar[b.dataset.tk]=+b.dataset.car; save(); render(); });
+  const trainOf=no=>(HSR_TRAINS[S.hsrDay]||[]).find(x=>x.no===no);
+  const seatOwner=(t,key)=>{ const m=hsrSeatIndex(t); return m[key]||null; };
+  const setSeat=(t,p,key)=>{ if(t.fixed&&!t.key){ for(const k of Object.keys(t.fixed)) if(t.fixed[k]===p.id) delete t.fixed[k]; if(key) t.fixed[key]=p.id; }
+    else p[t.key]=key||"—"; };
+  installSeatDrag(el,{ seatSel:".seatg.mine[data-p],.tseat[data-p]",
+    targetAt:n=>n.closest(".seatg[data-key]")||n.closest(".tzone"),
+    applyDrop:(src,tgt)=>{
+      const tc=tgt.closest("[data-train]"), tcs=src.closest("[data-train]"); if(!tc||!tcs||tc.dataset.train!==tcs.dataset.train) return false;
+      const t=trainOf(tc.dataset.train); if(!t) return false;
+      const p=pax(src.dataset.p); if(!p) return false;
+      const fromKey=src.dataset.key||null;
+      if(tgt.dataset.key){ const toKey=tgt.dataset.key; if(toKey===fromKey) return false;
+        const q=seatOwner(t,toKey); setSeat(t,p,toKey); if(q&&q!==p) setSeat(t,q,fromKey); return true; }
+      if(tgt.dataset.t==="pool"){ if(!fromKey) return false; setSeat(t,p,null); return true; }
+      return false;
+    } });
+  el.querySelectorAll(".hsrReset").forEach(b=>b.onclick=()=>{ const t=trainOf(b.dataset.train); if(!t) return;
+    confirmBox(`${t.no} 的座位還原成訂位紀錄？`,()=>{
+      if(t.key){ const m={hsrGo:HSR_0911.go,hsrBack:HSR_0911.back,hsr609:HSR_0911.h609}[t.key]||{}; PAX.forEach(p=>{ if(/^p\d\d$/.test(p.id)) p[t.key]=m[p.id]||"—"; else p[t.key]="—"; }); }
+      const sd=Object.values(HSR_TRAINS_SEED||{}).flat().find(x=>x.no===t.no); if(sd&&sd.fixed) t.fixed=JSON.parse(JSON.stringify(sd.fixed));
+      save(); render(); toast("已還原"); }); });
   const wireHsr=root=>root.querySelectorAll(".seat.mine,.seatg.mine").forEach(s=>s.addEventListener("click",ev=>{ ev.stopPropagation(); const p=pax(s.dataset.p); if(p) openPaxModal(p); }));
   wireHsr(el); window.LB_WIRE=wireHsr;
   if(!el.isConnected) scr.appendChild(el);
@@ -1704,6 +1725,17 @@ const shortName = n => {
   return (cn.length>=2 ? cn : n.replace(/\s+/g,"")).slice(0,4);
 };
 
+/* 高鐵座位跟 0911 座位表（含後續確認）不同的地方：{"6車 13A": 原本的 pid 或 null} */
+let HSR_CHG=null;
+function hsrBase(t){
+  const base={};
+  if(t.key){ const m={hsrGo:HSR_0911.go,hsrBack:HSR_0911.back,hsr609:HSR_0911.h609}[t.key]||{};
+    for(const [pid,v] of Object.entries(m)){ const mm=String(v||"").match(/^([56])車\s*(\d+)([A-E])$/); if(mm&&pax(pid)) base[`${mm[1]}車 ${mm[2]}${mm[3]}`]=pid; } }
+  const sd=Object.values(HSR_TRAINS_SEED||{}).flat().find(x=>x.no===t.no); if(sd&&sd.fixed) Object.assign(base,sd.fixed);
+  return base;
+}
+function hsrDiff(t){ const cur=hsrSeatIndex(t), base=hsrBase(t), out={};
+  new Set([...Object.keys(cur),...Object.keys(base)]).forEach(k=>{ const a=cur[k]?cur[k].id:null, b=base[k]||null; if(a!==b) out[k]=b; }); return out; }
 function hsrSeatIndex(train){
   const map={};
   if(train.fixed){ for(const [k,id] of Object.entries(train.fixed)) map[k]=pax(id); }
@@ -1917,25 +1949,27 @@ function svgCarThsrc(carNo, seatMap, t){
   rows.forEach(r=>C.cols.forEach(c=>{
     if(r===1&&C.noRow1.includes(c)) return;
     const p=seatAt(r,c), x=rowX(r), y=colY[c], label=`${r}${c}`;
-    const key=`${carNo}車 ${label}`, un=unusedOf(key);
+    const key=`${carNo}車 ${label}`, un=unusedOf(key), chg=!!(HSR_CHG&&key in HSR_CHG);
+    const badge=chg?`<circle cx="${x+SW-4}" cy="${y+4}" r="7" fill="#E07B12"/><text x="${x+SW-4}" y="${y+7}" text-anchor="middle" font-size="7.5" font-weight="900" fill="#fff">改</text>`:"";
     if(!p){
       if(un){
-        g+=`<g class="seatg"><title>${esc(un)}</title><rect x="${x}" y="${y}" width="${SW}" height="${SH}" rx="5" fill="url(#hatch${carNo})" stroke="#B9B9BF" stroke-dasharray="3 2"/>
+        g+=`<g class="seatg${chg?" chg":""}" data-key="${key}"><title>${esc(un)}</title><rect x="${x}" y="${y}" width="${SW}" height="${SH}" rx="5" fill="${chg?"#FFF4E8":`url(#hatch${carNo})`}" stroke="${chg?"#E07B12":"#B9B9BF"}" stroke-width="${chg?2.2:1}" stroke-dasharray="3 2"/>
           <text x="${x+SW/2}" y="${y+SH/2-1}" text-anchor="middle" font-size="10" font-weight="700" fill="#6B6B70">${label}</text>
-          <text x="${x+SW/2}" y="${y+SH/2+11}" text-anchor="middle" font-size="7.5" font-weight="700" fill="#8E8E93">已訂未用</text></g>`;
+          <text x="${x+SW/2}" y="${y+SH/2+11}" text-anchor="middle" font-size="7.5" font-weight="700" fill="#8E8E93">已訂未用</text>${badge}</g>`;
         return;
       }
-      g+=`<g class="seatg"><rect x="${x}" y="${y}" width="${SW}" height="${SH}" rx="5" fill="#ECECEF" stroke="#D5D5DA"/>
-        <text x="${x+SW/2}" y="${y+SH/2+4}" text-anchor="middle" font-size="11" font-weight="700" fill="#6B6B70">${label}</text></g>`;
+      g+=`<g class="seatg${chg?" chg":""}" data-key="${key}"><rect x="${x}" y="${y}" width="${SW}" height="${SH}" rx="5" fill="${chg?"#FFF4E8":"#ECECEF"}" stroke="${chg?"#E07B12":"#D5D5DA"}" stroke-width="${chg?2.2:1}"${chg?' stroke-dasharray="3 2"':""}/>
+        <text x="${x+SW/2}" y="${y+SH/2+4}" text-anchor="middle" font-size="11" font-weight="700" fill="#6B6B70">${label}</text>${badge}</g>`;
       return;
     }
     const k=paint(p), nm=shortName(p.name), fs=nm.length>=4?10.5:12, tbc=isTbc(p,key);
-    g+=`<g class="seatg mine" data-p="${p.id}">
-      <rect x="${x}" y="${y}" width="${SW}" height="${SH}" rx="5" fill="${k.f}" stroke="${tbc?"#F08A24":k.s}" stroke-width="${tbc?2:1.6}"${tbc?' stroke-dasharray="3 2"':""}/>
+    g+=`<g class="seatg mine${chg?" chg":""}" data-p="${p.id}" data-key="${key}">
+      <rect x="${x}" y="${y}" width="${SW}" height="${SH}" rx="5" fill="${k.f}" stroke="${chg?"#E07B12":tbc?"#F08A24":k.s}" stroke-width="${chg?2.6:tbc?2:1.6}"${tbc&&!chg?' stroke-dasharray="3 2"':""}/>
       ${tbc&&!(p.board&&String(t.route||"").includes(p.board))?`<rect x="${x+SW-26}" y="${y+2}" width="24" height="9" rx="2.5" fill="#F08A24"/><text x="${x+SW-14}" y="${y+9}" text-anchor="middle" font-size="6.5" font-weight="800" fill="#fff">票待確認</text>`:""}
       <text x="${x+3}" y="${y+9}" font-size="7" font-weight="700" fill="${k.lb}">${label}</text>
       <text x="${x+SW/2}" y="${y+SH/2+7}" text-anchor="middle" font-size="${fs}" font-weight="800" fill="${k.t}">${esc(nm)}</text>
       ${p.board&&String(t.route||"").includes(p.board)?`<rect x="${x+SW-22}" y="${y+2}" width="20" height="9" rx="2.5" fill="#1E9E4A"/><text x="${x+SW-12}" y="${y+9}" text-anchor="middle" font-size="6.5" font-weight="800" fill="#fff">${esc(p.board)}</text>`:""}
+      ${badge}
     </g>`;
   }));
   /* 圖例 */
@@ -2060,6 +2094,12 @@ function svgHsr(containerW){
   trains.forEach(t=>{
     const map=hsrSeatIndex(t);
     const n=Object.keys(map).length;
+    const diff=hsrDiff(t); HSR_CHG=diff; const nChg=Object.keys(diff).length;
+    const nameOf=v=>{ const q=v?pax(v):null; return q?q.name:"空位"; };
+    const seatedIds=new Set(Object.values(map).map(p=>p.id));
+    const pool=PAX.filter(p=>p.days.includes(S.hsrDay)&&!seatedIds.has(p.id));
+    const chip=p=>{ const g=p.group==="貴賓"?"vip":p.group==="雄獅主管"?"mgr":"stf"; return `<div class="tseat ${g}" data-t="pool" data-p="${esc(p.id)}"><b>${esc(p.name)}</b>${p.group==="工作人員"?`<i>工作人員</i>`:p.board?`<i>${esc(p.board)}上車</i>`:""}</div>`; };
+    const chgList=Object.keys(diff).sort().map(k=>`<span class="chgitem">${esc(k)}：<s>${esc(nameOf(diff[k]))}</s> → <b>${esc(nameOf(map[k]?map[k].id:null))}</b></span>`).join("");
     const south=t.dir==="南下";
     const dest=String(t.route||"").split("→").pop().replace(/[\d:\s]/g,"");
     /* 一次只畫一節車廂，畫面留給它；兩節以上的車次用分頁切 */
@@ -2068,7 +2108,7 @@ function svgHsr(containerW){
     const cnt=c=>Object.keys(map).filter(k=>k.startsWith(`${c}車 `)).length;
     const tabs = t.cars.length>1 ? `<div class="cartabs">${t.cars.map(c=>`
       <button class="tab${c===cur?" on":""}" data-car="${c}" data-tk="${esc(tk)}">第 ${c} 車<span>${esc(HSR_CARS[c].cls.slice(0,2))} · ${cnt(c)} 席</span></button>`).join("")}</div>` : "";
-    out+=`<div class="traincard">
+    out+=`<div class="traincard" data-train="${esc(t.no)}">
       <div class="trainhead">
         <span class="trainno">${esc(t.no)}<small>車次</small></span>
         <span class="trainroute">${routeChips(t.route)}</span>
@@ -2080,8 +2120,17 @@ function svgHsr(containerW){
       <div class="cars">${[cur].map(c=>`
         <div class="carblk">
           <div class="zw" data-train="${esc(t.no)}" data-car="${c}" data-title="高鐵 ${esc(t.no)} · ${c} 車">${svgCarThsrc(c,map,t)}</div>
-          <div class="zoomhint">點圖放大・光箱裡左右滑切換車廂</div>
+          <div class="zoomhint">點圖放大・光箱裡左右滑切換車廂・<b>長按名字可拖到別的座位</b>（互換；拖到空位是搬過去）</div>
         </div>`).join("")}</div>
+      ${nChg?`<div class="card chgcard" style="margin:0 0 10px"><div class="thead"><b>${ic("refresh",15)} 跟訂位紀錄不同的座位</b><span class="pill orange">${nChg} 席</span><span class="roomhint">橘框＋「改」＝換過位子</span></div><div class="chgrow">${chgList}</div></div>`:""}
+      <div class="card tcard pool tzone" data-t="pool" data-train="${esc(t.no)}" style="margin-bottom:8px">
+        <div class="thead"><b>未配位</b><span class="pill gray">${pool.length} 人</span><span class="roomhint">長按拖到車廂空位；把車上的人拖到這裡＝取消座位</span></div>
+        <div class="tseats">${pool.map(chip).join("")||`<div class="tempty">全部都有座位了</div>`}</div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:6px">
+        <span class="pill ${nChg?"orange":"gray"}">${nChg?`已換位 ${nChg} 席`:"照訂位紀錄"}</span>
+        <button class="btn ghost hsrReset" data-train="${esc(t.no)}" ${nChg?"":"disabled"}>還原成訂位紀錄</button>
+      </div>
     </div>`;
   });
   out+=`<div class="hsrlegend">
