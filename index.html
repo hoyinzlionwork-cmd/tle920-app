@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="6bb5e07 2026-09-18T02:59Z">
+<meta name="build" content="04aa6a5 2026-09-18T03:03Z">
 <title>導領e化平台 · 920董事會</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, minimum-scale=1, maximum-scale=5">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -290,7 +290,24 @@ svg.ic{width:1em;height:1em;stroke:currentColor;fill:none;stroke-width:2;stroke-
 .bgcell.w-qty{width:58px}
 .bgcell.w-price{width:78px}
 .bgtable td.dep{color:var(--ink2);background:#F7F7F8}
-.bgtable{min-width:1040px}
+.bgtable{min-width:1100px}
+.bgtable td.donecell{text-align:center;vertical-align:middle;white-space:nowrap}
+.donebox{display:inline-flex;flex-direction:column;align-items:center;gap:4px;font-size:12px;font-weight:800;color:var(--ink2);cursor:pointer;padding:6px 8px;border-radius:10px}
+.donebox input{position:absolute;opacity:0;width:0;height:0}
+.donebox .ckbox{width:28px;height:28px;border-radius:8px;font-size:16px}
+.donebox.on{color:#1E9E4A}
+.donebox.on .ckbox{background:#1E9E4A;border-color:#1E9E4A;color:#fff}
+.bgtable tr.done td{background:#F3F3F5;color:var(--ink3)}
+.bgtable tr.done td.date,.bgtable tr.done td.tot b,.bgtable tr.done td.comp .vend{color:var(--ink3)}
+.bgtable tr.done .bgtx,.bgtable tr.done .bgsel{color:var(--ink3);border-bottom-color:transparent}
+.bgtable tr.done .bgcell,.bgtable tr.done .bgnote2{background:#EDEDF0;color:var(--ink3);border-color:#E0E0E4}
+.bgtable tr.done .bgdel,.bgtable tr.done .bgaddline{visibility:hidden}
+.bgtable tr.done td.donecell{background:#EAF7EE}
+.bgtable tr.flash td{animation:bgflash 1.6s ease-out}
+@keyframes bgflash{0%{background:#FFF1B8}100%{background:inherit}}
+.bgprog{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:10px;padding-top:10px;border-top:1px dashed var(--line)}
+.bgprog .hint{font-size:12.5px;color:var(--ink2);flex:1}
+.bgprog .btn{min-height:38px;padding:6px 14px;font-size:14px}
 .bgtable tr.sign td{text-align:center;color:var(--ink2);padding:12px 6px;font-size:14px}
 /* Budget 表當紙用 */
 .inkbar{position:sticky;top:0;z-index:4;display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:#fff;border:1px solid var(--line);

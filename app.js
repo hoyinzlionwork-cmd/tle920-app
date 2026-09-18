@@ -835,7 +835,7 @@ function DEFAULTS(){
   return { tab:"lead", page:null, day:1, seatTab:"hsr", homeTab:"list",
     rosterMode:"roll",
     fields:{}, fieldsVer:2,   /* 欄位預設見 ROSTER_FIELDS */
-    roll:{1:{},2:{},3:{}}, notes:{}, orders:{}, lug:{}, sigs:[], budgetFinal:{}, budgetDeposit:{}, budgetNote:{}, vconf:{}, optin:{}, seating:{},
+    roll:{1:{},2:{},3:{}}, notes:{}, orders:{}, lug:{}, sigs:[], budgetFinal:{}, budgetDeposit:{}, budgetNote:{}, budgetDone:{}, vconf:{}, optin:{}, seating:{},
     dl:{status:"idle",ts:null}, rev:0, savedAt:0 };
 }
 
@@ -2627,6 +2627,7 @@ PAGES.budget=(hdr,scr)=>{
   el.className="pagepad";
   const t=budgetTotals();
   if(!S.budgetNote) S.budgetNote={};
+  if(!S.budgetDone) S.budgetDone={};
   const cards=budgetCards();
   const dateOf=d=>{ const m=String(TOUR.dateTxt||"").match(/(\d{4})\/(\d{1,2})\/(\d{1,2})/); if(!m) return `第 ${d} 天`;
     const dt=new Date(+m[1],+m[2]-1,+m[3]+d-1); return `${dt.getFullYear()}${String(dt.getMonth()+1).padStart(2,"0")}${String(dt.getDate()).padStart(2,"0")}`; };
@@ -2641,8 +2642,9 @@ PAGES.budget=(hdr,scr)=>{
     let first=true;
     cs.forEach(c=>{
       const n=c.lines.length, cash=c.pay==="現金", dep=cardDep(c), rem=c.budget-dep, fin=S.budgetFinal[c.key], paid=cash&&dep>0&&rem<=0, b0=c.lines[0];
+      const done=paid||!!S.budgetDone[c.key];
       c.lines.forEach((b,i)=>{
-        rows+=`<tr class="${cash?"":"nocash"}${i===0?" cardtop":""}" data-key="${esc(c.key)}">`;
+        rows+=`<tr class="${cash?"":"nocash"}${i===0?" cardtop":""}${done?" done":""}" data-key="${esc(c.key)}">`;
         if(first){ rows+=`<td class="date" rowspan="${dayRows}">${dateOf(d)}</td>`; first=false; }
         if(i===0) rows+=`<td class="comp" rowspan="${n}"><select class="bgsel" data-key="${esc(c.key)}" data-f="cat">${BUDGET_CATS.map(x=>`<option${x===c.cat?" selected":""}>${x}</option>`).join("")}</select>
             <span class="row2">${tx(b0,"slot","w-slot","餐次")}${tx(b0,"t","w-time","時間")}</span>${tx(b0,"vendor","w-vend","店家／對象")}</td>`;
@@ -2654,7 +2656,8 @@ PAGES.budget=(hdr,scr)=>{
             <td class="num dep" rowspan="${n}">${cash?(dep?nt(dep):"0"):"—"}</td>
             <td class="num" rowspan="${n}" id="rem_${esc(c.key)}">${cash?nt(rem):"—"}</td>
             <td class="num edit" rowspan="${n}">${paid?`<span class="pill green">公司已付</span>`:cash?`<input class="bgcell fin" data-key="${esc(c.key)}" data-f="fin" inputmode="numeric" value="${fin!=null?fin:""}" placeholder="填實付">`:`<span class="pill gray">${c.pay==="信用卡"?"公司刷卡":"公司轉帳"}</span>`}</td>
-            <td class="edit notecell" rowspan="${n}"><textarea class="bgnote2" data-k="${esc(c.key)}" rows="2" placeholder="備註">${esc(S.budgetNote[c.key]||"")}</textarea></td>`;
+            <td class="edit notecell" rowspan="${n}"><textarea class="bgnote2" data-k="${esc(c.key)}" rows="2" placeholder="備註">${esc(S.budgetNote[c.key]||"")}</textarea></td>
+            <td class="donecell" rowspan="${n}">${paid?`<span class="pill gray">—</span>`:cash?`<label class="donebox${done?" on":""}"><input type="checkbox" data-key="${esc(c.key)}"${done?" checked":""}><span class="ckbox">${done?"✓":""}</span>完成</label>`:""}</td>`;
         }
         rows+=`</tr>`;
       });
@@ -2678,13 +2681,18 @@ PAGES.budget=(hdr,scr)=>{
       <span>飯店、梅園樓、禮盒等 <b>已付訂金 <span id="bgDep">${fmtNT(t.depTotal)}</span></b> 公司行前已付，鎖住不能改；領隊現金＝各單「剩餘金額」加總，格子改了會自動重算</span>
       <span class="pill gray" id="bgRecorded">${t.recorded} / ${t.cashCards} 張已填實付</span>
     </div>
+    <div class="bgprog">
+      <span class="pill green" id="bgDoneCnt"></span>
+      <span class="hint">勾「完成」那張單會反灰鎖住；取消勾選就能再改</span>
+      <button class="btn sec" id="bgNext">→ 跳到下一張未完成</button>
+    </div>
   </div>
   <div class="card bgtablewrap">
     <div class="bgpaper" id="bgPaper">
     <table class="bgtable">
-      <thead><tr><th>日期</th><th>元件</th><th>訂購明細</th><th>數量</th><th>單位</th><th>項次單價</th><th>小計</th><th>TOTAL</th><th>已付訂金 🔒</th><th>剩餘金額</th><th>實付金額</th><th>備註</th></tr></thead>
+      <thead><tr><th>日期</th><th>元件</th><th>訂購明細</th><th>數量</th><th>單位</th><th>項次單價</th><th>小計</th><th>TOTAL</th><th>已付訂金 🔒</th><th>剩餘金額</th><th>實付金額</th><th>備註</th><th>完成</th></tr></thead>
       <tbody>${rows}</tbody>
-      <tfoot><tr><td colspan="7" class="rep"><b>領隊報告：</b><textarea class="bgreport" id="bgReport" rows="3" placeholder="超支原因、店家未收款、發票缺漏…">${esc(S.budgetReport||"")}</textarea></td>
+      <tfoot><tr><td colspan="8" class="rep"><b>領隊報告：</b><textarea class="bgreport" id="bgReport" rows="3" placeholder="超支原因、店家未收款、發票缺漏…">${esc(S.budgetReport||"")}</textarea></td>
         <td colspan="5" class="grand"><span>TOTAL：</span><b>現金 <span id="bgCash2">${nt(t.cash)}</span> NTD</b><span class="sub">實付（已填）<span id="bgFinal2">${nt(t.cashFinal)}</span> NTD</span></td></tr></tfoot>
     </table>
     </div>
@@ -2723,6 +2731,18 @@ PAGES.budget=(hdr,scr)=>{
     BUDGET_ITEMS.push({ id:newId("k"), day:c.day, t:c.t, cat:c.cat, slot:c.slot, vendor:c.vendor, name:"", price:0, qty:1, unit:c.lines[0].unit||"", pay:c.pay, grp:c.key });
     save(); render(); setTimeout(()=>{ const last=[...document.querySelectorAll(`tr[data-key="${CSS.escape(c.key)}"] .bgtx[data-f=name]`)].pop(); if(last){ last.scrollIntoView({block:"center"}); last.focus(); } },50); });
   el.querySelectorAll(".bgnote2").forEach(ta=>ta.addEventListener("input",()=>{ const v=ta.value.trim(); if(v) S.budgetNote[ta.dataset.k]=v; else delete S.budgetNote[ta.dataset.k]; save(); }));
+  /* 完成：那張單反灰鎖住；就地切換，不重畫（免得捲回最上面） */
+  const lockRows=(key,on)=>{ el.querySelectorAll(`tr[data-key="${CSS.escape(key)}"]`).forEach(tr=>{ tr.classList.toggle("done",on);
+      tr.querySelectorAll(".bgtx,.bgcell,.bgsel,.bgdel,.bgaddline,.bgnote2").forEach(x=>x.disabled=on); }); };
+  const doneCount=()=>{ const cs=budgetCards().filter(c=>c.pay==="現金"&&c.budget-cardDep(c)>0); const d=cs.filter(c=>S.budgetDone[c.key]).length;
+    const e=el.querySelector("#bgDoneCnt"); if(e){ e.textContent=`已完成 ${d} / ${cs.length} 張`; e.className="pill "+(d===cs.length&&cs.length?"green":"gray"); } };
+  el.querySelectorAll(".donebox input").forEach(ck=>ck.onchange=()=>{ const k=ck.dataset.key, on=ck.checked;
+    if(on) S.budgetDone[k]=Date.now(); else delete S.budgetDone[k];
+    ck.parentElement.classList.toggle("on",on); ck.parentElement.querySelector(".ckbox").textContent=on?"✓":""; lockRows(k,on); doneCount(); save(); });
+  el.querySelectorAll("tr.done").forEach(tr=>tr.querySelectorAll(".bgtx,.bgcell,.bgsel,.bgdel,.bgaddline,.bgnote2").forEach(x=>x.disabled=true));
+  doneCount();
+  el.querySelector("#bgNext").onclick=()=>{ const tr=el.querySelector("tr.cardtop:not(.done)"); if(!tr){ toast("全部都完成了"); return; }
+    tr.scrollIntoView({block:"center",behavior:"smooth"}); const key=tr.dataset.key; el.querySelectorAll(`tr[data-key="${CSS.escape(key)}"]`).forEach(x=>{ x.classList.add("flash"); setTimeout(()=>x.classList.remove("flash"),1600); }); };
   el.querySelector("#bgReport").onchange=e=>{ S.budgetReport=e.target.value; save(); toast("領隊報告已存"); };
   editBar(el,{add:()=>editBudget(null),addLabel:"新增項目"});
   el.querySelector(".editbar .ebl").textContent="表上的格子直接改；每張單最後一列有「＋ 加一列」";
