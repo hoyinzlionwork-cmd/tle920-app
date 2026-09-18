@@ -1124,15 +1124,27 @@ function render(){
   if(!NAVS.some(n=>n[0]===S.tab)) S.tab="lead";
   if(S.page && !PAGES[S.page]) S.page=null;   /* 舊存檔指到已拿掉的頁面（例如交班文件）就回帶團中 */
   const hdr=$("#hdr"), scr=$("#screen");
+  /* 同一頁重畫（勾選、拖拉、改一格）就留在原本的捲動位置；換頁才回最上面 */
+  const key=[S.tab,S.page,S.day,S.hsrDay,S.night,S.mealId,S.rosterMode,S.optKey,S.fusenSeg].join("|");
+  const fresh=key!==LAST_PAGE_KEY, keepTop=scr.scrollTop; LAST_PAGE_KEY=key; window.PAGE_FRESH=fresh; window.KEEP_SCROLL=fresh?0:keepTop;
   scr.innerHTML=""; hdr.innerHTML="";
-  if(S.tab==="lead"&&S.page){ PAGES[S.page](hdr,scr); }
-  else if(S.tab==="lead"){ renderLead(hdr,scr); }
-  else if(S.tab==="home"){ renderHome(hdr,scr); }
-  else{ renderStub(hdr,scr); }
+  try{
+    if(S.tab==="lead"&&S.page){ PAGES[S.page](hdr,scr); }
+    else if(S.tab==="lead"){ renderLead(hdr,scr); }
+    else if(S.tab==="home"){ renderHome(hdr,scr); }
+    else{ renderStub(hdr,scr); }
+  }catch(e){
+    /* 畫面出錯不能把整個 app 弄成白的：資料都還在，給一條回首頁的路 */
+    console.error(e);
+    hbar(hdr,"這一頁出了點問題",{back:true});
+    scr.innerHTML=`<div class="pagepad"><div class="card" style="border-color:#F3C3C8"><b>畫面載入失敗，資料沒有動。</b><p class="vs" style="margin:8px 0">${esc(String(e&&e.message||e))}</p>
+      <button class="btn pri" onclick="goPage(null)">回首頁</button></div></div>`;
+  }
   tagLongPress(scr); tagLongPress(hdr);
   updateSaveBar();
-  scr.scrollTop=0;
+  scr.scrollTop = fresh ? 0 : keepTop;
 }
+let LAST_PAGE_KEY="";
 function hbar(hdr,title,{back=false,dark=false}={}){
   hdr.innerHTML=`<div class="hbar${dark?" dark":""}">
     <div class="hleft">${back?`<button class="backbtn" title="上一頁">${ic("back",16)}<span>上一頁</span></button><button class="homebtn" title="首頁">${ic("home",16)}<span>首頁</span></button>`:""}</div>
@@ -1473,7 +1485,7 @@ PAGES.itin=(hdr,scr)=>{
   scr.appendChild(el);
   /* 打開行程表：已完成的都反灰，畫面直接靠到第一個還沒完成的節點 */
   const firstOpen=el.querySelector(".stop:not(.done)"), anyDone=!!el.querySelector(".stop.done");
-  if(firstOpen&&anyDone) requestAnimationFrame(()=>requestAnimationFrame(()=>{ const top=firstOpen.getBoundingClientRect().top-scr.getBoundingClientRect().top+scr.scrollTop-8; scr.scrollTop=Math.max(0,top); }));
+  if(firstOpen&&anyDone&&window.PAGE_FRESH) requestAnimationFrame(()=>requestAnimationFrame(()=>{ const top=firstOpen.getBoundingClientRect().top-scr.getBoundingClientRect().top+scr.scrollTop-8; scr.scrollTop=Math.max(0,top); }));
 };
 /* 節點存檔後依時間排序，所以不需要上下移；時間統一補成 hh:mm 才排得對 */
 function editStop(i){
@@ -2388,7 +2400,9 @@ function openPaxModal(p){
         <span class="pill gray">🚄 去程 ${esc(p.hsrGo)}</span>
         <span class="pill gray">🚄 回程 ${esc(p.hsrBack)}</span>
         <span class="pill gray">🚂 福森號 ${esc(p.trainSeat)}</span>
-        ${p.table?`<span class="pill gray">${ic("table",12)} 第 ${p.table} 桌</span>`:""}
+        ${[1,2,3].flatMap(d=>(MEALS[d]||[]).filter(hasSeating).map(m=>{ const st=seatingOf(m); let hit=null;
+            st.tables.forEach(t=>{ const i=t.seats.indexOf(p.id); if(i>=0) hit={t,i}; });
+            return hit?`<span class="pill gray">${ic("table",12)} D${d} ${esc(m.slot)} ${esc(hit.t.name.split("（")[0])} 第 ${hit.i+1} 位</span>`:""; })).join("")}
       </div></div>
     ${p.meal?`<div class="field"><label>特殊餐食</label><span class="pill amber">${esc(p.meal)}</span></div>`:""}
     ${p.note?`<div class="field"><label>備註</label><span style="font-size:13px">${esc(p.note)}</span></div>`:""}
@@ -3054,6 +3068,7 @@ PAGES.luggage=(hdr,scr)=>{
       r.querySelector(".lugck").onclick=()=>{ lg.checks[S.day]=!ck; save(); render(); };
       box.appendChild(r);
     });
+    if(!window.PAGE_FRESH) requestAnimationFrame(()=>{ $("#screen").scrollTop=window.KEEP_SCROLL||0; });
   });
 };
 
