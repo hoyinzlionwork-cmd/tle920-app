@@ -950,7 +950,8 @@ function toast(msg){
   const t=$("#toast"); t.textContent=msg; t.classList.add("on");
   clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove("on"),1900);
 }
-const NAVS=[["home","home","首頁"],["lead","flag","帶團中"]];
+/* 只有一個主畫面「帶團中」；底部分頁列拿掉了（首頁分頁只是回到同一頁，標題列已有「首頁」） */
+const NAVS=[["lead","flag","帶團中"]];
 function goTab(t){ S.tab=t; S.page=null; save(); render(); }
 /* 上一頁：記住走過的頁面（只在這次開啟期間），標題列「上一頁」照原路退回；「首頁」直接回帶團中 */
 const NAV_HIST=[];
@@ -977,10 +978,6 @@ function render(){
   EDIT_HANDLER=null; window.LB_WIRE=null;
   if(!NAVS.some(n=>n[0]===S.tab)) S.tab="lead";
   if(S.page && !PAGES[S.page]) S.page=null;   /* 舊存檔指到已拿掉的頁面（例如交班文件）就回帶團中 */
-  const nav=$("#nav");
-  nav.innerHTML=NAVS.map(([id,icn,lb])=>`<button class="nitem${S.tab===id?" on":""}" data-t="${id}">
-    <span class="nic">${ic(icn,19)}</span>${lb}</button>`).join("");
-  nav.querySelectorAll(".nitem").forEach(b=>b.onclick=()=>goTab(b.dataset.t));
   const hdr=$("#hdr"), scr=$("#screen");
   scr.innerHTML=""; hdr.innerHTML="";
   if(S.tab==="lead"&&S.page){ PAGES[S.page](hdr,scr); }
@@ -995,8 +992,7 @@ function hbar(hdr,title,{back=false,dark=false}={}){
   hdr.innerHTML=`<div class="hbar${dark?" dark":""}">
     <div class="hleft">${back?`<button class="backbtn" title="上一頁">${ic("back",16)}<span>上一頁</span></button><button class="homebtn" title="首頁">${ic("home",16)}<span>首頁</span></button>`:""}</div>
     <div class="htitle">${esc(title)}</div>
-    <div class="hright">
-      <button class="iconbtn" style="color:var(--red)">${ic("live",19)}</button></div>
+    <div class="hright"></div>
   </div>`;
   const bk=hdr.querySelector(".backbtn"); if(bk) bk.onclick=goBack;
   const hm=hdr.querySelector(".homebtn"); if(hm) hm.onclick=()=>goPage(null);
@@ -1233,66 +1229,25 @@ function renderLead(hdr,scr){
   el.className="pagepad";
   el.innerHTML=`
   <div class="card tinfo">
-    <div class="ttop"><span class="pill redln">共 ${TOUR.days} 天</span><span style="display:flex;gap:8px;align-items:center">${ebtn("tour",true)}<span id="dlSlot"></span></span></div>
+    <div class="ttop"><span class="pill redln">共 ${TOUR.days} 天</span>${ebtn("tour",true)}</div>
     <div class="trow"><span class="k">出團日</span><span class="v">${TOUR.dateTxt}</span></div>
     <div class="trow"><span class="k">團號</span><span class="v">${TOUR.code}</span></div>
     <div class="trow"><span class="k">團名</span><span class="v">${esc(TOUR.name)}${TOUR.sub?`<span style="display:block;font-size:11.5px;font-weight:500;color:var(--ink2);line-height:1.5">${esc(TOUR.sub)}</span>`:""}</span></div>
     ${TOUR.ctrl?`<div class="trow"><span class="k">團控</span><span class="v">${esc(TOUR.ctrl)}${TOUR.seats?`<span style="display:block;font-size:11.5px;font-weight:500;color:var(--ink2)">${esc(TOUR.seats)}</span>`:""}</span></div>`:""}
     <div class="trow"><span class="k">領　隊</span><span class="v">${esc(TOUR.leader)}</span></div>
     <div class="trow"><span class="k">旅客名單</span><span class="v">${GUESTS().length}人 / ${done}人 <span style="color:var(--ink3);font-size:11px;font-weight:400">(KK/已報到)</span>　<span class="pill gray">工作人員 ${PAX.length-GUESTS().length}</span></span></div>
+    <div class="trow"><span class="k">RC/TP/OP</span><span class="v rcline"><span>RC　${esc(TOUR.rc)}</span><span>TP　${esc(TOUR.tp)}</span><span>OP　${esc(TOUR.op)}</span></span></div>
   </div>
   <div class="fgrid">${FUNCS.map(([id,icn,lb])=>`
     <button class="fbtn" data-p="${id}"><span class="fic">${ic(icn,28)}</span><span class="flb">${lb}</span></button>`).join("")}
   </div>
-  <div class="collapse"><span id="rcToggle" style="cursor:pointer">RC/TP/OP ⌄</span><span class="qlink" id="qlink">Q 信箱</span></div>
-  <div class="rcbox" id="rcbox" style="display:none">
-    RC　${esc(TOUR.rc)}<br>TP　${esc(TOUR.tp)}<br>OP　${esc(TOUR.op)}
-  </div>
-  <div class="endmark">— 已經到底了 —</div>
-  <div class="blacktoast" id="dlHint">${ic("dl",15)} 建議下載離線資料，帶團更安心</div>
   <div class="setlink" id="setLink">設定 · 資料保全（備份／還原）</div>`;
   scr.appendChild(el);
   EDIT_HANDLER=()=>editForm("團資料",TOUR_FIELDS,TOUR,{onSave:o=>{ Object.assign(TOUR,o); dataChanged("已儲存"); }});
   el.querySelectorAll(".fbtn").forEach(b=>b.onclick=()=>goPage(b.dataset.p));
-  el.querySelector("#qlink").onclick=()=>goPage("qmail");
   el.querySelector("#setLink").onclick=()=>goPage("settings");
-  el.querySelector("#rcToggle").onclick=()=>{
-    const bx=el.querySelector("#rcbox");
-    bx.style.display = bx.style.display==="none"?"block":"none";
-  };
-  renderDlBtn(el.querySelector("#dlSlot"), el.querySelector("#dlHint"));
 }
 
-/* --- 下載離線資料 --- */
-function renderDlBtn(slot,hint){
-  const st=S.dl.status;
-  if(st==="busy"){
-    slot.innerHTML=`<button class="dlbtn busy" disabled><span class="mini"></span> 下載中</button>`;
-    if(hint) hint.style.display="none";
-    return;
-  }
-  if(st==="done"){
-    slot.innerHTML=`<button class="dlbtn">${ic("cloudok",14)} 下載離線資料</button>`;
-    if(hint) hint.style.display="none";
-    slot.querySelector("button").onclick=()=>{
-      confirmBox("已有下載資料，是否要重新下載？",()=>startDl(slot,hint));
-    };
-    return;
-  }
-  slot.innerHTML=`<button class="dlbtn">${ic("dl",14)} 下載離線資料</button>`;
-  slot.querySelector("button").onclick=()=>startDl(slot,hint);
-}
-function startDl(slot,hint){
-  S.dl.status="busy"; save(); renderDlBtn(slot,hint);
-  setTimeout(async ()=>{
-    try{
-      if("caches" in window){ const c=await caches.open("tle920-v3");
-        await c.addAll(["./","./index.html","./app.js","./manifest.json","./icon.png"]).catch(()=>{}); }
-    }catch(e){}
-    S.dl.status="done"; S.dl.ts=Date.now(); save();
-    renderDlBtn(slot,hint); toast("下載完成");
-  },1600);
-}
 function confirmBox(msg,onOk){
   const mb=$("#mbox");
   mb.className="mbox confirm";
@@ -1350,7 +1305,7 @@ PAGES.itin=(hdr,scr)=>{
     d.querySelectorAll(".chip").forEach(ch=>ch.onclick=()=>goPage(ch.dataset.v));
     tl.appendChild(d);
   });
-  editBar(el,{add:()=>editStop(null),addLabel:"新增節點",reset:()=>{ ITIN[S.day]=buildSeed().itin[S.day]||[]; },resetLabel:"還原本日行程"});
+  editBar(el,{add:()=>editStop(null),addLabel:"新增節點"});
   EDIT_HANDLER=i=>editStop(+i);
   scr.appendChild(el);
 };
@@ -1445,7 +1400,7 @@ function rosterList(scr){
       <span class="legendline"><span class="pill amber">黃＝要特別注意</span><span class="pill blue">藍＝行程不同</span></span></div>
     <table class="rtable byp roster"><thead><tr>${cols.map(([c])=>`<th>${c}</th>`).join("")}</tr></thead><tbody>${rows}</tbody></table></div>
     <p class="vs">上方勾選要顯示的欄位。長按任何一列可以修改該旅客。</p>`;
-  editBar(el,{add:()=>editPax(null),addLabel:"新增旅客",reset:()=>resetSection("pax"),resetLabel:"還原預設名單"});
+  editBar(el,{add:()=>editPax(null),addLabel:"新增旅客"});
   EDIT_HANDLER=id=>editPax(pax(id));
   scr.appendChild(el);
 }
@@ -1493,7 +1448,7 @@ function rosterRoll(scr){
     }
     el.appendChild(card);
   });
-  editBar(el,{add:()=>editPax(null),addLabel:"新增旅客",reset:()=>resetSection("pax"),resetLabel:"還原預設名單"});
+  editBar(el,{add:()=>editPax(null),addLabel:"新增旅客"});
   EDIT_HANDLER=id=>editPax(pax(id));
   scr.appendChild(el);
   const act=GUESTS().filter(p=>p.days.includes(S.day));
@@ -1535,7 +1490,7 @@ PAGES.seats=(hdr,scr)=>{
     tc.innerHTML=`<div style="font-weight:800;margin-bottom:8px;font-size:14px">本日車次</div>
       ${(HSR_TRAINS[S.hsrDay]||[]).map((t,i)=>`<div class="ordrow"><span class="who">${esc(t.no)}</span><span class="what">${esc(t.route)}${t.tag?"・"+esc(t.tag):""}</span>${ebtn(String(i),true)}</div>`).join("")}`;
     el.appendChild(tc);
-    editBar(el,{reset:()=>resetSection("hsrTrains"),resetLabel:"還原預設車次"});
+    editBar(el,{});
     EDIT_HANDLER=i=>{ const t=(HSR_TRAINS[S.hsrDay]||[])[+i]; if(!t) return;
       editForm("編輯車次",[{k:"no",label:"車次",required:true},{k:"route",label:"路線／時間"},{k:"dir",label:"方向",type:"select",opts:["南下","北上"]},{k:"tag",label:"標籤"}],
         t,{onSave:o=>{ Object.assign(t,o); dataChanged("已儲存"); }});
@@ -2221,7 +2176,7 @@ PAGES.coffee=(hdr,scr)=>{
   mcard.innerHTML=`<div style="font-weight:800;margin-bottom:8px;font-size:14px">菜單品項</div>
     ${MENU.map((m,i)=>`<div class="ordrow"><span class="who">${esc(m.em||"")} ${esc(m.name)}</span><span class="what"><span class="pill gray">${esc(m.temp||"熱")}</span> ${+m.price?`$${+m.price}`:"價格未定"}${m.note?` · ${esc(m.note)}`:""}</span>${ebtn(String(i),true)}</div>`).join("")}`;
   el.appendChild(mcard);
-  editBar(el,{add:()=>editMenuItem(null),addLabel:"新增品項",reset:()=>resetSection("menu"),resetLabel:"還原預設菜單"});
+  editBar(el,{add:()=>editMenuItem(null),addLabel:"新增品項"});
   EDIT_HANDLER=i=>editMenuItem(+i);
   scr.appendChild(el);
 };
@@ -2371,8 +2326,7 @@ function vendorCard(v){
     ${v.tel.length ? v.tel.map((t,i)=>telBtn(t, i===0?v.telNote:"")).join("")
                    : `<div class="vnotel">無獨立聯絡電話・現場洽詢</div>`}
     ${v.addr?`<div class="vrow"><span class="vk">${ic("pin",14)}</span><span class="vv">${esc(v.addr)}</span>
-      <a class="vmini" href="${mapHref(v.addr)}" target="_blank" rel="noopener">地圖</a>
-      <button class="vmini" data-cp="${esc(v.addr)}">複製</button></div>`:""}
+      <a class="vmini" href="${mapHref(v.addr)}" target="_blank" rel="noopener">地圖</a></div>`:""}
     ${v.hours?`<div class="vrow"><span class="vk">${ic("clock",14)}</span><span class="vv">${esc(v.hours)}</span></div>`:""}
     ${v.email?`<div class="vrow"><span class="vk">${ic("mail",14)}</span>
       <a class="vv vlink" href="mailto:${esc(v.email)}">${esc(v.email)}</a>
@@ -2450,7 +2404,7 @@ PAGES.vendors=(hdr,scr)=>{
       if(t){ t.scrollIntoView({behavior:"smooth",block:"center"}); t.classList.add("flash"); setTimeout(()=>t.classList.remove("flash"),1200); }
     },60);
   });
-  editBar(el,{add:()=>editVendor(null),addLabel:"新增店家",reset:()=>{ resetSection("vendors"); resetSection("vendorTodo"); },resetLabel:"還原預設店家"});
+  editBar(el,{add:()=>editVendor(null),addLabel:"新增店家"});
   EDIT_HANDLER=k=>{
     if(k==="__todo"){
       editForm("尚未查得",[{k:"_l",label:"清單",type:"lines",rows:4,hint:"每行：名稱｜說明"}],
@@ -2584,7 +2538,7 @@ PAGES.budget=(hdr,scr)=>{
     </div>
   </div>
   <p class="vs">「已付訂金」與「實付金額」直接在格子裡填，填完自動存；剩餘金額＝TOTAL－已付訂金。愛玉、甜甜圈單價空白，實付填現場金額。<br>按「手寫模式」整張表就變成紙：Apple Pencil 直接在格子上寫、畫、簽名，手指捲動、兩指縮放；寫的內容跟著這張表一起存、一起備份。要打字填格子時把手寫模式關掉。</p>
-  <button class="btn sec" id="bgReset" style="margin-top:4px">清空已填的訂金、實付與備註</button>`;
+`;
   scr.appendChild(el);
   budgetInkInit(el);
 
@@ -2599,10 +2553,7 @@ PAGES.budget=(hdr,scr)=>{
   });
   el.querySelectorAll(".bgnote2").forEach(ta=>ta.addEventListener("input",()=>{ const v=ta.value.trim(); if(v) S.budgetNote[ta.dataset.k]=v; else delete S.budgetNote[ta.dataset.k]; save(); }));
   el.querySelector("#bgReport").onchange=e=>{ S.budgetReport=e.target.value; save(); toast("領隊報告已存"); };
-  el.querySelector("#bgReset").onclick=()=>confirmBox("清空所有已填的訂金與實付金額？此動作無法復原。",()=>{
-    S.budgetFinal={}; S.budgetDeposit={}; S.budgetNote={}; save(); render(); toast("已清空");
-  });
-  editBar(el,{add:()=>editBudget(null),addLabel:"新增項目",reset:()=>resetSection("budget"),resetLabel:"還原 Budget 表"});
+  editBar(el,{add:()=>editBudget(null),addLabel:"新增項目"});
   EDIT_HANDLER=k=>{
     if(k==="__head") editForm("Budget 表抬頭",[{k:"code",label:"團號"},{k:"taxTitle",label:"發票抬頭"},{k:"taxId",label:"統一編號"},{k:"budgetPrinted",label:"印表日期"},{k:"headcount",label:"分攤人數",type:"number",required:true}],
       Object.assign({},TOUR,{headcount:BUDGET_HEADCOUNT}),
@@ -3106,7 +3057,6 @@ PAGES.tables=(hdr,scr)=>{
   </div>
   <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">
     <button class="btn sec" id="tblAdd">＋ 加一桌</button>
-    <button class="btn sec" id="tblCopy">複製上一餐的分桌</button>
     <button class="btn ghost" id="tblReset" ${custom?"":"disabled"}>還原成預設</button>
   </div>`;
   scr.appendChild(el);
@@ -3117,12 +3067,6 @@ PAGES.tables=(hdr,scr)=>{
     window.LB_WIRE=root=>root.querySelectorAll(".sseat[data-p]").forEach(x=>x.addEventListener("click",ev=>{ ev.stopPropagation(); const p=seatPerson(x.dataset.p); if(p&&!p.guest) openPaxModal(p); })); }
   el.querySelector("#tblAdd").onclick=()=>{ const cur=ensureSeating(m); cur.tables.push({name:`第 ${cur.tables.length+1} 桌`,seats:Array(8).fill(null)}); save(); render(); };
   el.querySelector("#tblReset").onclick=()=>confirmBox("還原成預設分桌？這家餐廳自訂的位子會清掉。",()=>{ delete S.seating[m.id]; save(); render(); toast("已還原"); });
-  el.querySelector("#tblCopy").onclick=()=>{
-    const all=[]; for(const d of [1,2,3]) for(const x of MEALS[d]||[]) all.push(x);
-    const idx=all.findIndex(x=>x.id===m.id); const prev=all.slice(0,idx).reverse().find(x=>hasSeating(x));
-    if(!prev){ toast("前面的餐次都還沒自訂分桌"); return; }
-    confirmBox(`把「${prev.place}」的分桌複製過來？`,()=>{ S.seating[m.id]=clone(seatingOf(prev)); save(); render(); toast("已複製"); });
-  };
   el.querySelectorAll("[data-tedit]").forEach(b=>b.onclick=()=>{
     const ti=+b.dataset.tedit, cur=ensureSeating(m), t=cur.tables[ti];
     editForm("桌子設定",[{k:"name",label:"桌名",required:true},{k:"cap",label:"位數",type:"number",required:true}],{name:t.name,cap:t.seats.length},{
@@ -3419,9 +3363,6 @@ PAGES.storage=(hdr,scr)=>{
   <h3 class="sect">程式內自動快照</h3>
   <div class="card">
     <p class="vs" style="margin:0 0 11px">每次操作後最多 60 秒自動存一份快照，保留最近 40 份。誤刪或誤改時可以倒回去。</p>
-    <div style="display:flex;gap:9px;flex-wrap:wrap;margin-bottom:11px">
-      <button class="btn sec" id="bkNow">立即快照</button>
-    </div>
     <div id="bkList"><p class="vs" style="margin:0">讀取中…</p></div>
   </div>`;
 
@@ -3467,11 +3408,6 @@ PAGES.storage=(hdr,scr)=>{
   }
   refreshBackups();
 
-  el.querySelector("#bkNow").onclick=async()=>{
-    const ok = await writeBackup("manual");
-    toast(ok?"已建立快照":"快照建立失敗");
-    refreshBackups();
-  };
 
   async function doExport(withMedia, btn){
     const label=btn.textContent;
@@ -3522,18 +3458,12 @@ PAGES.settings=(hdr,scr)=>{
     <div style="display:flex;gap:9px;flex-wrap:wrap">
       <button class="btn pri" id="stg">資料保全・備份還原</button>
       <button class="btn sec" id="rstData">還原全部預設資料</button>
-      <button class="btn sec" id="exp">匯出操作紀錄</button>
       <button class="btn sec" id="rst" style="color:#C8102E">重置示範資料</button>
     </div></div>`;
   el.querySelector("#stg").onclick=()=>goPage("storage");
   el.querySelector("#rstData").onclick=()=>confirmBox("把名單、行程、餐食、店家、分房、菜單、預算全部換回出廠預設？\n點名、訂單、行李、簽名紀錄會保留。",async()=>{
     await writeBackup("manual"); S.data=buildSeed(); dataChanged("已還原全部預設資料");
   });
-  el.querySelector("#exp").onclick=()=>{
-    const a=document.createElement("a");
-    a.href=URL.createObjectURL(new Blob([JSON.stringify(S,null,2)],{type:"application/json"}));
-    a.download=`${TOUR.code}-log.json`; a.click();
-  };
   el.querySelector("#rst").onclick=()=>confirmBox("重置所有點名、訂單、行李、簽名與上傳檔案？\n（快照與備份也會一併清除）",async()=>{
     await writeBackup("manual");          /* 按錯還有得救 */
     localStorage.removeItem(SKEY); localStorage.removeItem(SKEY_B);
