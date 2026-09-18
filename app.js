@@ -209,10 +209,19 @@ const DOC0917_PAX = {
   p24:["副總經理（隨團）","Paris","TL",""], p29:["經理（產品）","Tony","TL",""], p25:["資深協理（鐵道）","Jimmy","TL",""],
   p26:["經理（產品）","Jason","TL",""], p30:["副總經理（產品）","Debbie","TL",""], p27:["經理（嘉義）","Charis","TL",""], p31:["領隊","薛永南","TL",""],
 };
+/* 名單順序照 Google 名單第一頁（0917）：2731 → 雄獅主管 → 合作夥伴 → 工作人員；領隊自己新增的人排在同組最後 */
+const SHEET_ORDER=["p01","p02","p03","p04","p05","p06","p07","p08","p28","p09","p10","p11","p12","p13","p14","p15",
+  "p16","p17","p18","p19","p20","p21","p22","p23","p24","p29","p25","p32","p26","p30","p27","p31"];
+function sortPaxBySheet(list){
+  const idx=p=>{ const i=SHEET_ORDER.indexOf(p.id); return i>=0?i:999; };
+  const withPos=list.map((p,i)=>[p,i]); withPos.sort((a,b)=>(idx(a[0])-idx(b[0]))||(a[1]-b[1]));
+  list.splice(0,list.length,...withPos.map(x=>x[0]));
+  return list;
+}
 function applyDoc0917(list){
   const i32=list.findIndex(p=>p.id==="p32"); if(i32>=0) list.splice(i32,1);   /* 羅元榮 9/11 取消（0917 Google 名單） */
   list.forEach(p=>{ const d=DOC0917_PAX[p.id]; if(!d) return; p.rel=d[0]; p.en=d[1]; if(d[2]) p.title=d[2]; else delete p.title; if(d[3]) p.hon=d[3]; else delete p.hon; });
-  return list;
+  return sortPaxBySheet(list);
 }
 function applyHsr0911(list){
   const byId=Object.fromEntries(list.map(p=>[p.id,p]));
@@ -561,7 +570,7 @@ function buildSeed(){
     tour:TOUR_SEED, pax:PAX_SEED, nights:NIGHTS_SEED, menu:MENU_SEED, meals,
     vendors:VENDORS_SEED, vendorTodo:VENDOR_TODO_SEED,
     budget:BUDGET_ITEMS_SEED, headcount:BUDGET_HEADCOUNT_SEED,
-    itin:ITIN_SEED, luggageRoute:LUGGAGE_ROUTE_SEED, hsrTrains:HSR_TRAINS_SEED, _seatVer:5, _menuVer:1, _budgetVer:1, _tourVer:2, _docVer:6,
+    itin:ITIN_SEED, luggageRoute:LUGGAGE_ROUTE_SEED, hsrTrains:HSR_TRAINS_SEED, _seatVer:5, _menuVer:1, _budgetVer:1, _tourVer:2, _docVer:7,
   });
 }
 /* 出廠預設另存一份，之後 TOUR / PAX… 這些名字都指向 S.data */
@@ -668,6 +677,8 @@ function bindData(){
     for(const k of Object.keys(S.seating||{})) (S.seating[k].tables||[]).forEach(t=>{ t.seats=t.seats.map(v=>v==="p32"?null:v); });
     S.data._docVer=6;
   }
+  /* 一次性：名單順序改成照 Google 名單第一頁 */
+  if((S.data._docVer||0)<7){ sortPaxBySheet(PAX); S.data._docVer=7; }
   if((S.data._tourVer||0)<2){
     const st=(ITIN[2]||[]).find(x=>x.title==="自選 · 祝山日出");
     if(st){ st.links=(st.links||[]).filter(l=>l[0]!=="roster"); if(!st.links.some(l=>l[0]==="optin:sunrise")) st.links.unshift(["optin:sunrise","日出名單"]); }
@@ -1371,13 +1382,13 @@ function rosterList(scr){
   if(fld("room1")) cols.push(["9/20 房"]); if(fld("room2")) cols.push(["9/21 房"]);
   if(fld("meal")) cols.push(["特殊餐食"]); if(fld("note")) cols.push(["備註"]);
   const N1=NIGHTS.find(n=>n.key===1), N2=NIGHTS.find(n=>n.key===2);
-  let lastG="";
+  let lastG="", gseq=0;
   const rows=people.map((p,i)=>{
-    const g=grpName(p), gh=g!==lastG?`<tr class="ghead ${cls(g)}"><td colspan="${cols.length}">${esc(g==="2731"?"董事・貴賓":g)}</td></tr>`:""; lastG=g;
+    const g=grpName(p); if(g!==lastG) gseq=0; gseq++; const gh=g!==lastG?`<tr class="ghead ${cls(g)}"><td colspan="${cols.length}">${esc(g==="2731"?"董事・貴賓":g)}</td></tr>`:""; lastG=g;
     const back = (p.days||[]).includes(3) ? seatTxt(p.hsrBack,p.pnrBk,p.hsrBackTbc,"") : (seat672(p)?seatTxt(seat672(p),"",t672.tbc&&t672.tbc.includes(seat672(p)),` <span class="pill blue">0672 提前返北</span>`):`<span class="dimtxt">—</span>`);
     const go = p.hsr609 ? seatTxt(p.hsr609,"",false,` <span class="pill blue">0609 9/21 加入</span>`) : seatTxt(p.hsrGo,p.pnrGo,p.hsrGoTbc, p.board?` <span class="pill blue">${esc(p.board)}上車</span>`:"");
     const tds=[];
-    if(fld("grp")) tds.push(`<td class="gm">${esc(g)}</td>`); if(fld("seq")) tds.push(`<td class="sq">${i+1}</td>`);
+    if(fld("grp")) tds.push(`<td class="gm">${esc(g)}</td>`); if(fld("seq")) tds.push(`<td class="sq">${gseq}</td>`);
     tds.push(`<td class="nm">${ebtn(p.id,true)}${esc(p.name)}</td>`);
     if(fld("hon")) tds.push(`<td class="hn">${p.hon?`<b>${esc(p.hon)}</b>`:""}</td>`);
     if(fld("rel")) tds.push(`<td class="rl">${esc(p.rel||"")}</td>`);
