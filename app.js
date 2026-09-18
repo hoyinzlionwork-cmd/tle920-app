@@ -2646,7 +2646,7 @@ PAGES.budget=(hdr,scr)=>{
         if(first){ rows+=`<td class="date" rowspan="${dayRows}">${dateOf(d)}</td>`; first=false; }
         if(i===0) rows+=`<td class="comp" rowspan="${n}"><select class="bgsel" data-key="${esc(c.key)}" data-f="cat">${BUDGET_CATS.map(x=>`<option${x===c.cat?" selected":""}>${x}</option>`).join("")}</select>
             <span class="row2">${tx(b0,"slot","w-slot","餐次")}${tx(b0,"t","w-time","時間")}</span>${tx(b0,"vendor","w-vend","店家／對象")}</td>`;
-        rows+=`<td class="det"><span class="detrow">${tx(b,"name","","訂購明細")}<button class="bgdel" data-id="${esc(b.id)}" title="刪除這一列">✕</button></span>${tx(b,"note","w-note","備註（小字）")}${i===n-1?`<button class="bgaddline" data-key="${esc(c.key)}">＋ 加一列</button>`:""}</td>
+        rows+=`<td class="det"><span class="detrow">${tx(b,"name","","訂購明細")}<button class="bgdel" data-id="${esc(b.id)}" title="刪除這一列">✕</button></span>${b.note?`<div class="dnote">${esc(b.note)}</div>`:""}${i===n-1?`<button class="bgaddline" data-key="${esc(c.key)}">＋ 加一列</button>`:""}</td>
           <td class="num edit">${num(b,"qty","w-qty")}</td><td class="edit">${tx(b,"unit","w-unit","單位")}</td>
           <td class="num edit">${num(b,"price","w-price")}</td><td class="num" id="sub_${esc(b.id)}">${+b.qty?nt((+b.price||0)*(+b.qty||0)):""}</td>`;
         if(i===0){
