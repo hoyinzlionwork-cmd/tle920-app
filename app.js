@@ -2739,7 +2739,7 @@ function budgetCards(){
   return cards;
 }
 /* 已付訂金：領隊在表上改過就用改過的，否則用 Budget 表帶的（公司行前已付） */
-function cardDep(c){ return +c.dep||0; }   /* 已付訂金＝公司行前付的，表上鎖住 */
+function cardDep(c){ const v=(S.budgetDeposit||{})[c.key]; return v!=null&&v!=="" ? +v : (+c.dep||0); }   /* 已付訂金：表上改過就用改過的，否則用 Budget 表帶的 */
 function budgetTotals(){
   let cash=0, cashFinal=0, recorded=0, cashCards=0, depTotal=0, transfer=0, card=0, variance=0;
   budgetCards().forEach(c=>{
@@ -2770,6 +2770,7 @@ PAGES.budget=(hdr,scr)=>{
   const t=budgetTotals();
   if(!S.budgetNote) S.budgetNote={};
   if(!S.budgetDone) S.budgetDone={};
+  if(!S.budgetDeposit) S.budgetDeposit={};
   const cards=budgetCards();
   const dateOf=d=>{ const m=String(TOUR.dateTxt||"").match(/(\d{4})\/(\d{1,2})\/(\d{1,2})/); if(!m) return `第 ${d} 天`;
     const dt=new Date(+m[1],+m[2]-1,+m[3]+d-1); return `${dt.getFullYear()}${String(dt.getMonth()+1).padStart(2,"0")}${String(dt.getDate()).padStart(2,"0")}`; };
@@ -2796,7 +2797,7 @@ PAGES.budget=(hdr,scr)=>{
           <td class="num edit">${num(b,"price","w-price")}</td><td class="num" id="sub_${esc(b.id)}">${+b.qty?nt((+b.price||0)*(+b.qty||0)):""}</td>`;
         if(i===0){
           rows+=`<td class="tot" rowspan="${n}"><span class="paylbl">${esc(c.pay)}</span><b id="tot_${esc(c.key)}">NTD ${nt(c.budget)}</b></td>
-            <td class="num dep" rowspan="${n}">${cash?(dep?nt(dep):"0"):"—"}</td>
+            <td class="num edit" rowspan="${n}">${cash?`<input class="bgcell dep" data-key="${esc(c.key)}" data-f="dep" inputmode="numeric" value="${dep||""}" placeholder="0">`:"—"}</td>
             <td class="num" rowspan="${n}" id="rem_${esc(c.key)}">${cash?nt(rem):"—"}</td>
             <td class="num edit" rowspan="${n}">${paid?`<span class="pill green">公司已付</span>`:cash?`<input class="bgcell fin" data-key="${esc(c.key)}" data-f="fin" inputmode="numeric" value="${fin!=null?fin:""}" placeholder="填實付">`:`<span class="pill gray">${c.pay==="信用卡"?"公司刷卡":"公司轉帳"}</span>`}</td>
             <td class="edit notecell" rowspan="${n}"><textarea class="bgnote2" data-k="${esc(c.key)}" rows="2" placeholder="備註">${esc(S.budgetNote[c.key]||"")}</textarea></td>`;
@@ -2820,7 +2821,7 @@ PAGES.budget=(hdr,scr)=>{
       <div class="st"><span class="k">差額（已填的）</span><b id="bgVariance" class="v ${t.variance>0?"over":t.variance<0?"under":"even"}">${(t.variance>0?"＋":t.variance<0?"－":"")+fmtNT(Math.abs(t.variance))}</b></div>
     </div>
     <div class="bgfoot">
-      <span>飯店、梅園樓、禮盒等 <b>已付訂金 <span id="bgDep">${fmtNT(t.depTotal)}</span></b> 公司行前已付，鎖住不能改；領隊現金＝各單「剩餘金額」加總，格子改了會自動重算</span>
+      <span>飯店、梅園樓、禮盒等 <b>已付訂金 <span id="bgDep">${fmtNT(t.depTotal)}</span></b> 公司行前已付；領隊現金＝各單「剩餘金額」加總，任何格子改了都會自動重算</span>
       <span class="pill gray" id="bgRecorded">${t.recorded} / ${t.cashCards} 張已填實付</span>
     </div>
     <div class="bgprog">
@@ -2832,7 +2833,7 @@ PAGES.budget=(hdr,scr)=>{
   <div class="card bgtablewrap">
     <div class="bgpaper" id="bgPaper">
     <table class="bgtable">
-      <thead><tr><th>日期</th><th>完成</th><th>元件</th><th>訂購明細</th><th>數量</th><th>單位</th><th>項次單價</th><th>小計</th><th>TOTAL</th><th>已付訂金 🔒</th><th>剩餘金額</th><th>實付金額</th><th>備註</th></tr></thead>
+      <thead><tr><th>日期</th><th>完成</th><th>元件</th><th>訂購明細</th><th>數量</th><th>單位</th><th>項次單價</th><th>小計</th><th>TOTAL</th><th>已付訂金</th><th>剩餘金額</th><th>實付金額</th><th>備註</th></tr></thead>
       <tbody>${rows}</tbody>
       <tfoot><tr><td colspan="8" class="rep"><b>領隊報告：</b><textarea class="bgreport" id="bgReport" rows="3" placeholder="超支原因、店家未收款、發票缺漏…">${esc(S.budgetReport||"")}</textarea></td>
         <td colspan="5" class="grand"><span>TOTAL：</span><b>現金 <span id="bgCash2">${nt(t.cash)}</span> NTD</b><span class="sub">實付（已填）<span id="bgFinal2">${nt(t.cashFinal)}</span> NTD</span></td></tr></tfoot>
@@ -2853,6 +2854,7 @@ PAGES.budget=(hdr,scr)=>{
   el.querySelectorAll(".bgcell").forEach(inp=>inp.addEventListener("input",()=>{
     const raw=inp.value.replace(/[^\d.]/g,""), v=raw===""?null:parseFloat(raw);
     if(inp.dataset.f==="fin"){ const k=inp.dataset.key; if(v==null) delete S.budgetFinal[k]; else S.budgetFinal[k]=Math.round(v); refreshBudgetSummary(); }
+    else if(inp.dataset.f==="dep"){ const k=inp.dataset.key; if(v==null) delete S.budgetDeposit[k]; else S.budgetDeposit[k]=Math.round(v); refreshCard(k); }
     else { const b=item(inp.dataset.id); if(!b) return; b[inp.dataset.f]=v==null?0:v; b.budget=(+b.price||0)*(+b.qty||0); refreshCard(inp.closest("tr").dataset.key); }
     save();
   }));
@@ -2875,13 +2877,15 @@ PAGES.budget=(hdr,scr)=>{
   el.querySelectorAll(".bgnote2").forEach(ta=>ta.addEventListener("input",()=>{ const v=ta.value.trim(); if(v) S.budgetNote[ta.dataset.k]=v; else delete S.budgetNote[ta.dataset.k]; save(); }));
   /* 完成：那張單反灰鎖住；就地切換，不重畫（免得捲回最上面） */
   const lockRows=(key,on)=>{ el.querySelectorAll(`tr[data-key="${CSS.escape(key)}"]`).forEach(tr=>{ tr.classList.toggle("done",on);
-      tr.querySelectorAll(".bgtx,.bgcell,.bgsel,.bgdel,.bgaddline,.bgnote2").forEach(x=>x.disabled=on); }); };
+      tr.querySelectorAll(".bgtx,.bgcell:not(.dep),.bgsel,.bgdel,.bgaddline,.bgnote2").forEach(x=>x.disabled=on); }); };
   const doneCount=()=>{ const cs=budgetCards().filter(c=>c.pay==="現金"&&c.budget-cardDep(c)>0); const d=cs.filter(c=>S.budgetDone[c.key]).length;
     const e=el.querySelector("#bgDoneCnt"); if(e){ e.textContent=`已完成 ${d} / ${cs.length} 張`; e.className="pill "+(d===cs.length&&cs.length?"green":"gray"); } };
   el.querySelectorAll(".donebox input").forEach(ck=>ck.onchange=()=>{ const k=ck.dataset.key, on=ck.checked;
     if(on) S.budgetDone[k]=Date.now(); else delete S.budgetDone[k];
     ck.parentElement.classList.toggle("on",on); ck.parentElement.querySelector(".ckbox").textContent=on?"✓":""; lockRows(k,on); doneCount(); save(); });
-  el.querySelectorAll("tr.done").forEach(tr=>tr.querySelectorAll(".bgtx,.bgcell,.bgsel,.bgdel,.bgaddline,.bgnote2").forEach(x=>x.disabled=true));
+  el.querySelectorAll("tr.done").forEach(tr=>tr.querySelectorAll(".bgtx,.bgcell:not(.dep),.bgsel,.bgdel,.bgaddline,.bgnote2").forEach(x=>x.disabled=true));
+  /* 已付訂金改完離開格子就重畫一次：公司已付／剩餘／實付欄的狀態要跟著換 */
+  el.querySelectorAll(".bgcell.dep").forEach(inp=>inp.addEventListener("change",()=>{ save(); render(); }));
   doneCount();
   el.querySelector("#bgNext").onclick=()=>{ const tr=el.querySelector("tr.cardtop:not(.done)"); if(!tr){ toast("全部都完成了"); return; }
     tr.scrollIntoView({block:"center",behavior:"smooth"}); const key=tr.dataset.key; el.querySelectorAll(`tr[data-key="${CSS.escape(key)}"]`).forEach(x=>{ x.classList.add("flash"); setTimeout(()=>x.classList.remove("flash"),1600); }); };
