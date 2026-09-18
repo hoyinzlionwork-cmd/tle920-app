@@ -673,7 +673,7 @@ function buildSeed(){
     tour:TOUR_SEED, pax:PAX_SEED, nights:NIGHTS_SEED, menu:MENU_SEED, meals,
     vendors:VENDORS_SEED, vendorTodo:VENDOR_TODO_SEED,
     budget:BUDGET_ITEMS_SEED, headcount:BUDGET_HEADCOUNT_SEED,
-    itin:ITIN_SEED, luggageRoute:LUGGAGE_ROUTE_SEED, hsrTrains:HSR_TRAINS_SEED, _seatVer:5, _menuVer:1, _budgetVer:2, _tourVer:2, _docVer:10,
+    itin:ITIN_SEED, luggageRoute:LUGGAGE_ROUTE_SEED, hsrTrains:HSR_TRAINS_SEED, _seatVer:5, _menuVer:1, _budgetVer:2, _tourVer:2, _docVer:11,
   });
 }
 /* 出廠預設另存一份，之後 TOUR / PAX… 這些名字都指向 S.data */
@@ -791,6 +791,11 @@ function bindData(){
   }
   /* 一次性：店家 LINE 回覆的訂購證明掛到行程節點；補梅園樓司領寄舖節點 */
   if((S.data._docVer||0)<10){ applyStopConf(ITIN); S.data._docVer=10; }
+  /* 一次性：點名「筆記」併進旅客「備註」——同一個欄位，改一處全部同步 */
+  if((S.data._docVer||0)<11){
+    for(const [id,n] of Object.entries(S.notes||{})){ const p=pax(id); if(p&&n&&!(p.note||"").includes(n)) p.note=[p.note,n].filter(Boolean).join("；"); }
+    S.notes={}; S.data._docVer=11;
+  }
   if((S.data._docVer||0)<8){
     const N2=NIGHTS.find(n=>n.key===2);
     if(N2){ N2.rooms.forEach(r=>{ r.no=String(r.no||"").replace(/\b0(6\d\d)\b/g,"$1"); }); if(N2.info) N2.info=N2.info.replace(/\b0(6\d\d)\b/g,"$1"); }
@@ -1539,60 +1544,81 @@ function rosterList(scr){
   scr.appendChild(el);
 }
 
+/* 點名場次：行程表裡有「點名報到」捷徑的節點，每個各點一次（台北車站集合、北門報到…）。
+ * 第一場存在 S.roll[day]（首頁的「已報到」人數用這個），其餘存 S.rollS["day:節點標題"]。 */
+function rollSessions(day){
+  const ss=(ITIN[day]||[]).filter(st=>(st.links||[]).some(l=>l[0]==="roster")).map(st=>({t:st.t,title:st.title}));
+  return ss.length?ss:[{t:"",title:"本日點名"}];
+}
+function rollRec(day,idx,sess){
+  if(idx===0){ if(!S.roll[day]) S.roll[day]={}; return S.roll[day]; }
+  if(!S.rollS) S.rollS={}; const k=`${day}:${sess.title}`; if(!S.rollS[k]) S.rollS[k]={}; return S.rollS[k];
+}
 function rosterRoll(scr){
   dayPills(scr);
-  const bar=document.createElement("div");
-  bar.className="rollbar";
-  bar.innerHTML=`<span style="font-size:12.5px;color:var(--ink2);font-weight:600">點名對象：貴賓＋雄獅主管（工作人員不計）</span>
-    <button class="redo">${ic("refresh",14)} 重新點名</button>`;
-  bar.querySelector(".redo").onclick=()=>confirmBox(`重新點名將清空第 ${S.day} 天所有已到紀錄，確定？`,()=>{
-    S.roll[S.day]={}; save(); render(); toast(`第 ${S.day} 天已重新點名`);
-  });
-  scr.appendChild(bar);
-  const rec=S.roll[S.day];
+  const sessions=rollSessions(S.day);
+  if(!S.rollSess) S.rollSess={};
+  let si=S.rollSess[S.day]||0; if(si>=sessions.length) si=0;
+  const sess=sessions[si], rec=rollRec(S.day,si,sess);
+  if(sessions.length>1){
+    const sp=document.createElement("div"); sp.className="sesspills";
+    sp.innerHTML=`<span class="sl">點名場次</span>`+sessions.map((x,i)=>{ const r=rollRec(S.day,i,x), n=Object.keys(r).length;
+      return `<button class="tab${i===si?" on":""}" data-i="${i}">${esc(x.t?x.t+" ":"")}${esc(x.title)}${n?`<b>${n}</b>`:""}</button>`; }).join("");
+    sp.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{ S.rollSess[S.day]=+b.dataset.i; save(); render(); });
+    scr.appendChild(sp);
+  }
+  const act=GUESTS().filter(p=>p.days.includes(S.day));
+  const missing=act.filter(p=>!rec[p.id]), done=act.length-missing.length;
+  const pct=act.length?Math.round(done/act.length*100):0;
+  const only=!!S.rollOnlyMissing;
+  const seatOfDay=p=> S.day===3?p.hsrBack:(S.day===1?p.hsrGo:p.trainSeat);
+  const mark=(p,on)=>{ if(on) rec[p.id]=Date.now(); else delete rec[p.id]; if(navigator.vibrate) navigator.vibrate(8); save(); render(); };
   const el=document.createElement("div");
   el.className="pagepad";
-  const seatOfDay=p=> S.day===3?p.hsrBack:(S.day===1?p.hsrGo:p.trainSeat);
-  const rlist=document.createElement("div"); rlist.className="rolllist"; el.appendChild(rlist);
-  GUESTS().forEach(p=>{
-    const inDay=p.days.includes(S.day);
-    const ck=!!rec[p.id];
-    const card=document.createElement("div");
-    card.className="rollcard";
-    if(!inDay) card.style.opacity=".5";
-    card.innerHTML=`<div class="top">
-      <div class="fields">
-        <div class="rr"><span class="k">姓名</span><span class="v">${esc(p.name)} <span class="pill gray">${esc(p.rel)}</span>
-          ${p.meal?` <span class="pill amber">${esc(p.meal)}</span>`:""}</span></div>
-        <div class="rr"><span class="k">本日座位</span><span class="v"><span class="pill gray">${esc(seatOfDay(p))}</span> <span class="pill gray">${esc(p.tkt)}</span></span></div>
-        ${p.note?`<div class="rr"><span class="k">備註</span><span class="v" style="font-weight:500;color:var(--ink2)">${esc(p.note)}</span></div>`:""}
+  el.innerHTML=`
+  <div class="card rollhead${missing.length?"":" alldone"}">
+    <div class="rh1">
+      <div class="rhbig"><b>${done}</b><span>/ ${act.length}</span><i>已到${sessions.length>1?`・${esc(sess.title)}`:""}</i></div>
+      <div class="rhacts">
+        <button class="btn sec${only?" on":""}" id="rollOnly">${only?"顯示全部":"只看未到"}</button>
+        <button class="btn sec" id="rollAll">全部已到</button>
+        <button class="btn ghost" id="rollRedo">重新點名</button>
       </div>
-      ${ebtn(p.id,true)}
-      ${inDay?`<span class="arrived${ck?" on":" no"}"><span class="ckbox">${ck?"✓":""}</span>${ck?"已到":"未到"}</span>`
-        :`<span class="pill gray">本日未在團</span>`}
     </div>
-    ${inDay?`<input class="noteinp" placeholder="筆記：例：需輪椅、靠窗座位…" value="${esc(S.notes[p.id]||"")}">`:""}`;
-    if(inDay){
-      card.querySelector(".arrived").onclick=()=>{
-        if(rec[p.id]) delete rec[p.id]; else rec[p.id]=Date.now();
-        save(); render();
-      };
-      const inp=card.querySelector(".noteinp");
-      inp.onclick=e=>e.stopPropagation();
-      inp.onchange=()=>{ S.notes[p.id]=inp.value; save(); toast("筆記已存"); };
-    }
+    <div class="rhbar"><i style="width:${pct}%"></i></div>
+    ${missing.length?`<div class="rhmiss"><span class="ml">未到 ${missing.length} 位・點名字直接標已到</span><div class="mchips">${missing.map(p=>`<button class="mchip" data-p="${esc(p.id)}">${esc(p.name)}</button>`).join("")}</div></div>`
+      :`<div class="rhmiss ok">✓ 全部到齊</div>`}
+    <p class="vs" style="margin:8px 0 0">點名對象：貴賓＋雄獅主管（工作人員不計）。點整張卡片切換已到／未到。</p>
+  </div>
+  <div class="rolllist compact"></div>`;
+  const rlist=el.querySelector(".rolllist");
+  GUESTS().forEach(p=>{
+    const inDay=p.days.includes(S.day), ck=!!rec[p.id];
+    if(only && (ck || !inDay)) return;
+    const card=document.createElement("div");
+    card.className="rollcard2"+(ck?" on":"")+(inDay?"":" out");
+    card.innerHTML=`<div class="rc1"><b class="nm">${esc(p.name)}</b><span class="pill gray">${esc(p.rel)}</span>${ebtn(p.id,true)}
+        <span class="rcstate">${inDay?(ck?"✓ 已到":"未到"):"未在團"}</span></div>
+      <div class="rc2"><span class="pill gray">${esc(seatOfDay(p)||"—")}</span>${p.meal?`<span class="pill amber">${esc(p.meal)}</span>`:""}${p.hon?`<span class="pill gray">${esc(p.hon)}</span>`:""}
+        <button class="rcnote${p.note?" has":""}" title="備註">${ic("pen",13)}${p.note?esc(p.note):"備註"}</button></div>`;
+    if(inDay) card.addEventListener("click",e=>{ if(e.target.closest(".rcnote,.ebtn")) return; mark(p,!ck); });
+    card.querySelector(".rcnote").onclick=e=>{ e.stopPropagation();
+      editForm(`${p.name} 的備註`,[{k:"note",label:"備註（團體大表、旅客資料卡都會一起顯示）",type:"textarea",rows:3,ph:"例：需輪椅、靠窗座位…"}],{note:p.note||""},{onSave:o=>{ p.note=o.note.trim(); dataChanged("已儲存"); }}); };
     rlist.appendChild(card);
   });
+  if(!rlist.children.length) rlist.innerHTML=`<div class="tempty">✓ 全部到齊，沒有未到的人</div>`;
+  el.querySelectorAll(".mchip").forEach(b=>b.onclick=()=>{ const p=pax(b.dataset.p); if(p) mark(p,true); });
+  el.querySelector("#rollOnly").onclick=()=>{ S.rollOnlyMissing=!only; save(); render(); };
+  el.querySelector("#rollAll").onclick=()=>confirmBox(`把「${sess.title}」還沒到的 ${missing.length} 位全部標成已到？`,()=>{ missing.forEach(p=>rec[p.id]=Date.now()); save(); render(); toast("全部已到"); });
+  el.querySelector("#rollRedo").onclick=()=>confirmBox(`清空「${sess.title}」的點名紀錄，重新點？`,()=>{ for(const k of Object.keys(rec)) delete rec[k]; save(); render(); toast("已重新點名"); });
   editBar(el,{add:()=>editPax(null),addLabel:"新增旅客"});
   EDIT_HANDLER=id=>editPax(pax(id));
   scr.appendChild(el);
-  const act=GUESTS().filter(p=>p.days.includes(S.day));
-  const done=act.filter(p=>rec[p.id]).length;
   const sb=document.createElement("div");
   sb.className="statbar";
   sb.innerHTML=`<div class="st">全部<b>${act.length}</b></div>
     <div class="st hot">已到<b>${done}</b></div>
-    <div class="st">未到<b>${act.length-done}</b></div>`;
+    <div class="st">未到<b>${missing.length}</b></div>`;
   scr.appendChild(sb);
 }
 

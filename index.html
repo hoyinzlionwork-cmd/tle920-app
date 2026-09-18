@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="10784ea 2026-09-18T02:50Z">
+<meta name="build" content="567bb9f 2026-09-18T02:54Z">
 <title>導領e化平台 · 920董事會</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, minimum-scale=1, maximum-scale=5">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -191,6 +191,40 @@ svg.ic{width:1em;height:1em;stroke:currentColor;fill:none;stroke-width:2;stroke-
 .noteinp{width:100%;border:1px solid var(--line);border-radius:9px;padding:8px 11px;font-size:14px;font-family:inherit;
   margin-top:9px;background:#FAFAFB;color:var(--ink)}
 .noteinp::placeholder{color:var(--ink3)}
+.sesspills{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:9px 14px;background:#fff;border-bottom:1px solid var(--line)}
+.sesspills .sl{font-size:12.5px;font-weight:800;color:var(--ink2);margin-right:2px}
+.sesspills .tab b{margin-left:6px;background:var(--red);color:#fff;border-radius:999px;padding:0 7px;font-size:11.5px}
+.sesspills .tab.on{background:var(--red);border-color:var(--red);color:#fff}
+.sesspills .tab.on b{background:#fff;color:var(--red)}
+.rollhead{padding:14px 16px 12px}
+.rollhead.alldone{background:#F1FAF3;border-color:#BFE3C8}
+.rh1{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.rhbig{display:flex;align-items:baseline;gap:6px;flex:1}
+.rhbig b{font-size:40px;font-weight:900;color:var(--red);line-height:1}
+.rhbig span{font-size:20px;font-weight:700;color:var(--ink2)}
+.rhbig i{font-style:normal;font-size:14px;color:var(--ink2);margin-left:8px;font-weight:600}
+.rhacts{display:flex;gap:8px;flex-wrap:wrap}
+.rhacts .btn.on{background:var(--red-bg);border-color:var(--red);color:var(--red)}
+.rhbar{height:8px;border-radius:999px;background:var(--line2);margin:12px 0 10px;overflow:hidden}
+.rhbar i{display:block;height:100%;background:linear-gradient(90deg,#1E9E4A,#3DBF6A);border-radius:999px;transition:width .2s}
+.rhmiss .ml{display:block;font-size:12.5px;font-weight:800;color:var(--ink2);margin-bottom:6px}
+.rhmiss.ok{font-size:15px;font-weight:800;color:#1E9E4A}
+.mchips{display:flex;gap:7px;flex-wrap:wrap}
+.mchip{border:1.5px solid #F0B4BC;background:#FFF5F6;color:var(--red-dk);border-radius:999px;padding:7px 14px;font:inherit;font-size:14.5px;font-weight:800;cursor:pointer;min-height:38px}
+.mchip:active{background:var(--red);color:#fff}
+.rollcard2{background:#fff;border:1.5px solid var(--line);border-radius:14px;padding:12px 14px;cursor:pointer;position:relative;transition:background .12s,border-color .12s;-webkit-tap-highlight-color:transparent}
+.rollcard2:active{background:var(--line2)}
+.rollcard2.on{background:#EEF9F1;border-color:#8FD3A4}
+.rollcard2.out{opacity:.45;cursor:default}
+.rc1{display:flex;align-items:center;gap:8px}
+.rc1 .nm{font-size:19px;font-weight:900;color:var(--ink)}
+.rc1 .ebtn{width:22px;height:22px}
+.rcstate{margin-left:auto;font-size:13.5px;font-weight:800;color:var(--ink3);border:1.5px solid var(--line);border-radius:999px;padding:4px 12px;white-space:nowrap}
+.rollcard2.on .rcstate{background:#1E9E4A;border-color:#1E9E4A;color:#fff}
+.rc2{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:8px}
+.rcnote{margin-left:auto;border:1px dashed #C9C9CF;background:none;border-radius:8px;padding:4px 9px;font:inherit;font-size:12.5px;color:var(--ink3);cursor:pointer;display:inline-flex;align-items:center;gap:4px;max-width:60%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rcnote.has{border-style:solid;border-color:#E8C98A;background:#FFF8E6;color:#7A5200;font-weight:700}
+.rc3{margin-top:6px;font-size:12.5px;color:var(--ink2);line-height:1.5}
 .statbar{display:flex;background:#fff;border-top:1px solid var(--line);padding:10px 0 calc(10px + var(--safe-bottom));position:sticky;bottom:0}
 .statbar .st{flex:1;text-align:center;font-size:14px;color:var(--ink2);font-weight:600}
 .statbar .st b{font-size:17px;display:block;color:var(--ink)}
@@ -889,6 +923,7 @@ h3.sect{font-size:14px;color:var(--ink2);font-weight:800;margin:16px 2px 9px;let
 }
 @media (min-width:1000px){
   .rolllist,.vlist,.optlist,#lugList,#ordRows{grid-template-columns:1fr 1fr}
+  .rolllist.compact{grid-template-columns:repeat(3,1fr)}
   .optlist>.sect,#lugList>.card{grid-column:1/-1}
   .sect{margin-top:4px}
 }
