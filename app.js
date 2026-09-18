@@ -673,7 +673,7 @@ function buildSeed(){
     tour:TOUR_SEED, pax:PAX_SEED, nights:NIGHTS_SEED, menu:MENU_SEED, meals,
     vendors:VENDORS_SEED, vendorTodo:VENDOR_TODO_SEED,
     budget:BUDGET_ITEMS_SEED, headcount:BUDGET_HEADCOUNT_SEED,
-    itin:ITIN_SEED, luggageRoute:LUGGAGE_ROUTE_SEED, hsrTrains:HSR_TRAINS_SEED, _seatVer:5, _menuVer:1, _budgetVer:2, _tourVer:2, _docVer:9,
+    itin:ITIN_SEED, luggageRoute:LUGGAGE_ROUTE_SEED, hsrTrains:HSR_TRAINS_SEED, _seatVer:5, _menuVer:1, _budgetVer:2, _tourVer:2, _docVer:10,
   });
 }
 /* 出廠預設另存一份，之後 TOUR / PAX… 這些名字都指向 S.data */
@@ -790,7 +790,7 @@ function bindData(){
     S.data._budgetVer=2;
   }
   /* 一次性：店家 LINE 回覆的訂購證明掛到行程節點；補梅園樓司領寄舖節點 */
-  if((S.data._docVer||0)<9){ applyStopConf(ITIN); S.data._docVer=9; }
+  if((S.data._docVer||0)<10){ applyStopConf(ITIN); S.data._docVer=10; }
   if((S.data._docVer||0)<8){
     const N2=NIGHTS.find(n=>n.key===2);
     if(N2){ N2.rooms.forEach(r=>{ r.no=String(r.no||"").replace(/\b0(6\d\d)\b/g,"$1"); }); if(N2.info) N2.info=N2.info.replace(/\b0(6\d\d)\b/g,"$1"); }
@@ -1426,12 +1426,13 @@ PAGES.itin=(hdr,scr)=>{
     const d=document.createElement("div");
     d.className="stop";
     const links=(st.links||[]).map(([v,lb])=>`<button class="chip" data-v="${v}">${lb}</button>`).join("");
+    const cf=STOP_CONF[st.title]||st.conf||null;
     d.innerHTML=`<div class="card">${ebtn(String(i))}
       <div class="head"><span class="time">${esc(st.t)}</span><span class="title">${esc(st.title)}</span></div>
       ${st.desc?`<div class="desc">${esc(st.desc)}</div>`:""}
       ${st.staff&&st.staff.length?`<div class="staffbox"><div class="sh">工作事項</div>${st.staff.map(x=>`<div class="si">${esc(x)}</div>`).join("")}</div>`:""}
-      ${st.conf?`<div class="confbox"><div class="confh"><span>${ic("clip",15)} 訂購證明</span><i>${esc(st.conf.by||"")}</i><em>點圖放大給店家看</em></div>
-        ${st.conf.img&&typeof CONF_IMG!=="undefined"&&CONF_IMG[st.conf.img]?`<div class="confimg"><img src="${CONF_IMG[st.conf.img]}" alt="訂購證明"></div>`:`<div class="confb open">${(st.conf.lines||[]).map(x=>`<div>${esc(x)}</div>`).join("")}</div>`}</div>`:""}
+      ${cf?`<div class="confbox"><div class="confh"><span>${ic("clip",15)} 訂購證明</span><i>${esc(cf.by||"")}</i><em>點圖放大給店家看</em></div>
+        ${cf.img&&typeof CONF_IMG!=="undefined"&&CONF_IMG[cf.img]?`<div class="confimg"><img src="${CONF_IMG[cf.img]}" alt="訂購證明"></div>`:`<div class="confb open">${(cf.lines||[]).map(x=>`<div>${esc(x)}</div>`).join("")}</div>`}</div>`:""}
       ${links?`<div class="links">${links}</div>`:""}</div>`;
     d.querySelectorAll(".chip").forEach(ch=>ch.onclick=()=>goPage(ch.dataset.v));
     const ci=d.querySelector(".confimg img"); if(ci) ci.onclick=()=>openLightbox([{ title:`訂購證明 · ${st.title}`, render:()=>{ const im=new Image(); im.src=ci.src; return im; } }],0);
