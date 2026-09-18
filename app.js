@@ -2167,10 +2167,10 @@ function svgFusenCar(carNo, map, seg){
   g+= dir==="left" ? arrow(120,40,"#2B6BE0","運行方向","start") : arrow(W-120,W-40,"#E07B12","運行方向","end");
   /* 車體外殼、地板 */
   g+=`<rect x="${bx}" y="${by}" width="${bw}" height="${bh}" rx="16" fill="url(#${uid}-shell)" stroke="#8C7A55" stroke-width="1.5"/>
-      <rect x="${bx+7}" y="${by+9}" width="${bw-14}" height="${bh-18}" rx="10" fill="url(#${uid}-floor)"/>`;
-  /* 車窗（上下各一排，玻璃色） */
+      <rect x="${bx+8}" y="${by+14}" width="${bw-16}" height="${bh-28}" rx="8" fill="url(#${uid}-floor)"/>`;
+  /* 車窗：嵌在上下兩道車壁裡（俯視圖），不超出車體外框 */
   for(let i=0;i<14;i++){ const wx=bx+34+i*(bw-68)/13;
-    g+=`<rect x="${wx-22}" y="${by-6}" width="44" height="12" rx="3" fill="url(#${uid}-glass)" stroke="#5F6B77" stroke-width="1.2"/><rect x="${wx-22}" y="${by+bh-6}" width="44" height="12" rx="3" fill="url(#${uid}-glass)" stroke="#5F6B77" stroke-width="1.2"/>`; }
+    g+=`<rect x="${wx-21}" y="${by+3}" width="42" height="8" rx="2.5" fill="url(#${uid}-glass)" stroke="#7A8794" stroke-width="1"/><rect x="${wx-21}" y="${by+bh-11}" width="42" height="8" rx="2.5" fill="url(#${uid}-glass)" stroke="#7A8794" stroke-width="1"/>`; }
   /* 門柱 */
   const post=(x)=>`<rect x="${x}" y="${by+10}" width="11" height="58" rx="3" fill="#4A4A50"/><rect x="${x}" y="${by+bh-68}" width="11" height="58" rx="3" fill="#4A4A50"/>`;
   /* 左端 */
