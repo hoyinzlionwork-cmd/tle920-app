@@ -61,7 +61,7 @@ let TOUR = {
   dates:["9/20 (日)","9/21 (一)","9/22 (二)"],
   leader:"薛永南 領隊",
   rc:"莊學憲", tp:"林詠凱（鐵道）", op:"陳璟茹（國內OP・訂房）／周冠廷（產品）／洪采吟（嘉義）",
-  taxTitle:"雄獅旅行社股份有限公司", taxId:"04655091", budgetPrinted:"2026/09/10",
+  taxTitle:"雄獅旅行社股份有限公司", taxId:"04655091", budgetPrinted:"2026/09/18",
 };
 
 /* 旅客名單（作業手冊「名單」＋「高鐵」分頁）
@@ -404,36 +404,59 @@ let VENDOR_TODO = [
   ["遊覽車車行","作業手冊寫「43客座大巴（三內）」，「三內」疑為車行或內裝規格，須向 OP 確認。"],
 ];
 
-/* 預算表（公司系統 BOOK01 Budget 表，26TS920A3A，2026/09/10 印表，製表 李姵瑩）
+/* 預算表（公司系統 BOOK01 Budget 表，26TS920A3A T，9/18 版）
  * 每筆：day 第幾天／t 時間／cat 元件（餐廳・活動・團房・其它）／slot 餐次／vendor 店家／name 訂購明細
- *      price 項次單價／qty 數量／unit 單位／pay 付款方式（現金＝領隊帶的錢）／grp 同一張單的合併小計
- * 領隊現金 TOTAL＝所有「現金」項小計，表上為 NTD 89,550。
- * 「實際」欄由領隊回團後逐張填入決算金額，存於 S.budgetFinal（以卡片 key 為索引）。 */
-let BUDGET_HEADCOUNT = 24;
+ *      price 單價／qty 數量／unit 單位／dep 已付訂金（公司行前已付）／grp 同一張單的合併小計
+ * 領隊現金 TOTAL＝所有卡片的「剩餘金額」（TOTAL－已付訂金）加總；表上為 NTD 97,000。
+ * 「實付」欄由領隊逐張填入，存於 S.budgetFinal（以卡片 key 為索引）；已付訂金可在表上改，存於 S.budgetDeposit。 */
+let BUDGET_HEADCOUNT = 21;
 let BUDGET_ITEMS = [
-  { id:"k01", day:1, t:"07:00", cat:"餐廳", slot:"早餐",   vendor:"阜杭豆漿",           name:"早餐",                       price:150,  qty:24, unit:"人", pay:"現金" },
-  { id:"k02", day:1, t:"13:20", cat:"餐廳", slot:"下午茶", vendor:"十字鳴心咖啡",       name:"點心",                       price:200,  qty:24, unit:"人", pay:"現金" },
-  { id:"k03", day:1, t:"14:00", cat:"活動", slot:"",       vendor:"宿瓦納咖啡屋",       name:"不插電咖啡＋解說（雨備）",   price:400,  qty:24, unit:"人", pay:"現金", note:"水山巨木雨備方案，需三天前取消；沒下雨就不會用到" },
-  { id:"k04", day:1, t:"16:30", cat:"團房", slot:"",       vendor:"阿里山賓館",         name:"房型(標準雙人房)／床型(1大床)", price:0, qty:0, unit:"", pay:"信用卡", note:"公司刷卡，不走領隊現金" },
-  { id:"k05", day:2, t:"05:00", cat:"活動", slot:"",       vendor:"阿里山加成遊園車",   name:"日出包車",                   price:4500, qty:2,  unit:"台", pay:"現金" },
-  { id:"k06", day:2, t:"06:00", cat:"其它", slot:"",       vendor:"領隊",               name:"日出點心（領隊現場購買）",   price:50,   qty:24, unit:"人", pay:"現金" },
-  { id:"k07", day:2, t:"13:00", cat:"餐廳", slot:"午餐",   vendor:"FKUO山芙蓉茶業",     name:"餐標 600/人",                price:600,  qty:24, unit:"人", pay:"現金" },
-  { id:"k08", day:2, t:"14:30", cat:"活動", slot:"",       vendor:"林園製茶",           name:"茶席體驗＋導覽（需求老闆講解）", price:500, qty:24, unit:"人", pay:"現金" },
-  { id:"k09", day:2, t:"15:00", cat:"餐廳", slot:"下午茶", vendor:"愛山屋野生愛玉專賣店", name:"愛玉",                     price:0,    qty:24, unit:"人", pay:"現金", note:"Budget 表單價空白，現場實報實銷" },
-  { id:"k10", day:2, t:"15:00", cat:"餐廳", slot:"下午茶", vendor:"百年檜木甜甜圈",     name:"甜甜圈",                     price:0,    qty:24, unit:"人", pay:"現金", note:"Budget 表單價空白，現場實報實銷" },
-  { id:"k11", day:2, t:"16:20", cat:"團房", slot:"",       vendor:"阿里山英迪格酒店",   name:"房型(標準雙人房)／床型(1大床)", price:0, qty:0, unit:"", pay:"信用卡", note:"公司刷卡，不走領隊現金" },
-  { id:"k12", day:2, t:"20:00", cat:"團房", slot:"",       vendor:"梅園樓觀景飯店",     name:"雙床（含早）",               price:3780, qty:1,  unit:"間", pay:"銀存轉帳", grp:"g_meiyuan" },
-  { id:"k13", day:2, t:"20:00", cat:"團房", slot:"",       vendor:"梅園樓觀景飯店",     name:"雙床（含早）",               price:3780, qty:3,  unit:"間", pay:"銀存轉帳", grp:"g_meiyuan" },
-  { id:"k14", day:3, t:"11:00", cat:"活動", slot:"",       vendor:"優遊吧斯阿里山鄒族文化部落", name:"門票（雄獅專案價）",  price:100,  qty:24, unit:"人", pay:"現金", grp:"g_yuyu_tkt" },
-  { id:"k15", day:3, t:"11:00", cat:"活動", slot:"",       vendor:"優遊吧斯阿里山鄒族文化部落", name:"品茗",                price:100,  qty:24, unit:"人", pay:"現金", grp:"g_yuyu_tkt" },
-  { id:"k16", day:3, t:"12:30", cat:"活動", slot:"午餐",   vendor:"優遊吧斯阿里山鄒族文化部落", name:"合菜（需求 20 人坐包廂）", price:6000, qty:2, unit:"桌", pay:"現金", grp:"g_yuyu_meal" },
-  { id:"k17", day:3, t:"12:30", cat:"活動", slot:"午餐",   vendor:"優遊吧斯阿里山鄒族文化部落", name:"飲料（一茶一果）",    price:60,   qty:4,  unit:"瓶", pay:"現金", grp:"g_yuyu_meal" },
-  { id:"k18", day:3, t:"12:30", cat:"活動", slot:"午餐",   vendor:"優遊吧斯阿里山鄒族文化部落", name:"另外 4 位餐費",       price:600,  qty:4,  unit:"人", pay:"現金", grp:"g_yuyu_meal" },
-  { id:"k19", day:3, t:"",      cat:"其它", slot:"",       vendor:"領隊",               name:"【司機差旅費】$2,500/天",    price:2500, qty:2,  unit:"天", pay:"現金", grp:"g_misc" },
-  { id:"k20", day:3, t:"",      cat:"其它", slot:"",       vendor:"領隊",               name:"【停車費】實報實銷",         price:500,  qty:2,  unit:"天", pay:"現金", grp:"g_misc" },
-  { id:"k21", day:3, t:"",      cat:"其它", slot:"",       vendor:"領隊",               name:"【司機誤餐費】D1 午",        price:150,  qty:1,  unit:"人", pay:"現金", grp:"g_misc" },
-  { id:"k22", day:3, t:"",      cat:"其它", slot:"",       vendor:"領隊",               name:"【礦泉水】$120/箱（雄獅車不用給）", price:120, qty:3, unit:"箱", pay:"現金", grp:"g_misc" },
-  { id:"k23", day:3, t:"",      cat:"其它", slot:"",       vendor:"領隊",               name:"【零用金】$3,000×3 天",      price:9000, qty:1,  unit:"團", pay:"現金", grp:"g_misc" },
+  { id:"k01", day:1, t:"05:30", cat:"餐廳", slot:"早餐",   vendor:"阜杭豆漿",           name:"葷食－厚燒餅夾蛋",           price:50,   qty:27, unit:"人", pay:"現金", grp:"g_fuhang" },
+  { id:"k02", day:1, t:"05:30", cat:"餐廳", slot:"早餐",   vendor:"阜杭豆漿",           name:"熱豆漿",                     price:35,   qty:27, unit:"人", pay:"現金", grp:"g_fuhang" },
+  { id:"k03", day:1, t:"13:20", cat:"餐廳", slot:"下午茶", vendor:"十字鳴心咖啡",       name:"點心（現場統計）",           price:200,  qty:21, unit:"人", pay:"現金", grp:"g_coffee" },
+  { id:"k04", day:1, t:"13:20", cat:"餐廳", slot:"下午茶", vendor:"十字鳴心咖啡",       name:"冰釀咖啡／烏龍茶（熱）／阿里山藝妓（熱）／咖啡果皮茶（熱）／咖啡花茶（熱，口味淡薄無法回沖）", price:0, qty:0, unit:"", pay:"現金", grp:"g_coffee", note:"品項現場統計，單價店家報價" },
+  { id:"k05", day:1, t:"14:00", cat:"活動", slot:"",       vendor:"阿里山國家森林遊樂區", name:"國人全票",                 price:200,  qty:16, unit:"人", pay:"現金", grp:"g_park" },
+  { id:"k06", day:1, t:"14:00", cat:"活動", slot:"",       vendor:"阿里山國家森林遊樂區", name:"優待票－65 歲／導領人員",  price:10,   qty:12, unit:"人", pay:"現金", grp:"g_park" },
+  { id:"k07", day:1, t:"14:00", cat:"活動", slot:"",       vendor:"宿瓦納咖啡屋",       name:"不插電咖啡＋解說（此為雨備方案）", price:400, qty:21, unit:"人", pay:"現金" },
+  { id:"k08", day:1, t:"14:00", cat:"活動", slot:"",       vendor:"阿里山加成遊園車",   name:"來回接駁車（21＋6 工作人員＋1 領）", price:120, qty:27, unit:"人", pay:"現金", note:"14:00 候車亭→沼平車站＋15:30 沼平車站→阿里山賓館" },
+  { id:"k09", day:1, t:"16:30", cat:"團房", slot:"",       vendor:"阿里山賓館",         name:"（歷史館）貴賓四人房二大床－2 人（領隊住）", price:12500, qty:1, unit:"間", pay:"現金", grp:"g_abin", dep:12500 },
+  { id:"k10", day:1, t:"16:30", cat:"團房", slot:"",       vendor:"阿里山賓館",         name:"（現代館）豪華家庭二大床－1 人",   price:13500, qty:6, unit:"間", pay:"現金", grp:"g_abin", dep:81000 },
+  { id:"k11", day:1, t:"16:30", cat:"團房", slot:"",       vendor:"阿里山賓館",         name:"（現代館）歐式套房一大床－2 人",   price:21000, qty:1, unit:"間", pay:"現金", grp:"g_abin", dep:21000 },
+  { id:"k12", day:1, t:"16:30", cat:"團房", slot:"",       vendor:"阿里山賓館",         name:"（現代館）歐式套房二大床－2 人",   price:21000, qty:3, unit:"間", pay:"現金", grp:"g_abin", dep:63000 },
+  { id:"k13", day:1, t:"16:30", cat:"團房", slot:"",       vendor:"阿里山賓館",         name:"（現代館）歐式套房二大床－1 人",   price:21000, qty:1, unit:"間", pay:"現金", grp:"g_abin", dep:21000 },
+  { id:"k14", day:1, t:"16:30", cat:"團房", slot:"",       vendor:"阿里山賓館",         name:"（現代館）和洋式套房一大床－2 人", price:21000, qty:1, unit:"間", pay:"現金", grp:"g_abin", dep:21000 },
+  { id:"k15", day:1, t:"16:30", cat:"團房", slot:"",       vendor:"阿里山賓館",         name:"（現代館）和洋式套房一大床－1 人", price:21000, qty:1, unit:"間", pay:"現金", grp:"g_abin", dep:21000 },
+  { id:"k16", day:1, t:"16:30", cat:"團房", slot:"",       vendor:"阿里山賓館",         name:"（現代館）和洋式套房一大床＋一軟墊－3 人", price:22500, qty:1, unit:"間", pay:"現金", grp:"g_abin", dep:22500 },
+  { id:"k17", day:1, t:"16:30", cat:"團房", slot:"",       vendor:"阿里山賓館",         name:"中式合菜加價餐費",           price:1280, qty:21, unit:"人", pay:"現金", grp:"g_abin", dep:26880 },
+  { id:"k18", day:1, t:"16:30", cat:"其它", slot:"",       vendor:"阿里山賓館",         name:"進房禮（簽領據）",           price:50,   qty:21, unit:"人", pay:"現金" },
+  { id:"k19", day:1, t:"16:30", cat:"其它", slot:"",       vendor:"阿里山賓館",         name:"入房禮（簽領據）",           price:50,   qty:15, unit:"間", pay:"現金" },
+  { id:"k20", day:1, t:"21:00", cat:"團房", slot:"",       vendor:"阿里山高山青大飯店", name:"雙床（含早）",               price:2000, qty:1,  unit:"間", pay:"現金", dep:2000 },
+  { id:"k21", day:2, t:"05:00", cat:"活動", slot:"",       vendor:"阿里山加成遊園車",   name:"日出包車",                   price:4500, qty:2,  unit:"台", pay:"現金", note:"日出取消最慢前一天；發車後臨時取消需支付 1,200／車" },
+  { id:"k22", day:2, t:"05:40", cat:"其它", slot:"",       vendor:"領隊",               name:"日出點心（領隊現場購買）",   price:100,  qty:21, unit:"人", pay:"現金" },
+  { id:"k23", day:2, t:"11:00", cat:"餐廳", slot:"下午茶", vendor:"老街第一家現烤甜甜圈", name:"甜甜圈（實際 30／人）買 10 送 1，招待 2 司領", price:100, qty:22, unit:"人", pay:"現金" },
+  { id:"k24", day:2, t:"13:00", cat:"餐廳", slot:"午餐",   vendor:"FKUO山芙蓉茶業",     name:"餐標 600／人",               price:600,  qty:23, unit:"人", pay:"現金" },
+  { id:"k25", day:2, t:"14:30", cat:"活動", slot:"",       vendor:"林園製茶",           name:"茶席體驗＋導覽（需求老闆講解）", price:500, qty:22, unit:"人", pay:"現金" },
+  { id:"k26", day:2, t:"16:20", cat:"團房", slot:"",       vendor:"阿里山英迪格酒店",   name:"精品雙床 浴缸－2 人",        price:16170, qty:3, unit:"間", pay:"現金", grp:"g_indigo", dep:48510 },
+  { id:"k27", day:2, t:"16:20", cat:"團房", slot:"",       vendor:"阿里山英迪格酒店",   name:"精品大床 浴缸－2 人",        price:16170, qty:3, unit:"間", pay:"現金", grp:"g_indigo", dep:48510 },
+  { id:"k28", day:2, t:"16:20", cat:"團房", slot:"",       vendor:"阿里山英迪格酒店",   name:"精品大床 浴缸－1 人",        price:16170, qty:6, unit:"間", pay:"現金", grp:"g_indigo", dep:97020 },
+  { id:"k29", day:2, t:"16:20", cat:"團房", slot:"",       vendor:"阿里山英迪格酒店",   name:"豪華房大床－1 人",           price:16170, qty:1, unit:"間", pay:"現金", grp:"g_indigo", dep:16170 },
+  { id:"k30", day:2, t:"16:20", cat:"團房", slot:"",       vendor:"阿里山英迪格酒店",   name:"豪華房大床（大床＋沙發床）－3 人", price:24460, qty:1, unit:"間", pay:"現金", grp:"g_indigo", dep:24460 },
+  { id:"k31", day:2, t:"16:20", cat:"團房", slot:"",       vendor:"阿里山英迪格酒店",   name:"主廚套餐",                   price:3980, qty:19, unit:"人", pay:"現金", grp:"g_indigo", dep:75620 },
+  { id:"k32", day:2, t:"21:00", cat:"團房", slot:"",       vendor:"梅園樓觀景飯店",     name:"雙床（含早）",               price:3780, qty:1,  unit:"間", pay:"現金", grp:"g_meiyuan", dep:3780 },
+  { id:"k33", day:2, t:"21:00", cat:"團房", slot:"",       vendor:"梅園樓觀景飯店",     name:"雙床（含早）",               price:3780, qty:6,  unit:"間", pay:"現金", grp:"g_meiyuan", dep:22680 },
+  { id:"k34", day:3, t:"11:00", cat:"活動", slot:"",       vendor:"優遊吧斯",           name:"門票（雄獅專案價）",         price:100,  qty:19, unit:"人", pay:"現金", grp:"g_yuyu_tkt" },
+  { id:"k35", day:3, t:"11:00", cat:"活動", slot:"",       vendor:"優遊吧斯",           name:"品茗",                       price:100,  qty:19, unit:"人", pay:"現金", grp:"g_yuyu_tkt" },
+  { id:"k36", day:3, t:"12:30", cat:"餐廳", slot:"午餐",   vendor:"優遊吧斯",           name:"合菜（需求 20 人坐包廂）",   price:8200, qty:2,  unit:"桌", pay:"現金", grp:"g_yuyu_meal" },
+  { id:"k37", day:3, t:"12:30", cat:"餐廳", slot:"午餐",   vendor:"優遊吧斯",           name:"飲料（一茶一果）",           price:60,   qty:4,  unit:"瓶", pay:"現金", grp:"g_yuyu_meal" },
+  { id:"k38", day:3, t:"12:30", cat:"餐廳", slot:"午餐",   vendor:"優遊吧斯",           name:"工作人員餐費（暫抓）",       price:800,  qty:6,  unit:"人", pay:"現金" },
+  { id:"k39", day:3, t:"13:30", cat:"其它", slot:"",       vendor:"優遊吧斯",           name:"伴手禮－紅茶禮盒",           price:1200, qty:10, unit:"份", pay:"現金", grp:"g_yuyu_gift", dep:12000 },
+  { id:"k40", day:3, t:"13:30", cat:"其它", slot:"",       vendor:"優遊吧斯",           name:"樣品－精品綠禮盒",           price:1000, qty:1,  unit:"份", pay:"現金", grp:"g_yuyu_gift", dep:1000 },
+  { id:"k41", day:3, t:"13:30", cat:"其它", slot:"",       vendor:"優遊吧斯",           name:"樣品－紅茶禮盒",             price:1200, qty:1,  unit:"份", pay:"現金", grp:"g_yuyu_gift", dep:1200 },
+  { id:"k42", day:3, t:"",      cat:"其它", slot:"",       vendor:"領隊",               name:"【司機差旅費】$2,500／天（報價已含，現場不用支付）", price:0, qty:0, unit:"天", pay:"現金", grp:"g_misc" },
+  { id:"k43", day:3, t:"",      cat:"其它", slot:"",       vendor:"領隊",               name:"【停車費】實報實銷",         price:500,  qty:3,  unit:"天", pay:"現金", grp:"g_misc" },
+  { id:"k44", day:3, t:"",      cat:"其它", slot:"",       vendor:"領隊",               name:"【司機誤餐費】D1 午",        price:150,  qty:1,  unit:"人", pay:"現金", grp:"g_misc" },
+  { id:"k45", day:3, t:"",      cat:"其它", slot:"",       vendor:"領隊",               name:"【工作人員誤餐費】D2 早",    price:100,  qty:5,  unit:"人", pay:"現金", grp:"g_misc" },
+  { id:"k46", day:3, t:"",      cat:"其它", slot:"",       vendor:"領隊",               name:"【零用金】$3,000×3 天",      price:8255, qty:1,  unit:"團", pay:"現金", grp:"g_misc" },
 ];
 BUDGET_ITEMS.forEach(b=>{ b.budget = b.price*b.qty; });
 const BUDGET_CATS = ["餐廳","活動","團房","其它"];
@@ -511,6 +534,86 @@ let ITIN = {
   ],
 };
 
+/* 訂購證明：店家在 LINE 群回覆的 FNL／預約確認，照原文放在對應的行程節點下（by＝哪個群、誰回的）。
+ * 以節點標題對應；存檔裡的節點在 bindData 用 applyStopConf 補上。 */
+const STOP_CONF = {
+  "領取早餐（阜杭豆漿）": { by:"阜杭豆漿 LINE 群・小雪(MoMo)", lines:[
+    "團號：26TS920A3A T　團名：雄獅董事會嘉義福森AC3日",
+    "取餐日期：09/20 (日)　時間：早上 05:30 取餐",
+    "取餐人：薛永南 09********",
+    "內容：葷食－厚燒餅夾蛋 $50×27 份、熱豆漿 $35／個×27 杯（份數少一份，以此筆為主）",
+    "★ 請提供吸管 ＆ 每份要 1 個小提袋",
+    "◆ 費用領隊當日付清",
+    "◆ 發票：抬頭 雄獅旅行社股份有限公司／統編 04655091",
+    "訂餐人：OP 陳璟茹 02-8793-2902" ] },
+  "水山巨木步道（導覽）": { by:"阿里山加成電動車 LINE 群・Kaiyi", lines:[
+    "團號：26TS920A3A T　團名：雄獅董事",
+    "日期：09/20 日　人數：22＋5 工作人員＋1 領",
+    "領隊：薛永南 09********",
+    "價格：來回 $120／人",
+    "項目：14:00 候車亭→沼平車站接駁（2 台包車）",
+    "　　　15:30 沼平車站→阿里山賓館（2 台包車）" ] },
+  "自選 · 祝山日出": { by:"阿里山加成電動車 LINE 群・Kaiyi", lines:[
+    "原訂日出包車　日期：09/21 一",
+    "時間：請與領隊約正確時間",
+    "項目：日出包車費用 4,500×2 台＝9,000 元",
+    "人數：22＋1 領　領隊：薛永南 09********" ] },
+  "奮起湖老街": { by:"老街第一家甜甜圈 LINE・淑玲", lines:[
+    "團名：雄獅董事會　日期：9/21 一　時間：11:00",
+    "外送地點：奮起湖車站月台",
+    "聯絡人：周冠廷 09********",
+    "品項：甜甜圈 $30　份數：22",
+    "★ 費用現場結清",
+    "發票：抬頭 雄獅旅行社股份有限公司／統編 04655091",
+    "OP 陳璟茹 02-8793-2902" ] },
+  "午餐 · 山芙蓉 無菜單料理": { by:"山芙蓉茶業 LINE 群・佩琪", lines:[
+    "團號：26TS920A3A T　團名：雄獅董事",
+    "日期：09/21 一　時間：13:00–14:00",
+    "人數：23＋6 工作人員＋2 司領（招待）",
+    "領隊：薛永南 09********",
+    "項目：餐標 $600／人（開 3 桌／每桌分成 2 份出餐）",
+    "分桌明細：A 桌 10 人（忌生食/海鮮(含魚)×2、忌雞×1、忌辣×1、忌乳製品含起司×1）",
+    "　　　　　B 桌 6 人（忌奶製品含起司×1）／C 桌 7 人（忌起司、生食×1）",
+    "A 桌新增一位用餐；周先生已另外提供過",
+    "★ 費用領隊現場結清",
+    "發票：抬頭 雄獅旅行社股份有限公司／統編 04655091" ] },
+  "小山霂茗 · 導覽＋茶席體驗": { by:"林園製茶 雄獅工作群・陳璟茹 Ruby", lines:[
+    "團號：26TS920A3A T　團名：雄獅董事",
+    "日期：09/21 一　時間：14:30–16:00",
+    "人數：22＋6 工作人員＋2 司領",
+    "領隊：薛永南 09********",
+    "項目：茶席體驗＋導覽 $500／人（需求老闆講解）",
+    "★ 費用領隊現場結清",
+    "發票：抬頭 雄獅旅行社股份有限公司／統編 04655091" ] },
+  "工作人員入住 梅園樓觀景飯店（司領寄舖）": { by:"梅園樓觀景飯店 LINE", lines:[
+    "團名：雄獅董事　團號：26TS920A3A T",
+    "日期：09/21 一　領隊：薛永南 09********",
+    "項目：1.（司領寄舖）兩小床（含早）$3,780×1 間——8/10 已匯款完成",
+    "　　　2.（司領寄舖）兩小床（含早）$3,780×3 間——8/25 新增",
+    "　　　3.（司領寄舖）兩小床（含早）$3,780×3 間——9/11 新增",
+    "★ 費用已匯款完成",
+    "發票：抬頭 雄獅旅行社股份有限公司／統編 04655091" ] },
+  "優遊吧斯 鄒族文化部落": { by:"雄獅×優遊吧斯團體對接工作檔・優遊吧斯業務部", lines:[
+    "團號：26TS920A3A T　團名：雄獅董事",
+    "日期：09/22 二　時間：11:00–14:30",
+    "客人：19 人　司領：工作人員 6＋司領 2（請協助招待）",
+    "領隊：薛永南 09********",
+    "項目：門票 $100／人（雄獅專案價）、品茗 $100／人",
+    "　　　合菜 $8,200×2 桌＋每桌 2 飲（需求包廂 20 人桌坐）",
+    "特殊餐食：忌雞×1／忌奶製品含起司×2",
+    "另外周先生有預訂禮盒金額 $3,900（此筆費用會行前匯款）",
+    "★ 費用領隊現場結清",
+    "發票：抬頭 雄獅旅行社股份有限公司／統編 04655091" ] },
+};
+const MEIYUAN_STOP = { t:"21:00", title:"工作人員入住 梅園樓觀景飯店（司領寄舖）", desc:"貴賓住英迪格；工作人員（司領寄舖）當晚住梅園樓，兩小床含早共 7 間，費用已匯款。", staff:["冠廷：確認 7 間房與早餐時間"], links:[["vendors","店家聯絡"]] };
+function applyStopConf(itin){
+  for(const d of Object.keys(itin)) (itin[d]||[]).forEach(st=>{ const c=STOP_CONF[st.title]; if(c) st.conf=c; });
+  const d2=itin[2]||(itin[2]=[]);
+  if(!d2.some(x=>x.title===MEIYUAN_STOP.title)){ d2.push(Object.assign({conf:STOP_CONF[MEIYUAN_STOP.title]},JSON.parse(JSON.stringify(MEIYUAN_STOP)))); d2.sort((a,b)=>String(a.t).localeCompare(String(b.t))); }
+  return itin;
+}
+applyStopConf(ITIN);
+
 /* 行李車路線（作業手冊「代辦事項」） */
 let LUGGAGE_ROUTE = {
   1:"台北車站（西1門上行李）→ 阿里山賓館　｜　冠廷隨車、采欣＋Eunice 台北車站收行李",
@@ -570,7 +673,7 @@ function buildSeed(){
     tour:TOUR_SEED, pax:PAX_SEED, nights:NIGHTS_SEED, menu:MENU_SEED, meals,
     vendors:VENDORS_SEED, vendorTodo:VENDOR_TODO_SEED,
     budget:BUDGET_ITEMS_SEED, headcount:BUDGET_HEADCOUNT_SEED,
-    itin:ITIN_SEED, luggageRoute:LUGGAGE_ROUTE_SEED, hsrTrains:HSR_TRAINS_SEED, _seatVer:5, _menuVer:1, _budgetVer:1, _tourVer:2, _docVer:8,
+    itin:ITIN_SEED, luggageRoute:LUGGAGE_ROUTE_SEED, hsrTrains:HSR_TRAINS_SEED, _seatVer:5, _menuVer:1, _budgetVer:2, _tourVer:2, _docVer:9,
   });
 }
 /* 出廠預設另存一份，之後 TOUR / PAX… 這些名字都指向 S.data */
@@ -680,6 +783,14 @@ function bindData(){
   /* 一次性：名單順序改成照 Google 名單第一頁 */
   if((S.data._docVer||0)<7){ sortPaxBySheet(PAX); S.data._docVer=7; }
   /* 一次性：英迪格房號改回三位數（0601 → 601） */
+  /* 一次性：預算表換成 9/18 版 Budget 表（已付訂金改由表帶入） */
+  if((S.data._budgetVer||0)<2){
+    S.data.budget=seed.budget; BUDGET_ITEMS=S.data.budget; S.data.headcount=seed.headcount; BUDGET_HEADCOUNT=seed.headcount;
+    S.budgetFinal={}; S.budgetDeposit={}; S.budgetNote={}; TOUR.budgetPrinted=seed.tour.budgetPrinted;
+    S.data._budgetVer=2;
+  }
+  /* 一次性：店家 LINE 回覆的訂購證明掛到行程節點；補梅園樓司領寄舖節點 */
+  if((S.data._docVer||0)<9){ applyStopConf(ITIN); S.data._docVer=9; }
   if((S.data._docVer||0)<8){
     const N2=NIGHTS.find(n=>n.key===2);
     if(N2){ N2.rooms.forEach(r=>{ r.no=String(r.no||"").replace(/\b0(6\d\d)\b/g,"$1"); }); if(N2.info) N2.info=N2.info.replace(/\b0(6\d\d)\b/g,"$1"); }
@@ -1157,6 +1268,7 @@ const BUDGET_FIELDS=()=>[
   {k:"cat",label:"元件",type:"select",opts:BUDGET_CATS},{k:"slot",label:"餐次",ph:"早餐／午餐／下午茶（非餐廳留空）"},
   {k:"vendor",label:"店家／對象",required:true},{k:"name",label:"訂購明細",required:true},
   {k:"price",label:"項次單價",type:"number"},{k:"qty",label:"數量",type:"number"},{k:"unit",label:"單位",ph:"人／台／間／桌"},
+  {k:"dep",label:"已付訂金（公司行前已付，此筆）",type:"number"},
   {k:"pay",label:"付款方式",type:"select",opts:BUDGET_PAYS},{k:"grp",label:"合併小計代碼",ph:"同一張單的項目填相同代碼，例 g_yuyu_meal"},
   {k:"note",label:"備註",type:"textarea",rows:2},
 ];
@@ -1302,6 +1414,7 @@ function dayPills(scr){
 }
 
 /* ---------- 行程表 ---------- */
+const CONF_OPEN=new Set();   /* 這次開啟期間展開過的訂購證明 */
 PAGES.itin=(hdr,scr)=>{
   hbar(hdr,"行程表",{back:true});
   dayPills(scr);
@@ -1318,8 +1431,11 @@ PAGES.itin=(hdr,scr)=>{
       <div class="head"><span class="time">${esc(st.t)}</span><span class="title">${esc(st.title)}</span></div>
       ${st.desc?`<div class="desc">${esc(st.desc)}</div>`:""}
       ${st.staff&&st.staff.length?`<div class="staffbox"><div class="sh">工作事項</div>${st.staff.map(x=>`<div class="si">${esc(x)}</div>`).join("")}</div>`:""}
+      ${st.conf?`<div class="confbox"><button class="confh" type="button"><span>${ic("clip",15)} 訂購證明</span><i>${esc(st.conf.by||"")}</i><em>展開</em></button><div class="confb">${(st.conf.lines||[]).map(x=>`<div>${esc(x)}</div>`).join("")}</div></div>`:""}
       ${links?`<div class="links">${links}</div>`:""}</div>`;
     d.querySelectorAll(".chip").forEach(ch=>ch.onclick=()=>goPage(ch.dataset.v));
+    const cb=d.querySelector(".confbox"); if(cb){ const key="conf:"+S.day+":"+i; if(CONF_OPEN.has(key)) cb.classList.add("open");
+      cb.querySelector(".confh").onclick=()=>{ cb.classList.toggle("open"); if(cb.classList.contains("open")) CONF_OPEN.add(key); else CONF_OPEN.delete(key); cb.querySelector("em").textContent=cb.classList.contains("open")?"收合":"展開"; }; }
     tl.appendChild(d);
   });
   editBar(el,{add:()=>editStop(null),addLabel:"新增節點"});
@@ -2447,20 +2563,23 @@ function budgetCards(){
   BUDGET_ITEMS.forEach(b=>{
     const key=b.grp||b.id;
     let c=byKey[key];
-    if(!c){ c=byKey[key]={ key, day:+b.day||1, t:b.t||"", cat:b.cat, slot:b.slot||"", vendor:b.vendor||"", pay:b.pay||"現金", lines:[], budget:0, notes:[] }; cards.push(c); }
-    c.lines.push(b); c.budget+=(+b.price||0)*(+b.qty||0); if(b.note) c.notes.push(b.note);
+    if(!c){ c=byKey[key]={ key, day:+b.day||1, t:b.t||"", cat:b.cat, slot:b.slot||"", vendor:b.vendor||"", pay:b.pay||"現金", lines:[], budget:0, dep:0, notes:[] }; cards.push(c); }
+    c.lines.push(b); c.budget+=(+b.price||0)*(+b.qty||0); c.dep+=(+b.dep||0); if(b.note) c.notes.push(b.note);
   });
   cards.sort((a,b)=>a.day-b.day||(a.t?String(a.t):"99").localeCompare(b.t?String(b.t):"99"));   /* 沒時間的雜支排在當天最後 */
   return cards;
 }
+/* 已付訂金：領隊在表上改過就用改過的，否則用 Budget 表帶的（公司行前已付） */
+function cardDep(c){ const v=(S.budgetDeposit||{})[c.key]; return v!=null&&v!=="" ? +v : c.dep; }
 function budgetTotals(){
-  let cash=0, cashFinal=0, recorded=0, cashCards=0, transfer=0, card=0;
+  let cash=0, cashFinal=0, recorded=0, cashCards=0, depTotal=0, transfer=0, card=0;
   budgetCards().forEach(c=>{
-    if(c.pay==="現金"){ cash+=c.budget; cashCards++; const f=S.budgetFinal[c.key]; if(f!=null){ cashFinal+=f; recorded++; } else cashFinal+=c.budget; }
+    if(c.pay==="現金"){ const dep=cardDep(c), rem=c.budget-dep; depTotal+=dep; cash+=rem; if(rem>0) cashCards++;
+      const f=S.budgetFinal[c.key]; if(f!=null){ cashFinal+=f; if(rem>0) recorded++; } else cashFinal+=rem; }
     else if(c.pay==="信用卡") card++;
     else transfer+=c.budget;
   });
-  return { cash, cashFinal, recorded, cashCards, transfer, card, variance:cashFinal-cash };
+  return { cash, cashFinal, recorded, cashCards, depTotal, transfer, card, variance:cashFinal-cash };
 }
 function refreshBudgetSummary(){
   const t=budgetTotals();
@@ -2491,7 +2610,7 @@ PAGES.budget=(hdr,scr)=>{
     const dayRows=cs.reduce((n,c)=>n+c.lines.length,0);
     let first=true;
     cs.forEach(c=>{
-      const n=c.lines.length, cash=c.pay==="現金", dep=+S.budgetDeposit[c.key]||0, fin=S.budgetFinal[c.key];
+      const n=c.lines.length, cash=c.pay==="現金", dep=cardDep(c), rem=c.budget-dep, fin=S.budgetFinal[c.key], paid=cash&&dep>0&&rem<=0;
       const hasAmt=c.lines.some(b=>+b.qty);
       c.lines.forEach((b,i)=>{
         rows+=`<tr class="${cash?"":"nocash"}${i===0?" cardtop":""}">`;
@@ -2503,8 +2622,8 @@ PAGES.budget=(hdr,scr)=>{
         if(i===0){
           rows+=`<td class="tot" rowspan="${n}"><span class="paylbl">${esc(c.pay)}</span><b>${hasAmt?"NTD "+nt(c.budget):"NTD 0"}</b></td>
             <td class="num edit" rowspan="${n}">${cash?`<input class="bgcell" data-k="${esc(c.key)}" data-f="dep" inputmode="numeric" value="${dep||""}" placeholder="0">`:"—"}</td>
-            <td class="num" rowspan="${n}" id="rem_${esc(c.key)}">${cash?nt(c.budget-dep):"—"}</td>
-            <td class="num edit" rowspan="${n}">${cash?`<input class="bgcell fin" data-k="${esc(c.key)}" data-f="fin" inputmode="numeric" value="${fin!=null?fin:""}" placeholder="${nt(c.budget)}">`:`<span class="pill gray">${c.pay==="信用卡"?"公司刷卡":"公司轉帳"}</span>`}</td>
+            <td class="num" rowspan="${n}" id="rem_${esc(c.key)}">${cash?nt(rem):"—"}</td>
+            <td class="num edit" rowspan="${n}">${paid?`<span class="pill green">公司已付</span>`:cash?`<input class="bgcell fin" data-k="${esc(c.key)}" data-f="fin" inputmode="numeric" value="${fin!=null?fin:""}" placeholder="${nt(rem)}">`:`<span class="pill gray">${c.pay==="信用卡"?"公司刷卡":"公司轉帳"}</span>`}</td>
             <td class="edit notecell" rowspan="${n}"><textarea class="bgnote2" data-k="${esc(c.key)}" rows="2" placeholder="備註">${esc(S.budgetNote[c.key]||"")}</textarea></td>`;
         }
         rows+=`</tr>`;
@@ -2526,7 +2645,7 @@ PAGES.budget=(hdr,scr)=>{
       <div class="st"><span class="k">差額</span><b id="bgVariance" class="v ${t.variance>0?"over":t.variance<0?"under":"even"}">${(t.variance>0?"＋":t.variance<0?"－":"")+fmtNT(Math.abs(t.variance))}</b></div>
     </div>
     <div class="bgfoot">
-      <span>另有 <b>銀存轉帳 ${fmtNT(t.transfer)}</b>、<b>公司刷卡 ${t.card} 筆</b>（飯店），不在領隊現金內</span>
+      <span>飯店、梅園樓、禮盒等 <b>已付訂金 ${fmtNT(t.depTotal)}</b> 公司行前已付，不在領隊現金內；領隊現金＝各單「剩餘金額」加總</span>
       <span class="pill gray" id="bgRecorded">${t.recorded} / ${t.cashCards} 張已填實付</span>
     </div>
   </div>
@@ -2548,7 +2667,7 @@ PAGES.budget=(hdr,scr)=>{
     inp.addEventListener("input",()=>{
       const k=inp.dataset.k, raw=inp.value.replace(/[^\d]/g,""), v=raw===""?null:parseInt(raw,10);
       if(inp.dataset.f==="dep"){ if(v==null) delete S.budgetDeposit[k]; else S.budgetDeposit[k]=v;
-        const c=cards.find(x=>x.key===k); const rem=el.querySelector(`#rem_${CSS.escape(k)}`); if(rem&&c) rem.textContent=nt(c.budget-(v||0)); }
+        const c=cards.find(x=>x.key===k); const rem=el.querySelector(`#rem_${CSS.escape(k)}`); if(rem&&c) rem.textContent=nt(c.budget-cardDep(c)); refreshBudgetSummary(); }
       else { if(v==null) delete S.budgetFinal[k]; else S.budgetFinal[k]=v; refreshBudgetSummary(); }
       save();
     });
