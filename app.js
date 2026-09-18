@@ -2356,13 +2356,14 @@ PAGES.coffee=(hdr,scr)=>{
     <div class="t"><span>阿里山林鐵 · 十字路站</span><b>鳴心咖啡 車上預點</b><span>福森號抵站前點好，領隊一通電話下單，到站即取</span></div></div>
   <div class="card"><div class="cardh">📊 下單統計 <span class="pill redln">共 ${orders.length} 杯${total?` · $${total}`:""}</span></div>
     <div class="ordsum">${sum}</div></div>
-  <div class="card"><div class="cardh">貴賓點餐 <span class="pill gray">${PAX.filter(p=>p.days.includes(S.day===2?2:1)&&p.group!=="工作人員").length} 位</span></div><div id="ordRows"></div></div>
+  <div class="card"><div class="cardh">貴賓點餐 <span class="pill gray">${PAX.filter(p=>p.days.includes(1)&&p.group!=="工作人員").length} 位</span><span class="pill redln">9/20 福森號 A 段</span></div><div id="ordRows"></div></div>
   <button class="btn sec" id="clearOrd">清空全部訂單</button>
   ${typeof MENU_IMG_CREDIT!=="undefined"?`<p class="imgcredit">品項照片為示意（Flickr CC BY 2.0：${Object.values(MENU_IMG_CREDIT).map(c=>esc(c.by)).join("、")}），非鳴心咖啡實拍。</p>`:""}`;
   const rows=el.querySelector("#ordRows");
   /* 依福森號 A 段的車廂分成 A 車（5 車守車）、B 車（4 車客座）；領隊在車上點餐時一節一節收 */
   const carOf=p=>{ const st=fusenSeatsOf("A"); for(const c of [5,4]) if(Object.values(st[c]||{}).includes(p.id)) return c; return 0; };
-  const people=PAX.filter(p=>p.days.includes(S.day===2?2:1)&&p.group!=="工作人員");
+  /* 只有 A 段（9/20）有咖啡預點，名單固定看第 1 天在團的人 */
+  const people=PAX.filter(p=>p.days.includes(1)&&p.group!=="工作人員");
   const groups=[[5,"A 車","福森號 5 車・守車車廂"],[4,"B 車","福森號 4 車・客座車廂"],[0,"未配位","不在福森號座位圖上"]];
   groups.forEach(([car,lb,sub])=>{
     const list=people.filter(p=>carOf(p)===car); if(!list.length) return;
