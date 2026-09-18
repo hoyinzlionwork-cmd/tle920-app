@@ -60,7 +60,8 @@ let TOUR = {
   days:3,
   dates:["9/20 (日)","9/21 (一)","9/22 (二)"],
   leader:"薛永南 領隊",
-  rc:"莊學憲", tp:"林詠凱（鐵道）", op:"陳璟茹（國內OP・訂房）／周冠廷（產品）／洪采吟（嘉義）",
+  rc:"莊學憲 0963149442", tp:"林詠凱（鐵道）", op:"陳璟茹 0935665146（國內OP・訂房）／周冠廷（產品）／洪采吟（嘉義）",
+  checkin:"05:30 領隊報到", meet:"05:50 台北雄獅 站前門市", total:"30 人（交班表）", cashOut:"NT$97,000",
   taxTitle:"雄獅旅行社股份有限公司", taxId:"04655091", budgetPrinted:"2026/09/18",
 };
 
@@ -467,6 +468,8 @@ let ITIN = {
   1: [
     { t:"05:30", title:"領取早餐（阜杭豆漿）", desc:"招牌厚餅夾蛋＋豆漿（品項待確認）。",
       staff:["領隊前往阜杭豆漿領取早餐","董辦準備早餐提袋，需 20 個雄獅小紅袋"], links:[["vendors:v_fuhang","阜杭豆漿 資訊"]] },
+    { t:"05:50", title:"集合 · 台北雄獅 站前門市", desc:"領隊 05:30 報到（集合時間前 20 分鐘，遲到依導領部規範扣 300 元）；貴賓 05:50 站前門市集合報到，06:10 出發前往台北車站月台。",
+      staff:["冠廷 05:50 站前門市開門、擺設報到區","領隊：帶雄獅旗、背心、布條、福森號車牌"], links:[["roster","點名報到"]] },
     { t:"06:10", title:"台北車站 集合出發", desc:"集合報到、發送早餐及高鐵車票。",
       staff:["領隊：集合報到、發送早餐及車票","冠廷：聯絡行李車司機（西1門上行李）","采欣＋Eunice：收取貴賓行李放上行李車","冠廷隨行李車一同前往嘉義"],
       links:[["roster","點名報到"],["seats:hsr","高鐵座位表"],["luggage","行李點收"]] },
@@ -540,7 +543,7 @@ const STOP_CONF = {
   "領取早餐（阜杭豆漿）": { img:"fuhang", by:"阜杭豆漿 LINE 群・小雪(MoMo)", lines:[
     "團號：26TS920A3A T　團名：雄獅董事會嘉義福森AC3日",
     "取餐日期：09/20 (日)　時間：早上 05:30 取餐",
-    "取餐人：薛永南 09********",
+    "取餐人：薛永南 0935175805",
     "內容：葷食－厚燒餅夾蛋 $50×27 份、熱豆漿 $35／個×27 杯（份數少一份，以此筆為主）",
     "★ 請提供吸管 ＆ 每份要 1 個小提袋",
     "◆ 費用領隊當日付清",
@@ -549,7 +552,7 @@ const STOP_CONF = {
   "水山巨木步道（導覽）": { img:"jiacheng", by:"阿里山加成電動車 LINE 群・Kaiyi", lines:[
     "團號：26TS920A3A T　團名：雄獅董事",
     "日期：09/20 日　人數：22＋5 工作人員＋1 領",
-    "領隊：薛永南 09********",
+    "領隊：薛永南 0935175805",
     "價格：來回 $120／人",
     "項目：14:00 候車亭→沼平車站接駁（2 台包車）",
     "　　　15:30 沼平車站→阿里山賓館（2 台包車）" ] },
@@ -557,11 +560,11 @@ const STOP_CONF = {
     "原訂日出包車　日期：09/21 一",
     "時間：請與領隊約正確時間",
     "項目：日出包車費用 4,500×2 台＝9,000 元",
-    "人數：22＋1 領　領隊：薛永南 09********" ] },
+    "人數：22＋1 領　領隊：薛永南 0935175805" ] },
   "奮起湖老街": { img:"donut", by:"老街第一家甜甜圈 LINE・淑玲", lines:[
     "團名：雄獅董事會　日期：9/21 一　時間：11:00",
     "外送地點：奮起湖車站月台",
-    "聯絡人：周冠廷 09********",
+    "聯絡人：周冠廷 0953527741",
     "品項：甜甜圈 $30　份數：22",
     "★ 費用現場結清",
     "發票：抬頭 雄獅旅行社股份有限公司／統編 04655091",
@@ -570,7 +573,7 @@ const STOP_CONF = {
     "團號：26TS920A3A T　團名：雄獅董事",
     "日期：09/21 一　時間：13:00–14:00",
     "人數：23＋6 工作人員＋2 司領（招待）",
-    "領隊：薛永南 09********",
+    "領隊：薛永南 0935175805",
     "項目：餐標 $600／人（開 3 桌／每桌分成 2 份出餐）",
     "分桌明細：A 桌 10 人（忌生食/海鮮(含魚)×2、忌雞×1、忌辣×1、忌乳製品含起司×1）",
     "　　　　　B 桌 6 人（忌奶製品含起司×1）／C 桌 7 人（忌起司、生食×1）",
@@ -581,13 +584,13 @@ const STOP_CONF = {
     "團號：26TS920A3A T　團名：雄獅董事",
     "日期：09/21 一　時間：14:30–16:00",
     "人數：22＋6 工作人員＋2 司領",
-    "領隊：薛永南 09********",
+    "領隊：薛永南 0935175805",
     "項目：茶席體驗＋導覽 $500／人（需求老闆講解）",
     "★ 費用領隊現場結清",
     "發票：抬頭 雄獅旅行社股份有限公司／統編 04655091" ] },
   "工作人員入住 梅園樓觀景飯店（司領寄舖）": { img:"meiyuan", by:"梅園樓觀景飯店 LINE", lines:[
     "團名：雄獅董事　團號：26TS920A3A T",
-    "日期：09/21 一　領隊：薛永南 09********",
+    "日期：09/21 一　領隊：薛永南 0935175805",
     "項目：1.（司領寄舖）兩小床（含早）$3,780×1 間——8/10 已匯款完成",
     "　　　2.（司領寄舖）兩小床（含早）$3,780×3 間——8/25 新增",
     "　　　3.（司領寄舖）兩小床（含早）$3,780×3 間——9/11 新增",
@@ -597,7 +600,7 @@ const STOP_CONF = {
     "團號：26TS920A3A T　團名：雄獅董事",
     "日期：09/22 二　時間：11:00–14:30",
     "客人：19 人　司領：工作人員 6＋司領 2（請協助招待）",
-    "領隊：薛永南 09********",
+    "領隊：薛永南 0935175805",
     "項目：門票 $100／人（雄獅專案價）、品茗 $100／人",
     "　　　合菜 $8,200×2 桌＋每桌 2 飲（需求包廂 20 人桌坐）",
     "特殊餐食：忌雞×1／忌奶製品含起司×2",
@@ -673,7 +676,7 @@ function buildSeed(){
     tour:TOUR_SEED, pax:PAX_SEED, nights:NIGHTS_SEED, menu:MENU_SEED, meals,
     vendors:VENDORS_SEED, vendorTodo:VENDOR_TODO_SEED,
     budget:BUDGET_ITEMS_SEED, headcount:BUDGET_HEADCOUNT_SEED,
-    itin:ITIN_SEED, luggageRoute:LUGGAGE_ROUTE_SEED, hsrTrains:HSR_TRAINS_SEED, _seatVer:5, _menuVer:1, _budgetVer:2, _tourVer:2, _docVer:11,
+    itin:ITIN_SEED, luggageRoute:LUGGAGE_ROUTE_SEED, hsrTrains:HSR_TRAINS_SEED, _seatVer:5, _menuVer:1, _budgetVer:2, _tourVer:3, _docVer:11,
   });
 }
 /* 出廠預設另存一份，之後 TOUR / PAX… 這些名字都指向 S.data */
@@ -805,6 +808,15 @@ function bindData(){
     const st=(ITIN[2]||[]).find(x=>x.title==="自選 · 祝山日出");
     if(st){ st.links=(st.links||[]).filter(l=>l[0]!=="roster"); if(!st.links.some(l=>l[0]==="optin:sunrise")) st.links.unshift(["optin:sunrise","日出名單"]); }
     S.data._tourVer=2;
+  }
+  /* 一次性：9/18 交班表——報到／集合時間、人數、出團款、RC／OP 電話；D1 加「集合 · 站前門市」節點 */
+  if((S.data._tourVer||0)<3){
+    for(const k of ["checkin","meet","total","cashOut"]) if(!TOUR[k]) TOUR[k]=seed.tour[k];
+    if(TOUR.rc==="莊學憲") TOUR.rc=seed.tour.rc;
+    if(/^陳璟茹（/.test(TOUR.op||"")) TOUR.op=seed.tour.op;
+    const d1=ITIN[1]||(ITIN[1]=[]); const ss=(seed.itin[1]||[]).find(x=>x.title==="集合 · 台北雄獅 站前門市");
+    if(ss&&!d1.some(x=>x.title===ss.title)){ d1.push(JSON.parse(JSON.stringify(ss))); d1.sort((a,b)=>String(a.t).localeCompare(String(b.t))); }
+    S.data._tourVer=3;
   }
   /* 一次性升級：舊資料裡泛用的「店家聯絡」捷徑換成 seed 指到特定店家的版本；分房補上飯店對應 */
   for(const d of Object.keys(ITIN)) (ITIN[d]||[]).forEach(st=>(st.links||[]).forEach(l=>{
@@ -1279,7 +1291,8 @@ const BUDGET_FIELDS=()=>[
 ];
 const TOUR_FIELDS=[
   {k:"code",label:"團號"},{k:"name",label:"標準團名"},{k:"sub",label:"副標（行程名）",type:"textarea",rows:2},{k:"ctrl",label:"團控說明"},{k:"seats",label:"團位／HL／可賣"},{k:"dateTxt",label:"出團日"},
-  {k:"leader",label:"領隊"},{k:"rc",label:"RC"},{k:"tp",label:"TP"},{k:"op",label:"OP"},
+  {k:"leader",label:"領隊"},{k:"checkin",label:"報到時間"},{k:"meet",label:"集合時間／地點"},{k:"total",label:"交班人數"},{k:"cashOut",label:"出團款"},
+  {k:"rc",label:"RC"},{k:"tp",label:"TP"},{k:"op",label:"OP"},
   {k:"taxTitle",label:"發票抬頭"},{k:"taxId",label:"統一編號"},
 ];
 
@@ -1365,6 +1378,8 @@ function renderLead(hdr,scr){
   <div class="card tinfo">
     <div class="ttop"><span class="pill redln">共 ${TOUR.days} 天</span>${ebtn("tour",true)}</div>
     <div class="trow"><span class="k">出團日</span><span class="v">${TOUR.dateTxt}</span></div>
+    ${TOUR.checkin||TOUR.meet?`<div class="trow meet"><span class="k">報到集合</span><span class="v"><span class="meetpill">${esc(TOUR.checkin||"")}</span><span class="meetpill hot">${esc(TOUR.meet||"")}</span></span></div>`:""}
+    ${TOUR.total||TOUR.cashOut?`<div class="trow"><span class="k">交班表</span><span class="v">人數 ${esc(TOUR.total||"—")}　出團款 ${esc(TOUR.cashOut||"—")}</span></div>`:""}
     <div class="trow"><span class="k">團號</span><span class="v">${TOUR.code}</span></div>
     <div class="trow"><span class="k">團名</span><span class="v">${esc(TOUR.name)}${TOUR.sub?`<span style="display:block;font-size:11.5px;font-weight:500;color:var(--ink2);line-height:1.5">${esc(TOUR.sub)}</span>`:""}</span></div>
     ${TOUR.ctrl?`<div class="trow"><span class="k">團控</span><span class="v">${esc(TOUR.ctrl)}${TOUR.seats?`<span style="display:block;font-size:11.5px;font-weight:500;color:var(--ink2)">${esc(TOUR.seats)}</span>`:""}</span></div>`:""}
@@ -2364,7 +2379,7 @@ PAGES.coffee=(hdr,scr)=>{
   const carOf=p=>{ const st=fusenSeatsOf("A"); for(const c of [5,4]) if(Object.values(st[c]||{}).includes(p.id)) return c; return 0; };
   /* 只有 A 段（9/20）有咖啡預點，名單固定看第 1 天在團的人 */
   const people=PAX.filter(p=>p.days.includes(1)&&p.group!=="工作人員");
-  const groups=[[5,"A 車","福森號 5 車・守車車廂"],[4,"B 車","福森號 4 車・客座車廂"],[0,"未配位","不在福森號座位圖上"]];
+  const groups=[[5,"5 車","守車車廂"],[4,"4 車","客座車廂"],[0,"未配位","不在福森號座位圖上"]];
   groups.forEach(([car,lb,sub])=>{
     const list=people.filter(p=>carOf(p)===car); if(!list.length) return;
     const done=list.filter(p=>S.orders[p.id]).length;
