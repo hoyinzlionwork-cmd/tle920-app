@@ -2646,6 +2646,7 @@ PAGES.budget=(hdr,scr)=>{
       c.lines.forEach((b,i)=>{
         rows+=`<tr class="${cash?"":"nocash"}${i===0?" cardtop":""}${done?" done":""}" data-key="${esc(c.key)}">`;
         if(first){ rows+=`<td class="date" rowspan="${dayRows}">${dateOf(d)}</td>`; first=false; }
+        if(i===0) rows+=`<td class="donecell" rowspan="${n}">${paid?`<span class="pill gray">—</span>`:cash?`<label class="donebox${done?" on":""}"><input type="checkbox" data-key="${esc(c.key)}"${done?" checked":""}><span class="ckbox">${done?"✓":""}</span>完成</label>`:""}</td>`;
         if(i===0) rows+=`<td class="comp" rowspan="${n}"><select class="bgsel" data-key="${esc(c.key)}" data-f="cat">${BUDGET_CATS.map(x=>`<option${x===c.cat?" selected":""}>${x}</option>`).join("")}</select>
             <span class="row2">${tx(b0,"slot","w-slot","餐次")}${tx(b0,"t","w-time","時間")}</span>${tx(b0,"vendor","w-vend","店家／對象")}</td>`;
         rows+=`<td class="det"><span class="detrow">${tx(b,"name","","訂購明細")}<button class="bgdel" data-id="${esc(b.id)}" title="刪除這一列">✕</button></span>${b.note?`<div class="dnote">${esc(b.note)}</div>`:""}${i===n-1?`<button class="bgaddline" data-key="${esc(c.key)}">＋ 加一列</button>`:""}</td>
@@ -2656,8 +2657,7 @@ PAGES.budget=(hdr,scr)=>{
             <td class="num dep" rowspan="${n}">${cash?(dep?nt(dep):"0"):"—"}</td>
             <td class="num" rowspan="${n}" id="rem_${esc(c.key)}">${cash?nt(rem):"—"}</td>
             <td class="num edit" rowspan="${n}">${paid?`<span class="pill green">公司已付</span>`:cash?`<input class="bgcell fin" data-key="${esc(c.key)}" data-f="fin" inputmode="numeric" value="${fin!=null?fin:""}" placeholder="填實付">`:`<span class="pill gray">${c.pay==="信用卡"?"公司刷卡":"公司轉帳"}</span>`}</td>
-            <td class="edit notecell" rowspan="${n}"><textarea class="bgnote2" data-k="${esc(c.key)}" rows="2" placeholder="備註">${esc(S.budgetNote[c.key]||"")}</textarea></td>
-            <td class="donecell" rowspan="${n}">${paid?`<span class="pill gray">—</span>`:cash?`<label class="donebox${done?" on":""}"><input type="checkbox" data-key="${esc(c.key)}"${done?" checked":""}><span class="ckbox">${done?"✓":""}</span>完成</label>`:""}</td>`;
+            <td class="edit notecell" rowspan="${n}"><textarea class="bgnote2" data-k="${esc(c.key)}" rows="2" placeholder="備註">${esc(S.budgetNote[c.key]||"")}</textarea></td>`;
         }
         rows+=`</tr>`;
       });
@@ -2690,7 +2690,7 @@ PAGES.budget=(hdr,scr)=>{
   <div class="card bgtablewrap">
     <div class="bgpaper" id="bgPaper">
     <table class="bgtable">
-      <thead><tr><th>日期</th><th>元件</th><th>訂購明細</th><th>數量</th><th>單位</th><th>項次單價</th><th>小計</th><th>TOTAL</th><th>已付訂金 🔒</th><th>剩餘金額</th><th>實付金額</th><th>備註</th><th>完成</th></tr></thead>
+      <thead><tr><th>日期</th><th>完成</th><th>元件</th><th>訂購明細</th><th>數量</th><th>單位</th><th>項次單價</th><th>小計</th><th>TOTAL</th><th>已付訂金 🔒</th><th>剩餘金額</th><th>實付金額</th><th>備註</th></tr></thead>
       <tbody>${rows}</tbody>
       <tfoot><tr><td colspan="8" class="rep"><b>領隊報告：</b><textarea class="bgreport" id="bgReport" rows="3" placeholder="超支原因、店家未收款、發票缺漏…">${esc(S.budgetReport||"")}</textarea></td>
         <td colspan="5" class="grand"><span>TOTAL：</span><b>現金 <span id="bgCash2">${nt(t.cash)}</span> NTD</b><span class="sub">實付（已填）<span id="bgFinal2">${nt(t.cashFinal)}</span> NTD</span></td></tr></tfoot>
