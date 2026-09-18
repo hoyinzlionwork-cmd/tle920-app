@@ -2110,18 +2110,26 @@ const FUSEN_SEATS = {
 const FUSEN_SEG = { A:{ label:"A 段", date:"9/20", route:"北門 → 鹿滿 → 樟腦寮 → 第三景觀台 → 奮起湖 → 多林 → 十字路", dir:"left" },
                     C:{ label:"C 段", date:"9/21", route:"阿里山 → 二萬坪 → 十字路 → 奮起湖", dir:"right" } };
 const fusenSeatLabel=(car,no)=> no==="crew" ? `${car}車 車服座` : `${car}車 ${no}號`;
+/* 領隊改過的福森號座位存 S.fusenSeats[段]（{車:{號:pid}}）；沒改過就用產品部的 */
+function fusenSeatsOf(seg){ let c=null; try{ c=S&&S.fusenSeats?S.fusenSeats[seg]:null; }catch(_){} return c||FUSEN_SEATS[seg]; }
+function ensureFusen(seg){ if(!S.fusenSeats) S.fusenSeats={}; if(!S.fusenSeats[seg]) S.fusenSeats[seg]=JSON.parse(JSON.stringify(FUSEN_SEATS[seg])); return S.fusenSeats[seg]; }
+let FUSEN_CHG=null;   /* {"車-號": 原本的 pid 或 null}，畫圖時標橘框 */
+function fusenDiff(seg){ const cur=fusenSeatsOf(seg), base=FUSEN_SEATS[seg], out={};
+  for(const car of [4,5]){ const keys=new Set([...Object.keys(cur[car]||{}),...Object.keys(base[car]||{})]);
+    keys.forEach(no=>{ const a=(cur[car]||{})[no]||null, b=(base[car]||{})[no]||null; if(a!==b) out[`${car}-${no}`]=b; }); }
+  return out; }
 /* 把 A／C 段座位寫回旅客資料（團體大表、旅客卡片用） */
 function applyFusen0917(list){
   const byId=Object.fromEntries(list.map(p=>[p.id,p]));
   list.forEach(p=>{ delete p.fusenA; delete p.fusenC; });
-  for(const seg of ["A","C"]) for(const car of [4,5]) for(const [no,pid] of Object.entries(FUSEN_SEATS[seg][car])){
+  for(const seg of ["A","C"]) for(const car of [4,5]) for(const [no,pid] of Object.entries(fusenSeatsOf(seg)[car]||{})){
     const p=byId[pid]; if(p) p["fusen"+seg]=fusenSeatLabel(car,no);
   }
   list.forEach(p=>{ p.trainSeat = p.fusenA || p.fusenC || "—"; });
   return list;
 }
 const TRAIN_TL = { name:"薛永南 領隊", seat:"" };
-function fusenMap(seg){ const m={}; for(const car of [4,5]) for(const [no,pid] of Object.entries(FUSEN_SEATS[seg][car])){ const p=pax(pid); if(p) m[`${car}-${no}`]=p; } return m; }
+function fusenMap(seg){ const m={}; for(const car of [4,5]) for(const [no,pid] of Object.entries(fusenSeatsOf(seg)[car]||{})){ const p=pax(pid); if(p) m[`${car}-${no}`]=p; } return m; }
 
 /* 整列福森號：車頭＋五節，可點選；本團用的兩節標紅 */
 function svgFusenTrain(sel){
@@ -2189,16 +2197,17 @@ function svgFusenCar(carNo, map, seg){
   g+=post(X(.955));
   const seatW=54, seatH=42;
   const drawSeat=(cx,cy,no,key)=>{
-    const p=map[key], mine=!!p, vip=p&&(p.id==="p01"||p.id==="p02");
-    const fill=mine?(vip?`url(#${uid}-vip)`:"#FFFFFF"):"#F6F2EA", stroke=mine?(vip?"#8A0A1F":"#C8102E"):"#D9CFBC", tc=mine?(vip?"#fff":"#1E1E24"):"#B9B0A0";
+    const p=map[key], mine=!!p, vip=p&&(p.id==="p01"||p.id==="p02"), chg=!!(FUSEN_CHG&&key in FUSEN_CHG);
+    const fill=mine?(vip?`url(#${uid}-vip)`:(chg?"#FFF4E8":"#FFFFFF")):(chg?"#FFF4E8":"#F6F2EA"), stroke=chg?"#E07B12":mine?(vip?"#8A0A1F":"#C8102E"):"#D9CFBC", tc=mine?(vip?"#fff":"#1E1E24"):"#B9B0A0";
     const back=mine?(vip?"#8A0A1F":"#F3C3C8"):"#E6DECF";
     const nm=p?p.name.replace(/\s+[A-Za-z].*$/,"").replace(/\s/g,"").slice(0,4):"";
-    return `<g class="seatg${mine?" mine":""}" ${p?`data-p="${esc(p.id)}"`:""} data-key="${key}" ${mine?`filter="url(#${uid}-sh)"`:""}>
-      <rect x="${cx-seatW/2}" y="${cy-seatH/2}" width="${seatW}" height="${seatH}" rx="9" fill="${fill}" stroke="${stroke}" stroke-width="${mine?2:1.4}"/>
+    return `<g class="seatg${mine?" mine":""}${chg?" chg":""}" ${p?`data-p="${esc(p.id)}"`:""} data-key="${key}" ${mine?`filter="url(#${uid}-sh)"`:""}>
+      <rect x="${cx-seatW/2}" y="${cy-seatH/2}" width="${seatW}" height="${seatH}" rx="9" fill="${fill}" stroke="${stroke}" stroke-width="${chg?3:mine?2:1.4}"/>
       <rect x="${cx-seatW/2+4}" y="${cy-seatH/2+4}" width="7" height="${seatH-8}" rx="3.5" fill="${back}"/>
       ${p?`<text x="${cx+4}" y="${cy+4.5}" text-anchor="middle" font-size="${nm.length>3?9.5:11.5}" font-weight="800" fill="${tc}">${esc(nm)}</text>`
          :`<text x="${cx+4}" y="${cy+5}" text-anchor="middle" font-size="13" font-weight="800" fill="#C6BCA9">${no==="crew"?"車服":no}</text>`}
       <g><circle cx="${cx-seatW/2+2}" cy="${cy-seatH/2+1}" r="7.5" fill="${mine?"#C8102E":"#B9B0A0"}"/><text x="${cx-seatW/2+2}" y="${cy-seatH/2+4}" text-anchor="middle" font-size="${no==="crew"?6.5:8}" font-weight="800" fill="#fff">${no==="crew"?"服":no}</text></g>
+      ${chg?`<circle cx="${cx+seatW/2-3}" cy="${cy-seatH/2+1}" r="8" fill="#E07B12"/><text x="${cx+seatW/2-3}" y="${cy-seatH/2+4.5}" text-anchor="middle" font-size="9" font-weight="900" fill="#fff">改</text>`:""}
     </g>`;
   };
   const drawTable=(cx,cy)=>`<g filter="url(#${uid}-sh)"><rect x="${cx-16}" y="${cy-31}" width="32" height="62" rx="10" fill="url(#${uid}-wood)" stroke="#8F5E2E" stroke-width="1"/><rect x="${cx-11}" y="${cy-26}" width="22" height="52" rx="7" fill="none" stroke="#FFFFFF" stroke-opacity=".28" stroke-width="1"/></g>`;
@@ -2229,6 +2238,14 @@ PAGES.fusen=(hdr,scr)=>{
   if(!S.fusenCar||![4,5].includes(S.fusenCar)) S.fusenCar=5;
   const seg=S.fusenSeg, car=S.fusenCar, SG=FUSEN_SEG[seg], map=fusenMap(seg), L=FUSEN_LAYOUT[car];
   const used=Object.keys(map).filter(k=>k.startsWith(car+"-")).length, total=Object.keys(map).length;
+  const diff=fusenDiff(seg); FUSEN_CHG=diff; const nChg=Object.keys(diff).length, custom=!!(S.fusenSeats&&S.fusenSeats[seg]);
+  const segDay=seg==="A"?1:2, seated=new Set(Object.values(map).map(p=>p.id));
+  const pool=PAX.filter(p=>p.days.includes(segDay)&&!seated.has(p.id));
+  const nameOf=v=>{ const q=v?pax(v):null; return q?q.name:"空位"; };
+  const chgList=[4,5].map(c=>{ const items=Object.keys(diff).filter(k=>k.startsWith(c+"-")).sort((a,b)=>(a.split("-")[1]==="crew"?99:+a.split("-")[1])-(b.split("-")[1]==="crew"?99:+b.split("-")[1]));
+    return items.length?`<div class="chgrow"><b>${c} 車</b>${items.map(k=>{ const no=k.split("-")[1], cur=(fusenSeatsOf(seg)[c]||{})[no]||null;
+      return `<span class="chgitem">${no==="crew"?"車服座":no+" 號"}：<s>${esc(nameOf(diff[k]))}</s> → <b>${esc(nameOf(cur))}</b></span>`; }).join("")}</div>`:""; }).join("");
+  const chip=p=>{ const g=p.group==="貴賓"?"vip":p.group==="雄獅主管"?"mgr":"stf"; return `<div class="tseat ${g}" data-t="pool" data-p="${esc(p.id)}"><b>${esc(p.name)}</b>${p.group==="工作人員"?`<i>工作人員</i>`:""}</div>`; };
   const el=document.createElement("div");
   el.className="pagepad";
   el.innerHTML=`
@@ -2251,9 +2268,32 @@ PAGES.fusen=(hdr,scr)=>{
       <span class="fcsub" style="margin-left:auto">${seg==="A"?"運行方向 ←":"運行方向 →"}</span>
     </div>
     <div class="zw">${svgFusenCar(car,map,seg)}</div>
-    <div class="zoomhint">點圖放大・光箱裡左右滑切換 4 車／5 車</div>
+    <div class="zoomhint">點圖放大・光箱裡左右滑切換 4 車／5 車・<b>長按名字可拖到別的座位</b>（互換；拖到空位是搬過去）</div>
+  </div>
+  ${nChg?`<div class="card chgcard"><div class="thead"><b>${ic("refresh",15)} 跟產品部座位圖不同的座位</b><span class="pill orange">${nChg} 席</span><span class="roomhint">橘框＋「改」＝換過位子</span></div>${chgList}</div>`:""}
+  <div class="card tcard pool tzone" data-t="pool">
+    <div class="thead"><b>未配位</b><span class="pill gray">${pool.length} 人</span><span class="roomhint">長按拖到車廂空位；把車上的人拖到這裡＝取消座位</span></div>
+    <div class="tseats">${pool.map(chip).join("")||`<div class="tempty">全部都有座位了</div>`}</div>
+  </div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;align-items:center">
+    <span class="pill ${nChg?"orange":custom?"green":"gray"}">${nChg?`已換位 ${nChg} 席`:custom?"已自訂":"產品部配位"}</span>
+    <button class="btn ghost" id="fzReset" ${custom?"":"disabled"}>還原成產品部配位</button>
   </div>
   <p class="vs">A 段與 C 段的 4 車相同；5 車兩段不同，請看各段。未配位的工作人員（薛永南、周冠廷、洪采吟）坐 4 車空位（1、9–16 號）。</p>`;
+  el.querySelector("#fzReset").onclick=()=>confirmBox(`${SG.label}的福森號座位還原成產品部配位？`,()=>{ delete S.fusenSeats[seg]; save(); render(); toast("已還原"); });
+  installSeatDrag(el,{ seatSel:".seatg.mine[data-p],.tseat[data-p]",
+    targetAt:n=>n.closest(".seatg[data-key]")||n.closest(".tzone"),
+    applyDrop:(src,tgt)=>{
+      const cur=ensureFusen(seg), pid=src.dataset.p;
+      const parse=k=>{ const [c,no]=String(k).split("-"); return {c:+c,no}; };
+      const from=src.dataset.key?parse(src.dataset.key):null;
+      if(tgt.dataset.key){ const to=parse(tgt.dataset.key); if(from&&from.c===to.c&&from.no===to.no) return false;
+        if(!cur[to.c]) cur[to.c]={}; const other=cur[to.c][to.no]||null;
+        cur[to.c][to.no]=pid; if(from){ if(other) cur[from.c][from.no]=other; else delete cur[from.c][from.no]; }
+        return true; }
+      if(tgt.dataset.t==="pool"){ if(!from) return false; delete cur[from.c][from.no]; return true; }
+      return false;
+    } });
   el.querySelectorAll("[data-seg]").forEach(b=>b.onclick=()=>{ S.fusenSeg=b.dataset.seg; save(); render(); });
   el.querySelectorAll(".fcar").forEach(c=>c.addEventListener("click",()=>{ const n=+c.dataset.car; if(n===4||n===5){ S.fusenCar=n; save(); render(); } else toast(`${n} 車本團未使用`); }));
   const wireSeats=root=>root.querySelectorAll(".seatg.mine").forEach(s=>s.addEventListener("click",ev=>{ ev.stopPropagation(); const p=pax(s.dataset.p); if(p) openPaxModal(p); }));
@@ -3043,7 +3083,7 @@ const SEAT_DOC = {
     { name:"B 桌（10 人）", who:["凌瓏","游張松","王　雍","劉惟珺","鄭兆剛","黃信川","王村煌","王岳聰","陳曉穎","柳婉郁"] } ] },
   d2m3:{ note:"無菜單料理、套餐式，忌食已由冠廷提供餐廳・戴董來、魏董及夫人走・廁所在上方，門在下方（C 桌後）",
     room:{ w:1000, h:800, marks:[ {type:"bar",x:400,y:28,w:200,h:44,label:"廁所"}, {type:"bar",x:110,y:700,w:350,h:40,label:"門"},
-      {type:"arrow",x1:345,y1:795,x2:345,y2:690} ], tables:[ {t:1,x:345,y:300}, {t:2,x:345,y:568}, {t:0,x:800,y:440} ] }, tables:[
+      {type:"arrow",x1:345,y1:795,x2:345,y2:702} ], tables:[ {t:1,x:345,y:300}, {t:2,x:345,y:568}, {t:0,x:800,y:440} ] }, tables:[
     { name:"A 桌（10 人・長桌）", shape:"long", dir:"v", split:5, who:["張郁芬","柳婉郁","黃信川","盧希鵬","游慧茹","利明献","g:龔處長","王文傑","魏寶生","趙秋芬"], side:["左排（上→下）","右排（上→下）"] },
     { name:"B 桌（7 人・長桌）",  shape:"long", dir:"h", split:3, who:["游張松","戴啟珩","張振明","王　雍","凌瓏","陳聖德","陳萱"], side:["上排（廁所側）","下排"] },
     { name:"C 桌（6 人・長桌）",  shape:"long", dir:"h", split:3, who:["王村煌","陳曉穎","邱浩軒","王岳聰","鄭兆剛","劉惟珺"], side:["上排","下排（門側）"], door:"下方：門" } ] },
@@ -3077,6 +3117,16 @@ function defaultSeating(m){
 }
 /* ---- 座位圖共用零件 ---- */
 const SEAT_FONT='font-family="PingFang TC,Microsoft JhengHei,system-ui,sans-serif"';
+/* 座位圖共用的漸層／陰影／地板紋 */
+const SEAT_DEFS=`<defs>
+  <radialGradient id="st-tbl" cx="50%" cy="42%" r="60%"><stop offset="0" stop-color="#FFFBF0"/><stop offset=".72" stop-color="#FBEED2"/><stop offset="1" stop-color="#F0DDB4"/></radialGradient>
+  <linearGradient id="st-tbl2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFF9EA"/><stop offset="1" stop-color="#F3E1BC"/></linearGradient>
+  <linearGradient id="st-stage" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4A4A55"/><stop offset="1" stop-color="#2A2A33"/></linearGradient>
+  <linearGradient id="st-door" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E9E9EE"/><stop offset="1" stop-color="#CFCFD6"/></linearGradient>
+  <pattern id="st-floor" width="26" height="26" patternUnits="userSpaceOnUse"><circle cx="13" cy="13" r="1.1" fill="#E4DFD3"/></pattern>
+  <filter id="st-sh" x="-20%" y="-20%" width="140%" height="150%"><feDropShadow dx="0" dy="1.5" stdDeviation="1.6" flood-color="#3A2E10" flood-opacity=".18"/></filter>
+  <filter id="st-sh2" x="-10%" y="-10%" width="120%" height="140%"><feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="#3A2E10" flood-opacity=".16"/></filter>
+</defs>`;
 /* 跟產品部座位圖不同的位子：{ "桌:位": 原本坐的人 id 或 null }，畫圖時用來標橘框 */
 let SEAT_CHG=null;
 function seatDiff(m,st){
@@ -3087,24 +3137,26 @@ function seatDiff(m,st){
 function seatG(pid,ti,i,x,y,r){
   const p=seatPerson(pid), fs=r>=20?11.5:10, chg=!!(SEAT_CHG&&(ti+":"+i) in SEAT_CHG);
   let out=`<g class="sseat${p?"":" empty"}${chg?" chg":""}" data-t="${ti}" data-i="${i}"${p?` data-p="${esc(p.id)}"`:""}>`;
-  if(!p) return out+`<circle cx="${x}" cy="${y}" r="${r}" fill="#fff" stroke="${chg?"#E07B12":"#C9C9CF"}" stroke-width="${chg?2.5:1.5}" stroke-dasharray="4 3"/>${chg?`<text x="${x}" y="${y+4}" text-anchor="middle" font-size="9" fill="#E07B12" font-weight="800">空</text>`:""}</g>`;
-  const g=p.group==="貴賓"?["#FFF7F7","#F3C3C8"]:p.group==="雄獅主管"?["#F5F8FF","#C9D8F5"]:p.guest?["#FFFBE6","#E8C98A"]:["#FAFAFB","#D5D5DA"];
+  if(!p) return out+`<circle cx="${x}" cy="${y}" r="${r-1}" fill="${chg?"#FFF4E8":"#FFFFFF"}" fill-opacity=".7" stroke="${chg?"#E07B12":"#CFCAC0"}" stroke-width="${chg?2.5:1.6}" stroke-dasharray="4 3"/>${chg?`<text x="${x}" y="${y+4}" text-anchor="middle" font-size="9" fill="#E07B12" font-weight="800">空</text>`:""}</g>`;
+  const g=p.group==="貴賓"?["#FFF8F8","#E89AA6"]:p.group==="雄獅主管"?["#F5F8FF","#9DB8E6"]:p.guest?["#FFFBEA","#DDB65A"]:["#FAFAFB","#C9C9CF"];
   const nm=p.name.replace(/\s/g,"").slice(0,4), two=nm.length>2&&r<22;
-  out+=`<circle cx="${x}" cy="${y}" r="${r}" fill="${chg?"#FFF4E8":g[0]}" stroke="${chg?"#E07B12":g[1]}" stroke-width="${chg?3:1.8}"/>`;
-  if(two) out+=`<text x="${x}" y="${y-2}" text-anchor="middle" font-size="${fs}" font-weight="800" fill="#333336">${esc(nm.slice(0,2))}</text><text x="${x}" y="${y+fs}" text-anchor="middle" font-size="${fs}" font-weight="800" fill="#333336">${esc(nm.slice(2))}</text>`;
-  else out+=`<text x="${x}" y="${y+4}" text-anchor="middle" font-size="${fs}" font-weight="800" fill="#333336">${esc(nm)}</text>`;
+  out+=`<circle cx="${x}" cy="${y}" r="${r}" fill="${chg?"#FFF4E8":g[0]}" stroke="${chg?"#E07B12":g[1]}" stroke-width="${chg?3:2.2}" filter="url(#st-sh)"/>`;
+  if(two) out+=`<text x="${x}" y="${y-2}" text-anchor="middle" font-size="${fs}" font-weight="800" fill="#2B2B30">${esc(nm.slice(0,2))}</text><text x="${x}" y="${y+fs}" text-anchor="middle" font-size="${fs}" font-weight="800" fill="#2B2B30">${esc(nm.slice(2))}</text>`;
+  else out+=`<text x="${x}" y="${y+4}" text-anchor="middle" font-size="${fs}" font-weight="800" fill="#2B2B30">${esc(nm)}</text>`;
   if(chg) out+=`<circle cx="${x+r*0.72}" cy="${y-r*0.72}" r="8.5" fill="#E07B12"/><text x="${x+r*0.72}" y="${y-r*0.72+3.5}" text-anchor="middle" font-size="9.5" font-weight="900" fill="#fff">改</text>`;
   return out+`</g>`;
 }
 /* 圓桌：seats[0] 在 12 點方向，順時針；跟產品部座位圖同一種畫法。回傳 <g>，給單桌圖跟全景圖共用 */
 function roundTableG(t,ti,cx,cy,R){
   const n=t.seats.length, r=Math.max(14,Math.min(24,Math.floor((2*Math.PI*R/Math.max(n,1))/2)-3));
-  let out=`<g class="tzone" data-t="${ti}"><circle class="tbl" cx="${cx}" cy="${cy}" r="${R-r-14}" fill="#FFF3D6" stroke="#E8C98A" stroke-width="2"/>
-    <text x="${cx}" y="${cy-6}" text-anchor="middle" font-size="${R>180?22:15}" font-weight="800" fill="#7A5200">${esc(t.name.split("（")[0])}</text>
-    <text x="${cx}" y="${cy+(R>180?20:14)}" text-anchor="middle" font-size="${R>180?14:12}" fill="#A87800">${t.seats.filter(Boolean).length} 人</text>`;
+  const TR=R-r-14;
+  let out=`<g class="tzone" data-t="${ti}"><circle class="tbl" cx="${cx}" cy="${cy}" r="${TR}" fill="url(#st-tbl)" stroke="#D9B876" stroke-width="2" filter="url(#st-sh2)"/>
+    <circle cx="${cx}" cy="${cy}" r="${TR-9}" fill="none" stroke="#E7D3A6" stroke-width="1" stroke-dasharray="3 5"/>
+    <text x="${cx}" y="${cy-6}" text-anchor="middle" font-size="${R>180?24:16}" font-weight="900" fill="#6E4A00" letter-spacing="1">${esc(t.name.split("（")[0])}</text>
+    <text x="${cx}" y="${cy+(R>180?22:15)}" text-anchor="middle" font-size="${R>180?14:12}" font-weight="600" fill="#A8843A">${t.seats.filter(Boolean).length} 人</text>`;
   t.seats.forEach((pid,i)=>{
-    const a=-Math.PI/2 + i*2*Math.PI/n, x=cx+R*Math.cos(a), y=cy+R*Math.sin(a);
-    out+=`<text x="${cx+(R+r+9)*Math.cos(a)}" y="${cy+(R+r+9)*Math.sin(a)+3}" text-anchor="middle" font-size="9" fill="#B9B9BF">${i+1}</text>`;
+    const a=-Math.PI/2 + i*2*Math.PI/n, x=cx+R*Math.cos(a), y=cy+R*Math.sin(a), nx=cx+(R+r+11)*Math.cos(a), ny=cy+(R+r+11)*Math.sin(a);
+    out+=`<circle cx="${nx}" cy="${ny}" r="7.5" fill="#EFEBE2"/><text x="${nx}" y="${ny+3}" text-anchor="middle" font-size="8.5" font-weight="800" fill="#8A8478">${i+1}</text>`;
     out+=seatG(pid,ti,i,x,y,r);
   });
   return out+"</g>";
@@ -3114,46 +3166,52 @@ function longTableG(t,ti,cx,cy){
   const n=t.seats.length, sp=t.split||Math.ceil(n/2), s1=t.seats.slice(0,sp), s2=t.seats.slice(sp), m=Math.max(s1.length,s2.length,1);
   const vert=t.dir==="v", step=64, r=22, len=m*step+20;
   let out=`<g class="tzone" data-t="${ti}">`;
-  if(vert) out+=`<rect class="tbl" x="${cx-28}" y="${cy-len/2}" width="56" height="${len}" rx="8" fill="#FFF3D6" stroke="#E8C98A" stroke-width="2"/>
-    <text x="${cx}" y="${cy+5}" text-anchor="middle" font-size="15" font-weight="800" fill="#7A5200" transform="rotate(-90 ${cx} ${cy})">${esc(t.name.split("（")[0])}</text>`;
-  else out+=`<rect class="tbl" x="${cx-len/2}" y="${cy-28}" width="${len}" height="56" rx="8" fill="#FFF3D6" stroke="#E8C98A" stroke-width="2"/>
-    <text x="${cx}" y="${cy+5}" text-anchor="middle" font-size="15" font-weight="800" fill="#7A5200">${esc(t.name.split("（")[0])}</text>`;
+  if(vert) out+=`<rect class="tbl" x="${cx-28}" y="${cy-len/2}" width="56" height="${len}" rx="10" fill="url(#st-tbl2)" stroke="#D9B876" stroke-width="2" filter="url(#st-sh2)"/>
+    <rect x="${cx-20}" y="${cy-len/2+8}" width="40" height="${len-16}" rx="6" fill="none" stroke="#E7D3A6" stroke-width="1" stroke-dasharray="3 5"/>
+    <text x="${cx}" y="${cy+5}" text-anchor="middle" font-size="16" font-weight="900" fill="#6E4A00" letter-spacing="1" transform="rotate(-90 ${cx} ${cy})">${esc(t.name.split("（")[0])}</text>`;
+  else out+=`<rect class="tbl" x="${cx-len/2}" y="${cy-28}" width="${len}" height="56" rx="10" fill="url(#st-tbl2)" stroke="#D9B876" stroke-width="2" filter="url(#st-sh2)"/>
+    <rect x="${cx-len/2+8}" y="${cy-20}" width="${len-16}" height="40" rx="6" fill="none" stroke="#E7D3A6" stroke-width="1" stroke-dasharray="3 5"/>
+    <text x="${cx}" y="${cy+5}" text-anchor="middle" font-size="16" font-weight="900" fill="#6E4A00" letter-spacing="1">${esc(t.name.split("（")[0])}</text>`;
   [s1,s2].forEach((side,si)=>{
     const off=si===0?-70:70, start=(vert?cy:cx)-((side.length-1)*step)/2;
     side.forEach((pid,i)=>{ const pos=start+i*step, idx=si===0?i:sp+i, x=vert?cx+off:pos, y=vert?pos:cy+off;
-      out+=`<text x="${x}" y="${y-r-5}" text-anchor="middle" font-size="9" fill="#B9B9BF">${idx+1}</text>`+seatG(pid,ti,idx,x,y,r); });
-    if(t.side&&t.side[si]){ const lx=vert?cx+off:cx, ly=vert?cy-len/2-14:(si===0?cy-70-r-16:cy+70+r+18);
-      out+=`<text x="${lx}" y="${ly}" text-anchor="middle" font-size="10" fill="#8E8E93">${esc(t.side[si])}</text>`; }
+      const nx=vert?(si===0?x-r-11:x+r+11):x, ny=vert?y:(si===0?y-r-11:y+r+11);
+      out+=`<circle cx="${nx}" cy="${ny}" r="7.5" fill="#EFEBE2"/><text x="${nx}" y="${ny+3}" text-anchor="middle" font-size="8.5" font-weight="800" fill="#8A8478">${idx+1}</text>`+seatG(pid,ti,idx,x,y,r); });
+    if(t.side&&t.side[si]){ const lx=vert?cx+off:cx, ly=vert?cy-len/2-16:(si===0?cy-70-r-26:cy+70+r+28);
+      out+=`<text x="${lx}" y="${ly}" text-anchor="middle" font-size="10.5" font-weight="700" fill="#A09A8E" letter-spacing=".5">${esc(t.side[si])}</text>`; }
   });
   return out+"</g>";
 }
 function svgRoundTable(t,ti){
   const W=420, R=t.seats.length>14?152:140;
-  let out=`<svg class="roundtbl" viewBox="0 0 ${W} ${W}" xmlns="http://www.w3.org/2000/svg">`+roundTableG(t,ti,W/2,W/2,R);
+  let out=`<svg class="roundtbl" viewBox="0 0 ${W} ${W}" xmlns="http://www.w3.org/2000/svg">`+SEAT_DEFS+roundTableG(t,ti,W/2,W/2,R);
   if(t.door) out+=`<rect x="${W/2-70}" y="${W-22}" width="140" height="18" rx="4" fill="#E5E5EA"/><text x="${W/2}" y="${W-9}" text-anchor="middle" font-size="11" fill="#333336">門 · ${esc(t.door)}</text>`;
   return out+"</svg>";
 }
 function svgLongTable(t,ti){
   const n=t.seats.length, sp=t.split||Math.ceil(n/2), m=Math.max(sp,n-sp,1), vert=t.dir==="v", len=m*64+20;
   const W=vert?260:len+40, H=vert?len+40:250;
-  let out=`<svg class="roundtbl long${vert?" v":""}" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">`+longTableG(t,ti,W/2,H/2);
+  let out=`<svg class="roundtbl long${vert?" v":""}" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">`+SEAT_DEFS+longTableG(t,ti,W/2,H/2);
   if(t.door) out+=`<rect x="${W/2-60}" y="${H-20}" width="120" height="16" rx="4" fill="#E5E5EA"/><text x="${W/2}" y="${H-8}" text-anchor="middle" font-size="10" fill="#333336">門 · ${esc(t.door)}</text>`;
   return out+"</svg>";
 }
 /* 餐廳全景圖：照產品部座位圖的方位畫——舞台、門、廁所、出入口箭頭都放在原本的位置，桌子也照圖上的左右擺 */
 function svgRoom(st,room){
   const W=room.w, H=room.h;
-  let out=`<svg class="roomplan" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
-    <defs><filter id="rm-sh" x="-10%" y="-10%" width="120%" height="130%"><feDropShadow dx="0" dy="1" stdDeviation="1.2" flood-color="#000" flood-opacity=".12"/></filter></defs>
-    <rect x="1" y="1" width="${W-2}" height="${H-2}" rx="14" fill="#FCFBF8" stroke="#E4E4EA"/>`;
+  let out=`<svg class="roomplan" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">`+SEAT_DEFS+`
+    <rect x="1" y="1" width="${W-2}" height="${H-2}" rx="18" fill="#FBF8F1" stroke="#E2DCCF" stroke-width="1.5"/>
+    <rect x="1" y="1" width="${W-2}" height="${H-2}" rx="18" fill="url(#st-floor)"/>
+    <rect x="9" y="9" width="${W-18}" height="${H-18}" rx="13" fill="none" stroke="#EEE8DA" stroke-width="1"/>`;
   const head=(x,y,dx,dy,c)=>{ const L=Math.hypot(dx,dy)||1, ux=dx/L, uy=dy/L, px=-uy, py=ux, b=14, h=22;
     return `<polygon points="${x},${y} ${x-ux*h+px*b},${y-uy*h+py*b} ${x-ux*h-px*b},${y-uy*h-py*b}" fill="${c}"/>`; };
   (room.marks||[]).forEach(mk=>{
-    if(mk.type==="bar") out+=`<g filter="url(#rm-sh)"><rect x="${mk.x}" y="${mk.y}" width="${mk.w}" height="${mk.h}" rx="5" fill="#E6E6EB" stroke="#B4B4BC" stroke-width="1.5"/></g>
-      <text x="${mk.x+mk.w/2}" y="${mk.y+mk.h/2+7}" text-anchor="middle" font-size="19" font-weight="800" fill="#2B2B30" letter-spacing="4">${esc(mk.label)}</text>`;
+    if(mk.type==="bar"){ const stage=/舞台/.test(mk.label);
+      out+=`<g filter="url(#st-sh2)"><rect x="${mk.x}" y="${mk.y}" width="${mk.w}" height="${mk.h}" rx="7" fill="${stage?"url(#st-stage)":"url(#st-door)"}" stroke="${stage?"#1E1E26":"#B9B9C2"}" stroke-width="1.5"/></g>
+      ${stage?`<rect x="${mk.x+10}" y="${mk.y+mk.h-6}" width="${mk.w-20}" height="3" rx="1.5" fill="#C8102E" opacity=".85"/>`:""}
+      <text x="${mk.x+mk.w/2}" y="${mk.y+mk.h/2+7}" text-anchor="middle" font-size="19" font-weight="900" fill="${stage?"#FFFFFF":"#2B2B30"}" letter-spacing="6">${esc(mk.label)}</text>`; }
     else if(mk.type==="arrow"){ const c=mk.color||"#E0281E", dx=mk.x2-mk.x1, dy=mk.y2-mk.y1, L=Math.hypot(dx,dy)||1;
-      out+=`<line x1="${mk.x1}" y1="${mk.y1}" x2="${mk.x2-dx/L*18}" y2="${mk.y2-dy/L*18}" stroke="${c}" stroke-width="12" stroke-linecap="round"/>`+head(mk.x2,mk.y2,dx,dy,c);
-      if(mk.label) out+=`<text x="${mk.lx}" y="${mk.ly}" text-anchor="${mk.anchor||"middle"}" font-size="17" font-weight="800" fill="#2B2B30">${esc(mk.label)}</text>`; }
+      out+=`<g filter="url(#st-sh)"><line x1="${mk.x1}" y1="${mk.y1}" x2="${mk.x2-dx/L*18}" y2="${mk.y2-dy/L*18}" stroke="${c}" stroke-width="12" stroke-linecap="round"/>`+head(mk.x2,mk.y2,dx,dy,c)+`</g>`;
+      if(mk.label) out+=`<text x="${mk.lx}" y="${mk.ly}" text-anchor="${mk.anchor||"middle"}" font-size="17" font-weight="900" fill="#2B2B30" letter-spacing="1">${esc(mk.label)}</text>`; }
     else if(mk.type==="text") out+=`<text x="${mk.x}" y="${mk.y}" text-anchor="${mk.anchor||"middle"}" font-size="${mk.size||13}" fill="${mk.color||"#8E8E93"}">${esc(mk.label)}</text>`;
   });
   (room.tables||[]).forEach(pl=>{ const t=st.tables[pl.t]; if(!t) return;
@@ -3169,6 +3227,62 @@ function ensureSeating(m){ if(!S.seating[m.id]) S.seating[m.id]=clone(seatingOf(
 /* 拖拉中把觸控捲動擋掉（Safari 對 SVG 的 touch-action 不一定買單） */
 let DRAG_ACTIVE=false;
 window.addEventListener("touchmove",e=>{ if(DRAG_ACTIVE) e.preventDefault(); },{passive:false});
+
+/* 長按 0.38 秒抬起名字、拖到別的位子放下。餐廳分桌、福森號座位共用。
+ * opts.seatSel 可拖的元素／opts.targetAt(node) 找放下的目標／opts.applyDrop(src,tgt) 改資料，回 true 就存檔重畫 */
+function installSeatDrag(el,opts){
+  const scrEl=$("#screen"); let press=null, drag=null, ghost=null;
+  const clearPress=()=>{ if(press){ clearTimeout(press.timer); press=null; } };
+  const targetAt=(x,y)=>{ if(ghost) ghost.style.display="none"; const n=document.elementFromPoint(x,y); if(ghost) ghost.style.display="";
+    return n ? opts.targetAt(n) : null; };
+  const mkGhost=(c,e)=>{
+    const p=seatPerson(c.dataset.p), r=c.getBoundingClientRect();
+    const g=document.createElement("div");
+    const cls=p?(p.group==="貴賓"?"vip":p.group==="雄獅主管"?"mgr":p.guest?"gst":"stf"):"";
+    g.className="tseat tghost "+cls; g.innerHTML=`<b>${esc(p?p.name:"")}</b>`;
+    g.style.width=Math.max(96,r.width)+"px"; document.body.appendChild(g);
+    drag.ox=Math.max(96,r.width)/2; drag.oy=22;
+    g.style.left=(e.clientX-drag.ox)+"px"; g.style.top=(e.clientY-drag.oy)+"px";
+    return g;
+  };
+  el.querySelectorAll(opts.seatSel).forEach(c=>{
+    c.addEventListener("pointerdown",e=>{
+      if(e.pointerType==="mouse" && e.button!==0) return;
+      clearPress();
+      press={el:c,id:e.pointerId,x:e.clientX,y:e.clientY,scroll:false,
+        timer:setTimeout(()=>{ if(!press||press.el!==c) return;
+          drag={el:c,id:e.pointerId,ox:0,oy:0}; DRAG_ACTIVE=true;
+          try{ c.setPointerCapture(e.pointerId); }catch(_){}
+          ghost=mkGhost(c,e);
+          c.classList.add("lift"); if(navigator.vibrate) navigator.vibrate(10); press=null; },380)};
+      try{ c.setPointerCapture(e.pointerId); }catch(_){}
+    });
+    c.addEventListener("pointermove",e=>{
+      if(drag && drag.id===e.pointerId){
+        e.preventDefault(); ghost.style.left=(e.clientX-drag.ox)+"px"; ghost.style.top=(e.clientY-drag.oy)+"px";
+        const t=targetAt(e.clientX,e.clientY); el.querySelectorAll(".over").forEach(x=>{ if(x!==t) x.classList.remove("over"); }); if(t&&t!==drag.el) t.classList.add("over");
+        if(e.clientY<90) scrEl.scrollTop-=8; else if(e.clientY>window.innerHeight-120) scrEl.scrollTop+=8;   /* 拖到邊緣自動捲 */
+        return;
+      }
+      if(press && press.id===e.pointerId){
+        const dx=e.clientX-press.x, dy=e.clientY-press.y;
+        if(!press.scroll && Math.hypot(dx,dy)>6){ press.scroll=true; clearTimeout(press.timer); }   /* 還沒長按就滑動＝要捲頁 */
+        if(press.scroll){ scrEl.scrollTop-=dy; press.x=e.clientX; press.y=e.clientY; }
+      }
+    });
+    const end=e=>{
+      if(press && press.id===e.pointerId) clearPress();
+      if(drag && drag.id===e.pointerId){
+        const t=targetAt(e.clientX,e.clientY);
+        ghost.remove(); ghost=null; drag.el.classList.remove("lift"); el.querySelectorAll(".over").forEach(x=>x.classList.remove("over"));
+        const src=drag.el; drag=null; DRAG_ACTIVE=false;
+        if(t && t!==src && opts.applyDrop(src,t)){ save(); render(); toast("已調整座位"); }
+      }
+    };
+    c.addEventListener("pointerup",end); c.addEventListener("pointercancel",end);
+    c.addEventListener("contextmenu",e=>e.preventDefault());
+  });
+}
 /* 只有產品部給了座位圖（或領隊自己排過）的餐次才有分桌 */
 function hasSeating(m){ return !!(m && (SEAT_DOC[m.id] || S.seating[m.id])); }
 function mealById(id){ for(const d of Object.keys(MEALS)) for(const m of MEALS[d]||[]) if(m.id===id) return {m,day:+d}; return null; }
@@ -3237,75 +3351,25 @@ PAGES.tables=(hdr,scr)=>{
     });
   });
 
-  /* ---- 長按拖拉 ---- */
-  const scrEl=$("#screen"); let press=null, drag=null, ghost=null;
-  const clearPress=()=>{ if(press){ clearTimeout(press.timer); press=null; } };
-  const targetAt=(x,y)=>{ if(ghost) ghost.style.display="none"; const n=document.elementFromPoint(x,y); if(ghost) ghost.style.display="";
-    return n ? (n.closest(".tseat,.sseat")||n.closest(".tzone")) : null; };
-  const isSeat=el=>el.classList.contains("tseat")||el.classList.contains("sseat");
-  const applyDrop=(src,tgt)=>{
-    const cur=ensureSeating(m), pid=src.dataset.p;
-    const from = src.dataset.t==="pool" ? null : {t:+src.dataset.t,i:+src.dataset.i};
-    const take=()=>{ if(from) cur.tables[from.t].seats[from.i]=null; };
-    if(isSeat(tgt)){
+  installSeatDrag(el,{ seatSel:".tseat[data-p],.sseat[data-p]",
+    targetAt:n=>n.closest(".tseat,.sseat")||n.closest(".tzone"),
+    applyDrop:(src,tgt)=>{
+      const isSeat=x=>x.classList.contains("tseat")||x.classList.contains("sseat");
+      const cur=ensureSeating(m), pid=src.dataset.p;
+      const from = src.dataset.t==="pool" ? null : {t:+src.dataset.t,i:+src.dataset.i};
+      const take=()=>{ if(from) cur.tables[from.t].seats[from.i]=null; };
+      if(isSeat(tgt)){
+        if(tgt.dataset.t==="pool"){ if(!from) return false; take(); return true; }
+        const to={t:+tgt.dataset.t,i:+tgt.dataset.i}; if(from && from.t===to.t && from.i===to.i) return false;
+        const other=cur.tables[to.t].seats[to.i]||null;
+        cur.tables[to.t].seats[to.i]=pid;
+        if(from) cur.tables[from.t].seats[from.i]=other;   /* 互換；對方是空位就等於搬過去 */
+        return true;
+      }
       if(tgt.dataset.t==="pool"){ if(!from) return false; take(); return true; }
-      const to={t:+tgt.dataset.t,i:+tgt.dataset.i}; if(from && from.t===to.t && from.i===to.i) return false;
-      const other=cur.tables[to.t].seats[to.i]||null;
-      cur.tables[to.t].seats[to.i]=pid;
-      if(from) cur.tables[from.t].seats[from.i]=other;   /* 互換；對方是空位就等於搬過去 */
-      return true;
-    }
-    if(tgt.dataset.t==="pool"){ if(!from) return false; take(); return true; }
-    const tt=+tgt.dataset.t, seats=cur.tables[tt].seats; if(from && from.t===tt) return false;
-    take(); const hole=seats.indexOf(null); if(hole>=0) seats[hole]=pid; else seats.push(pid); return true;
-  };
-  const mkGhost=(c,e)=>{
-    const p=seatPerson(c.dataset.p), r=c.getBoundingClientRect();
-    const g=document.createElement("div");
-    const cls=p?(p.group==="貴賓"?"vip":p.group==="雄獅主管"?"mgr":p.guest?"gst":"stf"):"";
-    g.className="tseat tghost "+cls; g.innerHTML=`<b>${esc(p?p.name:"")}</b>`;
-    g.style.width=Math.max(96,r.width)+"px"; document.body.appendChild(g);
-    drag.ox=Math.max(96,r.width)/2; drag.oy=22;
-    g.style.left=(e.clientX-drag.ox)+"px"; g.style.top=(e.clientY-drag.oy)+"px";
-    return g;
-  };
-  el.querySelectorAll(".tseat[data-p],.sseat[data-p]").forEach(c=>{
-    c.addEventListener("pointerdown",e=>{
-      if(e.pointerType==="mouse" && e.button!==0) return;
-      clearPress();
-      press={el:c,id:e.pointerId,x:e.clientX,y:e.clientY,scroll:false,
-        timer:setTimeout(()=>{ if(!press||press.el!==c) return;
-          drag={el:c,id:e.pointerId,ox:0,oy:0}; DRAG_ACTIVE=true;
-          try{ c.setPointerCapture(e.pointerId); }catch(_){}
-          ghost=mkGhost(c,e);
-          c.classList.add("lift"); if(navigator.vibrate) navigator.vibrate(10); press=null; },380)};
-      try{ c.setPointerCapture(e.pointerId); }catch(_){}
-    });
-    c.addEventListener("pointermove",e=>{
-      if(drag && drag.id===e.pointerId){
-        e.preventDefault(); ghost.style.left=(e.clientX-drag.ox)+"px"; ghost.style.top=(e.clientY-drag.oy)+"px";
-        const t=targetAt(e.clientX,e.clientY); el.querySelectorAll(".over").forEach(x=>{ if(x!==t) x.classList.remove("over"); }); if(t&&t!==drag.el) t.classList.add("over");
-        if(e.clientY<90) scrEl.scrollTop-=8; else if(e.clientY>window.innerHeight-120) scrEl.scrollTop+=8;   /* 拖到邊緣自動捲 */
-        return;
-      }
-      if(press && press.id===e.pointerId){
-        const dx=e.clientX-press.x, dy=e.clientY-press.y;
-        if(!press.scroll && Math.hypot(dx,dy)>6){ press.scroll=true; clearTimeout(press.timer); }   /* 還沒長按就滑動＝要捲頁 */
-        if(press.scroll){ scrEl.scrollTop-=dy; press.x=e.clientX; press.y=e.clientY; }
-      }
-    });
-    const end=e=>{
-      if(press && press.id===e.pointerId) clearPress();
-      if(drag && drag.id===e.pointerId){
-        const t=targetAt(e.clientX,e.clientY);
-        ghost.remove(); ghost=null; drag.el.classList.remove("lift"); el.querySelectorAll(".over").forEach(x=>x.classList.remove("over"));
-        const src=drag.el; drag=null; DRAG_ACTIVE=false;
-        if(t && t!==src && applyDrop(src,t)){ save(); render(); toast("已調整座位"); }
-      }
-    };
-    c.addEventListener("pointerup",end); c.addEventListener("pointercancel",end);
-    c.addEventListener("contextmenu",e=>e.preventDefault());
-  });
+      const tt=+tgt.dataset.t, seats=cur.tables[tt].seats; if(from && from.t===tt) return false;
+      take(); const hole=seats.indexOf(null); if(hole>=0) seats[hole]=pid; else seats.push(pid); return true;
+    } });
 };
 
 /* ---------- 同意書（離隊切結） ---------- */
