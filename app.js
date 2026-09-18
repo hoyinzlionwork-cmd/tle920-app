@@ -625,6 +625,30 @@ let LUGGAGE_ROUTE = {
 };
 
 
+
+/* 菜單（Google 名單「菜單」分頁）：每餐吃什麼、哪幾道要換、誰忌口。items 一道一行；notes 是要盯的事 */
+let MENU_DOC = [
+  { id:"n1a", day:1, slot:"早餐",   place:"阜杭豆漿", items:["招牌厚餅夾蛋＋熱豆漿"], notes:["高鐵月台站內發，要裝袋（跟 Paris 拿）"] },
+  { id:"n1b", day:1, slot:"午餐",   place:"福森號九宮格（A 段車上）",
+    items:["山辛鴨藏：嘉義在地飼養鴨肉，搭配馬告低溫舒肥","茶韻海凝：鮮美小鮑魚搭配和風白醬油與石柝蜜香紅茶細煮","山葵豚炙：嘉義在地黑豬肉，搭配山葵醬油醃漬提味","相思燻玉：相思木慢火煙燻玉子燒","林穀珍飯：日式慢烤銀杏搭配阿里山椴木菇醬燕麥，佐鄒族小米飯","金萱白潤：阿里山金萱茶慢煮豆腐","竹香野蔬：麻竹筍與在地鮮蔬、龍鬚菜清炒","薑霞山珍：竹崎轎篙筍、阿里山椴木菇與山美薑黃搭配雞高湯燉煮","鄒火青原：達娜伊谷煙燻肉與高海拔高麗菜快炒","野生藍莓乳酪軟歐"],
+    notes:["茶韻海凝（小鮑魚）：不吃海鮮 2 位（魏董及夫人）更換茶油雞","相思燻玉：不用更換，但有奶需提醒","藍莓乳酪軟歐：3 位不吃起司更換——陳萱（忌乳製品含起司）、柳婉郁（忌起司、生食）、王岳聰（忌奶製品含起司）"] },
+  { id:"n1c", day:1, slot:"小點心", place:"鳴心咖啡（十字路）", items:["冰釀咖啡","烏龍茶（熱）","阿里山藝妓（熱）","咖啡果皮茶（熱）","咖啡花茶（熱）"], notes:["咖啡花茶口味淡薄，無法回沖"] },
+  { id:"n1d", day:1, slot:"晚餐",   place:"阿里山賓館 三樓中餐廳・合菜",
+    items:["原民塔香竹雞","陶板岩烤大草蝦","秘製黑椒烤牛肉","廣式蠔油海上鮮","碧綠金銀瑤柱","栗子白果燒鱸鰻","羊肚菌菇排骨湯","高山茶油雞拼糯米雞飯","精緻美點","四季水果"],
+    notes:["魏董另上兩套忌海鮮套餐"] },
+  { id:"n2a", day:2, slot:"早餐",   place:"阿里山賓館 麗景廳（飯店內）", items:["飯店早餐 07:00–10:00（最後進場 09:30）"], notes:[] },
+  { id:"n2b", day:2, slot:"小點心", place:"福森號 C 段小點心（二萬坪）", items:["草仔粿（豬肉蝦米）","紅豆麻糬","愛玉"], notes:["2 位不吃海鮮換素食草仔粿"] },
+  { id:"n2c", day:2, slot:"小點心", place:"奮起湖", items:["甜甜圈＋愛玉"], notes:[] },
+  { id:"n2d", day:2, slot:"午餐",   place:"山芙蓉・合菜", items:["白飯（當天新鮮蔬菜）","烤豬肉、赤蔥雞、香腸","佛手瓜煎蛋","小米粽","山葵豆腐","湯（依當天食材為主）"], notes:["待確認：四人合菜出兩套"] },
+  { id:"n2e", day:2, slot:"晚餐",   place:"阿里山英迪格 宴會廳 A・套餐",
+    items:["義水耕生菜沙拉","英迪格特色麵包・雙味佐醬","鄒族風味炭烤肉盤","山林轎蒿筍・竹笙燉鴨湯","雙茶韻香煎干貝・鮭魚卵沙拉","炭烤龍蝦佐在地香草蒜味奶油","黑松露小米蒸米糕","小米提拉米蘇佐小米酒凍與金萱茶酥","嘉義旬味四季果盤"],
+    notes:["不吃奶 2 位要調整","提拉米蘇內有起司，是否更換待確認"] },
+  { id:"n3a", day:3, slot:"早餐",   place:"阿里山英迪格 粟餐廳（飯店內）", items:["飯店早餐 06:30–10:30"], notes:[] },
+  { id:"n3b", day:3, slot:"午餐",   place:"優遊吧斯・合菜",
+    items:["山葵豆腐山野拼（泉豆腐、山豬肉、香腸角、咖啡龍鬚）","苦茶油雞野溪哥","馬告肥腸臭臭鍋","野生高白窩窩頭","茶米甘露魚石斑","紅柴野蜜竹筒飯","鳳眼仙佛轎篙筍","芥末椒鹽山肘子","瑪翡秘制老鴨湯","南台灣四季鮮果"], notes:[] },
+  { id:"n3c", day:3, slot:"晚餐",   place:"piepiya 麵包＋飲品（高鐵上發）", items:["麵包店紙袋","原味葡萄乾共 14 顆：每房一顆，雄獅主管每人一顆"], notes:["飲料需確認","高鐵月台站內發，要裝袋"] },
+];
+
 const FUNCS = [
   ["itin",   "route",  "行程表"],
   ["roster", "team",   "團體大表"],
@@ -632,6 +656,7 @@ const FUNCS = [
   ["fusen",  "train",  "福森號座位"],
   ["rooms",  "bed",    "分房表"],
   ["meals",  "meal",   "餐廳分桌"],
+  ["menus",  "clip",   "菜單"],
   ["vendors","phone",  "店家聯絡"],
   ["coffee", "cup",    "咖啡點餐"],
   ["luggage","lug",    "行李點收"],
@@ -676,14 +701,14 @@ function buildSeed(){
     tour:TOUR_SEED, pax:PAX_SEED, nights:NIGHTS_SEED, menu:MENU_SEED, meals,
     vendors:VENDORS_SEED, vendorTodo:VENDOR_TODO_SEED,
     budget:BUDGET_ITEMS_SEED, headcount:BUDGET_HEADCOUNT_SEED,
-    itin:ITIN_SEED, luggageRoute:LUGGAGE_ROUTE_SEED, hsrTrains:HSR_TRAINS_SEED, _seatVer:5, _menuVer:1, _budgetVer:2, _tourVer:3, _docVer:12,
+    itin:ITIN_SEED, luggageRoute:LUGGAGE_ROUTE_SEED, hsrTrains:HSR_TRAINS_SEED, menuDoc:MENU_DOC_SEED, _seatVer:5, _menuVer:1, _budgetVer:2, _tourVer:3, _docVer:12,
   });
 }
 /* 出廠預設另存一份，之後 TOUR / PAX… 這些名字都指向 S.data */
 const TOUR_SEED=TOUR, PAX_SEED=PAX, NIGHTS_SEED=NIGHTS, MENU_SEED=MENU, MEALS_SEED=MEALS,
       VENDORS_SEED=VENDORS, VENDOR_TODO_SEED=VENDOR_TODO, BUDGET_ITEMS_SEED=BUDGET_ITEMS,
       BUDGET_HEADCOUNT_SEED=BUDGET_HEADCOUNT, ITIN_SEED=ITIN, LUGGAGE_ROUTE_SEED=LUGGAGE_ROUTE,
-      HSR_TRAINS_SEED=HSR_TRAINS;
+      HSR_TRAINS_SEED=HSR_TRAINS, MENU_DOC_SEED=MENU_DOC;
 
 function bindData(){
   if(!S.data || typeof S.data!=="object") S.data = buildSeed();
@@ -695,7 +720,7 @@ function bindData(){
   applyFusen0917(PAX);   /* 福森號座位一律以產品部 A／C 段座位圖為準 */
   VENDORS=S.data.vendors; VENDOR_TODO=S.data.vendorTodo; BUDGET_ITEMS=S.data.budget;
   BUDGET_HEADCOUNT=S.data.headcount; ITIN=S.data.itin; LUGGAGE_ROUTE=S.data.luggageRoute;
-  HSR_TRAINS=S.data.hsrTrains;
+  HSR_TRAINS=S.data.hsrTrains; MENU_DOC=S.data.menuDoc;
   BUDGET_ITEMS.forEach(b=>{ b.budget=(+b.price||0)*(+b.qty||0); });
   /* 一次性：高鐵座位換成 9/11 版表格（含新增／取消人員、台中標記、672 柳董） */
   if((S.data._seatVer||0)<2){
@@ -1224,7 +1249,7 @@ function editBar(parent, {add, addLabel="新增", reset, resetLabel="還原此�
 let LP_MODAL=null;   /* 彈窗（店家資訊）內的長按處理 */
 function tagLongPress(root){
   root.querySelectorAll(".ebtn").forEach(b=>{
-    const host=b.closest("tr.prow,.mealcard2,.reccard,.rollcard,.vcard,.roomcard,.bgitem,.ordrow,td.det,.bh1,.tinfo,.stop,.card")||b.parentElement;
+    const host=b.closest("tr.prow,.mealcard2,.reccard,.rollcard,.vcard,.roomcard,.bgitem,.ordrow,td.det,.bh1,.tinfo,.stop,.menucard,.card")||b.parentElement;
     if(host){ host.dataset.lp=b.dataset.e; host.classList.add("lp"); }
   });
 }
@@ -2399,6 +2424,38 @@ PAGES.fusen=(hdr,scr)=>{
   el.querySelectorAll(".zw").forEach(zoomify);
   scr.appendChild(el);
 };
+
+
+/* ---------- 菜單：每天每餐吃什麼、要換的、忌口提醒 ---------- */
+PAGES.menus=(hdr,scr)=>{
+  hbar(hdr,"菜單",{back:true});
+  dayPills(scr);
+  const el=document.createElement("div");
+  el.className="pagepad";
+  const list=MENU_DOC.filter(m=>+m.day===+S.day);
+  const mealOf=m=>{ const ms=(MEALS[S.day]||[]); return ms.find(x=>x.slot===m.slot && hasSeating(x)); };
+  el.innerHTML=`<p class="vs">菜單來自產品部 Google 名單「菜單」分頁。橘色框是要換餐、要提醒的事；長按卡片可以改。</p>
+  <div class="menulist">${list.map(m=>{ const mm=mealOf(m);
+    return `<div class="card menucard">${ebtn(m.id,true)}
+      <div class="mh2"><span class="pill red">${esc(m.slot)}</span><b>${esc(m.place)}</b><span class="pill gray">${(m.items||[]).length} 項</span></div>
+      <ol class="dishes">${(m.items||[]).map(x=>`<li>${esc(x)}</li>`).join("")}</ol>
+      ${(m.notes||[]).length?`<div class="mnotes">${m.notes.map(x=>`<div class="mnote">${ic("hand",13)} ${esc(x)}</div>`).join("")}</div>`:""}
+      ${mm?`<div class="links"><button class="chip" data-v="tables:${esc(mm.id)}">餐廳分桌</button></div>`:""}
+    </div>`; }).join("")||`<div class="card tempty">這一天沒有菜單資料</div>`}</div>`;
+  el.querySelectorAll(".chip[data-v]").forEach(ch=>ch.onclick=()=>goPage(ch.dataset.v));
+  editBar(el,{add:()=>editMenuDoc(null),addLabel:"新增一餐"});
+  EDIT_HANDLER=id=>editMenuDoc(MENU_DOC.find(m=>m.id===id));
+  scr.appendChild(el);
+};
+function editMenuDoc(m){
+  editForm(m?"編輯菜單":"新增一餐",[
+    {k:"day",label:"第幾天",type:"select",opts:[[1,"第 1 天"],[2,"第 2 天"],[3,"第 3 天"]]},{k:"slot",label:"餐次",ph:"早餐／午餐／晚餐／小點心",required:true},
+    {k:"place",label:"餐廳／地點",required:true},{k:"items",label:"菜色（一道一行）",type:"lines",rows:8},{k:"notes",label:"要換餐、提醒（一行一項）",type:"lines",rows:3},
+  ], m||{day:S.day,slot:"",place:"",items:[],notes:[]}, {
+    onSave:o=>{ o.day=+o.day||1; if(m) Object.assign(m,o); else { o.id=newId("n"); MENU_DOC.push(o); } dataChanged("已儲存"); },
+    onDelete:m?()=>{ S.data.menuDoc=MENU_DOC.filter(x=>x!==m); dataChanged("已刪除"); }:null,
+  });
+}
 
 function openPaxModal(p){
   const ord=S.orders[p.id];
