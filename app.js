@@ -3077,15 +3077,23 @@ function defaultSeating(m){
 }
 /* ---- 座位圖共用零件 ---- */
 const SEAT_FONT='font-family="PingFang TC,Microsoft JhengHei,system-ui,sans-serif"';
+/* 跟產品部座位圖不同的位子：{ "桌:位": 原本坐的人 id 或 null }，畫圖時用來標橘框 */
+let SEAT_CHG=null;
+function seatDiff(m,st){
+  const base=defaultSeating(m).tables, out={};
+  st.tables.forEach((t,ti)=>{ const d=base[ti]; t.seats.forEach((pid,i)=>{ const o=d?(d.seats[i]||null):null; if((pid||null)!==o) out[ti+":"+i]=o; }); });
+  return out;
+}
 function seatG(pid,ti,i,x,y,r){
-  const p=seatPerson(pid), fs=r>=20?11.5:10;
-  let out=`<g class="sseat${p?"":" empty"}" data-t="${ti}" data-i="${i}"${p?` data-p="${esc(p.id)}"`:""}>`;
-  if(!p) return out+`<circle cx="${x}" cy="${y}" r="${r}" fill="#fff" stroke="#C9C9CF" stroke-width="1.5" stroke-dasharray="4 3"/></g>`;
+  const p=seatPerson(pid), fs=r>=20?11.5:10, chg=!!(SEAT_CHG&&(ti+":"+i) in SEAT_CHG);
+  let out=`<g class="sseat${p?"":" empty"}${chg?" chg":""}" data-t="${ti}" data-i="${i}"${p?` data-p="${esc(p.id)}"`:""}>`;
+  if(!p) return out+`<circle cx="${x}" cy="${y}" r="${r}" fill="#fff" stroke="${chg?"#E07B12":"#C9C9CF"}" stroke-width="${chg?2.5:1.5}" stroke-dasharray="4 3"/>${chg?`<text x="${x}" y="${y+4}" text-anchor="middle" font-size="9" fill="#E07B12" font-weight="800">空</text>`:""}</g>`;
   const g=p.group==="貴賓"?["#FFF7F7","#F3C3C8"]:p.group==="雄獅主管"?["#F5F8FF","#C9D8F5"]:p.guest?["#FFFBE6","#E8C98A"]:["#FAFAFB","#D5D5DA"];
   const nm=p.name.replace(/\s/g,"").slice(0,4), two=nm.length>2&&r<22;
-  out+=`<circle cx="${x}" cy="${y}" r="${r}" fill="${g[0]}" stroke="${g[1]}" stroke-width="1.8"/>`;
+  out+=`<circle cx="${x}" cy="${y}" r="${r}" fill="${chg?"#FFF4E8":g[0]}" stroke="${chg?"#E07B12":g[1]}" stroke-width="${chg?3:1.8}"/>`;
   if(two) out+=`<text x="${x}" y="${y-2}" text-anchor="middle" font-size="${fs}" font-weight="800" fill="#333336">${esc(nm.slice(0,2))}</text><text x="${x}" y="${y+fs}" text-anchor="middle" font-size="${fs}" font-weight="800" fill="#333336">${esc(nm.slice(2))}</text>`;
   else out+=`<text x="${x}" y="${y+4}" text-anchor="middle" font-size="${fs}" font-weight="800" fill="#333336">${esc(nm)}</text>`;
+  if(chg) out+=`<circle cx="${x+r*0.72}" cy="${y-r*0.72}" r="8.5" fill="#E07B12"/><text x="${x+r*0.72}" y="${y-r*0.72+3.5}" text-anchor="middle" font-size="9.5" font-weight="900" fill="#fff">改</text>`;
   return out+`</g>`;
 }
 /* 圓桌：seats[0] 在 12 點方向，順時針；跟產品部座位圖同一種畫法。回傳 <g>，給單桌圖跟全景圖共用 */
@@ -3177,16 +3185,23 @@ PAGES.tables=(hdr,scr)=>{
   const pool=here.filter(p=>!seatedIds.has(p.id));
   const GO={"貴賓":0,"雄獅主管":1,"工作人員":2};
   pool.sort((a,b)=>(GO[a.group]??9)-(GO[b.group]??9));
-  const chip=(pid,t,i)=>{ const p=seatPerson(pid); const no=i>=0?`<s>${i+1}</s>`:""; if(!p) return `<div class="tseat empty" data-t="${t}" data-i="${i}">${no}</div>`;
+  const diff=seatDiff(m,st); SEAT_CHG=diff; const nChg=Object.keys(diff).length;
+  const nameOf=v=>{ const q=seatPerson(v); return q?q.name:"空位"; };
+  const chip=(pid,t,i)=>{ const p=seatPerson(pid); const no=i>=0?`<s>${i+1}</s>`:""; const k=t+":"+i, chg=t!=="pool"&&(k in diff);
+    const orig=chg?`<u>原 ${esc(nameOf(diff[k]))}</u>`:"";
+    if(!p) return `<div class="tseat empty${chg?" chg":""}" data-t="${t}" data-i="${i}">${no}${orig}</div>`;
     const g=p.group==="貴賓"?"vip":p.group==="雄獅主管"?"mgr":p.guest?"gst":"stf";
-    return `<div class="tseat ${g}" data-t="${t}" data-i="${i}" data-p="${esc(p.id)}">${no}<b>${esc(p.name)}</b>${p.meal?`<i>${esc(p.meal)}</i>`:p.guest?`<i>來賓</i>`:""}</div>`; };
+    return `<div class="tseat ${g}${chg?" chg":""}" data-t="${t}" data-i="${i}" data-p="${esc(p.id)}">${no}<b>${esc(p.name)}</b>${p.meal?`<i>${esc(p.meal)}</i>`:p.guest?`<i>來賓</i>`:""}${orig}</div>`; };
+  const chgList=st.tables.map((t,ti)=>{ const items=t.seats.map((pid,i)=>({i,k:ti+":"+i,pid})).filter(x=>x.k in diff);
+    return items.length?`<div class="chgrow"><b>${esc(t.name.split("（")[0])}</b>${items.map(x=>`<span class="chgitem">第 ${x.i+1} 位：<s>${esc(nameOf(diff[x.k]))}</s> → <b>${esc(nameOf(x.pid))}</b></span>`).join("")}</div>`:""; }).join("");
   const el=document.createElement("div");
   el.className="pagepad";
   el.innerHTML=`
   <div class="mealswitch">${[1,2,3].flatMap(d=>(MEALS[d]||[]).filter(hasSeating).map(x=>`<button class="tab${x.id===m.id?" on":""}" data-m="${esc(x.id)}">D${d} ${esc(x.slot)}・${esc(x.place.split("・")[0].split("（")[0])}</button>`)).join("")}</div>
   ${st.note?`<div class="card" style="font-size:13px;line-height:1.6;background:#FFF3D6;border-color:#E8C98A;color:#7A5200"><b>產品部座位圖</b>　${esc(st.note)}　<span style="color:#A87800">圓桌圖 12 點方向＝第 1 位，順時針。</span></div>`:""}
   <div class="card tblhint"><span>${ic("hand",16)}</span><span><b>長按名字</b>（全景圖上或下方格子都可以）抬起來，拖到別的位子就互換；拖到空位是搬過去；拖到「未入座」是移出。改完自動存，只影響這家餐廳。</span>
-    <span class="pill ${custom?"green":"gray"}">${custom?"已自訂":"預設分桌"}</span></div>
+    <span class="pill ${nChg?"orange":custom?"green":"gray"}">${nChg?`已換位 ${nChg} 席`:custom?"已自訂":"預設分桌"}</span></div>
+  ${nChg?`<div class="card chgcard"><div class="thead"><b>${ic("refresh",15)} 跟產品部座位圖不同的位子</b><span class="pill orange">${nChg} 席</span><span class="roomhint">橘框＋「改」＝換過位子；格子下方寫原本是誰</span></div>${chgList}</div>`:""}
   ${room?`<div class="card tcard roomcard2"><div class="thead"><b>餐廳全景圖</b><span class="pill gray">方位照產品部座位圖</span><span class="roomhint">點空白處放大・長按名字拖拉</span></div>
     <div class="roomwrap"><div class="zw" data-title="${esc(m.place)} 分桌圖">${svgRoom(st,room)}</div></div></div>`:""}
   <div class="tables">
