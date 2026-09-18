@@ -317,7 +317,7 @@ let MEALS = {
      ["小點","奮起湖老街","甜甜圈＋愛玉・裝袋拿著吃","OK",["v_donut","v_aiyu"]],
      ["午餐","山芙蓉 無菜單料理","無菜單套餐式（忌食已提供餐廳）・A 長桌 10／B 桌 7／C 桌 6・戴董加入、魏董伉儷午餐後離團","OK",["v_fkuo"]],
      ["茶席","小山霂茗（林園製茶）","老闆親自接待・每桌 7 人分 3–4 桌、每桌一位茶師","OK",["v_xiaoshan","v_linyuan"]],
-     ["晚餐","阿里山英迪格・HUFU氛饗亭（宴會廳C）","套餐式・座位圖 20 人（A 桌 10／B 桌 9），見「分桌」","OK",["v_indigo"]]],
+     ["晚餐","阿里山英迪格・宴會廳 A","主廚套餐・座位圖 20 人（A 桌 10／B 桌 9），見「分桌」","OK",["v_indigo"]]],
   3:[["早餐","阿里山英迪格・粟餐廳（1F）","07:00–10:30","OK",["v_indigo"]],
      ["午餐","優遊吧斯 鄒族文化部落","合菜（需分菜）・800/人｜大桌 19 人＋小桌 16 人，門在大桌 6 點方向｜是否品茗待確認（與小山霂茗類似，菜色須避免重複）","OK",["v_yuyupas"]],
      ["點心","高鐵站發放","piepiya 麵包＋飲品・裝袋（數量以房為單位？口味待確認）","待確認",["v_piepiya"]]],
@@ -381,10 +381,10 @@ let VENDORS = [
     tel:["0800-263-520"], addr:"阿里山森林遊樂區",
     note:"祝山日出包車 2 台×4,500，每台最多 19 人。05:00 出發。" },
 
-  { id:"v_indigo", name:"阿里山英迪格酒店", sub:"D2 晚餐 HUFU／D3 早餐 粟餐廳／住宿一晚", days:[2,3], slots:["晚餐","早餐","住宿"],
+  { id:"v_indigo", name:"阿里山英迪格酒店", sub:"D2 晚餐 宴會廳 A／D3 早餐 粟餐廳／住宿一晚", days:[2,3], slots:["晚餐","早餐","住宿"],
     tel:["05-258-6800"], addr:"嘉義縣番路鄉阿里山龍頭20號",
     hours:"粟餐廳早餐 07:00–10:30",
-    note:"D2 晚餐於 HUFU 氛饗亭（宴會廳C），HUFU 套餐菜單調整中。" },
+    note:"D2 晚餐於宴會廳 A，主廚套餐。" },
 
   { id:"v_meiyuan", name:"梅園樓觀景飯店", sub:"D2 工作人員外宿／D3 茶敘", days:[2,3], slots:["住宿","茶敘"],
     tel:["05-258-6282"], addr:"嘉義縣番路鄉公田村龍頭19之6號",
@@ -518,7 +518,7 @@ let ITIN = {
       staff:["元榮：送魏董及夫人上九人座（行李需自大巴取下）"], links:[["consent","離隊切結"]] },
     { t:"16:20", title:"阿里山英迪格酒店 Check-in", desc:"16:20–16:30 辦理入住，全體人員住館內。",
       links:[["rooms","分房表"],["luggage","行李點收"]] },
-    { t:"18:30", title:"晚餐 · HUFU氛饗亭（宴會廳C）", desc:"HUFU 套餐（菜單調整中）。",
+    { t:"18:30", title:"晚餐 · 阿里山英迪格 宴會廳 A", desc:"主廚套餐，3,980+10%／人。",
       staff:["冠廷：前往餐廳擺桌牌"], links:[["meals","餐廳分桌"]] },
   ],
   3: [
@@ -676,7 +676,7 @@ function buildSeed(){
     tour:TOUR_SEED, pax:PAX_SEED, nights:NIGHTS_SEED, menu:MENU_SEED, meals,
     vendors:VENDORS_SEED, vendorTodo:VENDOR_TODO_SEED,
     budget:BUDGET_ITEMS_SEED, headcount:BUDGET_HEADCOUNT_SEED,
-    itin:ITIN_SEED, luggageRoute:LUGGAGE_ROUTE_SEED, hsrTrains:HSR_TRAINS_SEED, _seatVer:5, _menuVer:1, _budgetVer:2, _tourVer:3, _docVer:11,
+    itin:ITIN_SEED, luggageRoute:LUGGAGE_ROUTE_SEED, hsrTrains:HSR_TRAINS_SEED, _seatVer:5, _menuVer:1, _budgetVer:2, _tourVer:3, _docVer:12,
   });
 }
 /* 出廠預設另存一份，之後 TOUR / PAX… 這些名字都指向 S.data */
@@ -795,6 +795,14 @@ function bindData(){
   /* 一次性：店家 LINE 回覆的訂購證明掛到行程節點；補梅園樓司領寄舖節點 */
   if((S.data._docVer||0)<10){ applyStopConf(ITIN); S.data._docVer=10; }
   /* 一次性：點名「筆記」併進旅客「備註」——同一個欄位，改一處全部同步 */
+  /* 一次性：D2 晚餐改「宴會廳 A」，HUFU 字樣拿掉 */
+  if((S.data._docVer||0)<12){
+    const fix=v=>String(v||"").replace(/HUFU\s*氛饗亭（宴會廳\s*C）/g,"宴會廳 A").replace(/HUFU氛饗亭（宴會廳C）/g,"宴會廳 A").replace(/HUFU 套餐（菜單調整中）/g,"主廚套餐").replace(/HUFU 套餐/g,"主廚套餐").replace(/HUFU\s*氛饗亭/g,"宴會廳 A").replace(/宴會廳C/g,"宴會廳 A").replace(/D2 晚餐 HUFU/g,"D2 晚餐 宴會廳 A").replace(/HUFU/g,"宴會廳 A");
+    for(const d of Object.keys(ITIN)) (ITIN[d]||[]).forEach(st=>{ st.title=fix(st.title); st.desc=fix(st.desc); });
+    for(const d of Object.keys(MEALS)) (MEALS[d]||[]).forEach(m=>{ m.place=fix(m.place); m.menu=fix(m.menu); });
+    VENDORS.forEach(v=>{ v.sub=fix(v.sub); v.note=fix(v.note); });
+    S.data._docVer=12;
+  }
   if((S.data._docVer||0)<11){
     for(const [id,n] of Object.entries(S.notes||{})){ const p=pax(id); if(p&&n&&!(p.note||"").includes(n)) p.note=[p.note,n].filter(Boolean).join("；"); }
     S.notes={}; S.data._docVer=11;
